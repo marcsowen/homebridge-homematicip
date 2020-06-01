@@ -10,7 +10,7 @@ import {
 import {HmIPConnector} from "./HmIPConnector";
 import {HmIPThermostat, Updateable} from "./HmIPThermostat";
 import {PLATFORM_NAME, PLUGIN_NAME} from "./settings";
-import {HmIPDeviceChangeEvent, HmIPState, HmIPStateChange} from "./HmIPState";
+import {HmIPDeviceChangeEvent, HmIPGroup, HmIPState, HmIPStateChange} from "./HmIPState";
 
 /**
  * HomematicIP platform
@@ -22,7 +22,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     // this is used to track restored cached accessories
     public readonly accessories: PlatformAccessory[] = [];
 
-    private readonly connector: HmIPConnector;
+    public readonly connector: HmIPConnector;
+    public groups!: { [key: string]: HmIPGroup }
     private deviceMap = new Map();
 
     constructor(
@@ -59,6 +60,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     async discoverDevices() {
         await this.connector.init();
         const hmIPState = <HmIPState> await this.connector.apiCall("home/getCurrentState");
+        this.groups = hmIPState.groups;
 
         // loop over the discovered devices and register each one if it has not already been registered
         for (const id in hmIPState.devices) {
@@ -75,7 +77,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
                 existingAccessory.context.device = device;
                 this.api.updatePlatformAccessories([existingAccessory]);
 
-                this.deviceMap.set(id, new HmIPThermostat(this, existingAccessory, this.connector));
+                this.deviceMap.set(id, new HmIPThermostat(this, existingAccessory));
             } else {
                 if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO') {
                     this.log.info(`Adding new HmIP thermostat: ${device.modelType} - ${device.label}`);
@@ -83,7 +85,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
                     const accessory = new this.api.platformAccessory(device.label, uuid);
                     accessory.context.device = device;
 
-                    this.deviceMap.set(id, new HmIPThermostat(this, accessory, this.connector));
+                    this.deviceMap.set(id, new HmIPThermostat(this, accessory));
                     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
                 }
             }
@@ -95,9 +97,10 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
                 const stateChangeEvent = stateChange.events[stateChangeEventId];
                 if (stateChangeEvent.pushEventType === 'DEVICE_CHANGED') {
                     const deviceChangeEvent = <HmIPDeviceChangeEvent> stateChangeEvent;
-                    this.log.debug('Device changed: ', deviceChangeEvent.device.label);
+                    this.log.debug(`Device changed: ${deviceChangeEvent.device.modelType} - ${deviceChangeEvent.device.label}`);
                     if (this.deviceMap.has(deviceChangeEvent.device.id)) {
-                        (<Updateable> this.deviceMap.get(deviceChangeEvent.device.id)).updateDevice(deviceChangeEvent.device);
+                        (<Updateable> this.deviceMap.get(deviceChangeEvent.device.id))
+                            .updateDevice(deviceChangeEvent.device, this.groups);
                     }
                 }
             }

@@ -26,6 +26,12 @@ export interface HmIPDevice {
     functionalChannels: { [key: string]: HmIPFunctionalChannel };
 }
 
+export interface HmIPGroup {
+    id: string;
+    type: string;
+}
+
 export interface HmIPState {
     devices: { [key: string]: HmIPDevice };
+    groups: { [key: string]: HmIPGroup }
 }

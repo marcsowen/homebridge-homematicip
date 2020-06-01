@@ -51,7 +51,7 @@ export class HmIPConnector {
         this.urlWebSocket = result.urlWebSocket;
     }
 
-    async apiCall<T>(path: string) {
+    async apiCall<T>(path: string, _body?: object) {
         const response = await fetch(`${this.urlREST}/hmip/${path}`, {
             method: "POST",
             headers: {
@@ -61,9 +61,14 @@ export class HmIPConnector {
                 "AUTHTOKEN": this.authToken,
                 "CLIENTAUTH": this.clientAuthToken
             },
-            body: this.clientCharacteristics
+            body: _body ? JSON.stringify(_body) : this.clientCharacteristics
         });
-        return <T>await response.json();
+
+        if (response.headers.get("Content-Type") === "application/json") {
+            return <T>await response.json();
+        } else {
+            return true;
+        }
     }
 
     async connectWs(listener: (this: WebSocket, data: WebSocket.Data) => void) {
