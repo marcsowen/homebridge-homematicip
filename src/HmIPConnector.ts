@@ -2,6 +2,7 @@ import * as os from "os";
 import * as crypto from "crypto"
 import fetch from "node-fetch"
 import WebSocket from "ws";
+import {Logger} from "homebridge";
 
 interface LookUpResult {
     urlREST: string;
@@ -14,10 +15,12 @@ export class HmIPConnector {
     private readonly clientAuthToken: string;
     private readonly clientCharacteristics: string;
 
+    private readonly log: Logger;
     private urlREST!: string;
     private urlWebSocket!: string;
 
-    constructor(accessPoint: string, authToken: string) {
+    constructor(log: Logger, accessPoint: string, authToken: string) {
+        this.log = log;
         this.authToken = authToken;
         this.clientCharacteristics = JSON.stringify({
             "clientCharacteristics":
@@ -82,11 +85,11 @@ export class HmIPConnector {
         ws.on("message", listener);
 
         ws.on("open", () => {
-            console.log("WS connected.");
+            this.log.info("HmIP websocket connected.");
         })
 
         ws.on("close", () => {
-            console.log("WS closed.");
+            this.log.info("HmIP websocket disconnected.");
         })
     }
 

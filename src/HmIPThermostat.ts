@@ -7,7 +7,7 @@ import {
 } from 'homebridge';
 
 import {HmIPPlatform} from './HmIPPlatform';
-import {HmIPDevice, HmIPGroup} from "./HmIPState";
+import {HmIPDevice, HmIPGroup, Updateable} from "./HmIPState";
 
 interface WallMountedThermostatProChannel {
     functionalChannelType: string;
@@ -15,10 +15,6 @@ interface WallMountedThermostatProChannel {
     setPointTemperature: number;
     humidity: number;
     groups: string[];
-}
-
-export interface Updateable {
-    updateDevice(device: HmIPDevice, groups: { [key: string]: HmIPGroup }): void;
 }
 
 /**
@@ -70,32 +66,27 @@ export class HmIPThermostat implements Updateable {
     }
 
     handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-        this.platform.log.debug(`Getting current heating/cooling state for ${this.accessory.displayName}.`);
         callback(null, this.platform.Characteristic.CurrentHeatingCoolingState.HEAT);
     }
 
     handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-        this.platform.log.debug(`Getting target heating/cooling state for ${this.accessory.displayName}.`);
         callback(null, this.platform.Characteristic.CurrentHeatingCoolingState.HEAT);
     }
 
     handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        this.platform.log.debug(`Setting target heating/cooling state for ${this.accessory.displayName} to ${value}.`);
         callback(null);
     }
 
     handleCurrentTemperatureGet(callback: CharacteristicGetCallback) {
-        this.platform.log.debug(`Getting current temperature for ${this.accessory.displayName}.`);
         callback(null, this.actualTemperature);
     }
 
     handleTargetTemperatureGet(callback: CharacteristicGetCallback) {
-        this.platform.log.debug(`Getting target temperature for ${this.accessory.displayName}.`);
         callback(null, this.setPointTemperature);
     }
 
     async handleTargetTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        this.platform.log.debug(`Setting target temperature for ${this.accessory.displayName} to ${value}.`);
+        this.platform.log.info(`Setting target temperature for ${this.accessory.displayName} to ${value}`);
         const body = {
             groupId: this.heatingGroupId,
             setPointTemperature: value
@@ -105,48 +96,43 @@ export class HmIPThermostat implements Updateable {
     }
 
     handleTemperatureDisplayUnitsGet(callback: CharacteristicGetCallback) {
-        this.platform.log.debug('Getting temperature display units.');
         callback(null, this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS);
     }
 
     handleTemperatureDisplayUnitsSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        this.platform.log.debug(`Setting temperature display units for ${this.accessory.displayName} to ${value}.`);
         callback(null);
     }
 
     handleCurrentRelativeHumidityGet(callback: CharacteristicGetCallback) {
-        this.platform.log.debug(`Getting current relative humidity for ${this.accessory.displayName}.`);
         callback(null, this.humidity);
     }
 
     public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-        this.platform.log.debug('Updating thermostat:', this.accessory.displayName)
         for (const id in hmIPDevice.functionalChannels) {
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_PRO_CHANNEL') {
                 const wthChannel = <WallMountedThermostatProChannel> channel;
 
                 if (wthChannel.setPointTemperature != this.setPointTemperature) {
-                    this.platform.log.info(" - Target temperature changed:", wthChannel.setPointTemperature);
+                    this.platform.log.info(`Target temperature of ${this.accessory.displayName} changed to ${wthChannel.setPointTemperature}`);
                     this.setPointTemperature = wthChannel.setPointTemperature;
                     this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.setPointTemperature);
                 }
 
                 if (wthChannel.actualTemperature != this.actualTemperature) {
-                    this.platform.log.info(" - Current temperature changed:", wthChannel.actualTemperature);
+                    this.platform.log.info(`Current temperature of ${this.accessory.displayName} changed to ${wthChannel.actualTemperature}`);
                     this.actualTemperature = wthChannel.actualTemperature;
                     this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.actualTemperature);
                 }
 
                 if (wthChannel.humidity != this.humidity) {
-                    this.platform.log.info(" - Current relative humidity changed:", wthChannel.humidity);
+                    this.platform.log.info(`Current relative humidity of ${this.accessory.displayName} changed to ${wthChannel.humidity}`);
                     this.humidity = wthChannel.humidity;
                     this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.humidity);
                 }
 
                 for (const groupId of wthChannel.groups) {
                     if (groups[groupId].type == "HEATING") {
-                        this.platform.log.debug(" - Setting heating group id to:", groupId);
                         this.heatingGroupId = groupId;
                     }
                 }

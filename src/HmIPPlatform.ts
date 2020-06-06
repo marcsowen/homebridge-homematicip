@@ -8,9 +8,10 @@ import {
     Service
 } from 'homebridge';
 import {HmIPConnector} from "./HmIPConnector";
-import {HmIPThermostat, Updateable} from "./HmIPThermostat";
+import {HmIPThermostat} from "./HmIPThermostat";
 import {PLATFORM_NAME, PLUGIN_NAME} from "./settings";
-import {HmIPDeviceChangeEvent, HmIPGroup, HmIPState, HmIPStateChange} from "./HmIPState";
+import {HmIPDeviceChangeEvent, HmIPGroup, HmIPState, HmIPStateChange, Updateable} from "./HmIPState";
+import {HmIPShutter} from "./HmIPShutter";
 
 /**
  * HomematicIP platform
@@ -32,6 +33,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         public readonly api: API,
     ) {
         this.connector = new HmIPConnector(
+            log,
             config["access_point"],
             config["auth_token"]
         );
@@ -77,15 +79,23 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
                 existingAccessory.context.device = device;
                 this.api.updatePlatformAccessories([existingAccessory]);
 
-                this.deviceMap.set(id, new HmIPThermostat(this, existingAccessory));
+                if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO') {
+                    this.deviceMap.set(id, new HmIPThermostat(this, existingAccessory));
+                } else if (device.type === 'FULL_FLUSH_SHUTTER') {
+                    this.deviceMap.set(id, new HmIPShutter(this, existingAccessory));
+                }
             } else {
                 if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO') {
                     this.log.info(`Adding new HmIP thermostat: ${device.modelType} - ${device.label}`);
-
                     const accessory = new this.api.platformAccessory(device.label, uuid);
                     accessory.context.device = device;
-
                     this.deviceMap.set(id, new HmIPThermostat(this, accessory));
+                    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+                } else if (device.type === 'FULL_FLUSH_SHUTTER') {
+                    this.log.info(`Adding new HmIP shutter: ${device.modelType} - ${device.label}`);
+                    const accessory = new this.api.platformAccessory(device.label, uuid);
+                    accessory.context.device = device;
+                    this.deviceMap.set(id, new HmIPShutter(this, accessory));
                     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
                 }
             }
@@ -93,11 +103,14 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
         await this.connector.connectWs( data => {
             const stateChange = <HmIPStateChange> JSON.parse(data.toString());
+
             for (const stateChangeEventId in stateChange.events) {
                 const stateChangeEvent = stateChange.events[stateChangeEventId];
+
                 if (stateChangeEvent.pushEventType === 'DEVICE_CHANGED') {
                     const deviceChangeEvent = <HmIPDeviceChangeEvent> stateChangeEvent;
                     this.log.debug(`Device changed: ${deviceChangeEvent.device.modelType} - ${deviceChangeEvent.device.label}`);
+
                     if (this.deviceMap.has(deviceChangeEvent.device.id)) {
                         (<Updateable> this.deviceMap.get(deviceChangeEvent.device.id))
                             .updateDevice(deviceChangeEvent.device, this.groups);

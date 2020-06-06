@@ -35,3 +35,7 @@ export interface HmIPState {
     devices: { [key: string]: HmIPDevice };
     groups: { [key: string]: HmIPGroup }
 }
+
+export interface Updateable {
+    updateDevice(device: HmIPDevice, groups: { [key: string]: HmIPGroup }): void;
+}
