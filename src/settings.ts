@@ -7,3 +7,8 @@ export const PLATFORM_NAME = 'HomematicIP';
  * This must match the name of your plugin as defined the package.json
  */
 export const PLUGIN_NAME = 'homebridge-homematicip';
+
+/**
+ * Version to be used in protocol communication
+ */
+export const PLUGIN_VERSION = '0.0.1';

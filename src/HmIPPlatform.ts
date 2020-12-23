@@ -23,6 +23,7 @@ import {HmIPHomeControlAccessPoint} from "./devices/HmIPHomeControlAccessPoint";
 import {HmIPGenericDevice} from "./devices/HmIPGenericDevice";
 import {HmIPWeatherDevice} from "./devices/HmIPWeatherDevice";
 import {HmIPAccessory} from "./HmIPAccessory";
+import * as os from "os";
 
 /**
  * HomematicIP platform
@@ -47,13 +48,22 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         this.connector = new HmIPConnector(
             log,
             config["access_point"],
-            config["auth_token"]
+            config["auth_token"],
+            config["pin"]
         );
-
+        if (!this.connector.isReadyForUse() && !this.connector.isReadyForPairing()) {
+            log.error('Please configure \'access_point\' in \'config.json\' (sticker on the back) and make ' +
+                'sure the Access Point is glowing blue.');
+            return;
+        }
         this.log.debug('Finished initializing platform:', this.config.name);
         this.api.on('didFinishLaunching', () => {
             log.debug('Executed didFinishLaunching callback');
-            this.discoverDevices();
+            if (!this.connector.isReadyForUse()) {
+                this.startPairing(config['access_point']);
+            } else {
+                this.discoverDevices();
+            }
         });
         this.api.on('shutdown', () => {
             log.debug('Executed shutdown callback');
@@ -66,10 +76,39 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
      * It should be used to setup event handlers for characteristics and update respective values.
      */
     configureAccessory(accessory: PlatformAccessory) {
-        if (!this.getAccessory(accessory.UUID)) {
+        if (this.connector.isReadyForUse() && !this.getAccessory(accessory.UUID)) {
             this.log.info('Loading accessory from cache:', accessory.displayName);
             this.accessories.push(accessory);
         }
+    }
+
+    async startPairing(accessPointId: string) {
+        if (!(await this.connector.init()).valueOf()) {
+            return;
+        }
+        var uuid = this.api.hap.uuid.generate(PLUGIN_NAME + '_' + os.hostname());
+        if (!(await this.connector.authConnectionRequest(uuid))) {
+            this.log.error('Cannot start auth request for access_point=' + accessPointId);
+            return;
+        }
+        const sleep = (waitTimeInMs: number) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
+        do {
+            this.log.info('Press blue, glowing link button of HmIP Access Point now!');
+            await sleep (5000);
+        } while (!(await this.connector.authRequestAcknowledged(uuid))); // response code: 400 Bad Request
+
+        var authTokenResponse = await this.connector.authRequestToken(uuid);
+        if (!authTokenResponse || !authTokenResponse.authToken) {
+            this.log.error('Cannot request auth token for access_point=' + accessPointId);
+            return;
+        }
+
+        var confirmResponse = await this.connector.authConfirmToken(uuid, authTokenResponse.authToken);
+        if (!confirmResponse || !confirmResponse.clientId) {
+            this.log.error('Cannot confirm auth token for access_point=' + accessPointId + ', authToken=' + authTokenResponse.authToken);
+            return;
+        }
+        this.log.info('SUCCESS! Your auth_token is: ' + authTokenResponse.authToken + ' (Access Point ID: ' + accessPointId + ', Client ID: ' + confirmResponse.clientId + '). Update \'auth_token\' in config and restart.');
     }
 
     /**
@@ -82,7 +121,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
             return;
         }
 
-        const hmIPState = <HmIPState> await this.connector.apiCall("home/getCurrentState");
+        const hmIPState = <HmIPState> await this.connector.apiCall("home/getCurrentState", this.connector.clientCharacteristics);
         this.groups = hmIPState.groups;
         this.setHome(hmIPState.home);
 
