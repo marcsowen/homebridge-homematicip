@@ -5,7 +5,11 @@
   "license": "ISC",
   "author": "Marc Sowen <marc.sowen@gmail.com>",
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homekit",
+    "homematic",
+    "homematicip",
+    "hmip"
   ],
   "repository": {
     "type": "git",

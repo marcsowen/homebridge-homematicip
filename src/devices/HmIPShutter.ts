@@ -6,8 +6,9 @@ import {
     Service
 } from 'homebridge';
 
-import {HmIPPlatform} from './HmIPPlatform';
-import {HmIPDevice, HmIPGroup, Updateable} from "./HmIPState";
+import {HmIPPlatform} from '../HmIPPlatform';
+import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from "../HmIPState";
+import {HmIPGenericDevice} from "./HmIPGenericDevice";
 
 interface ShutterChannel {
     functionalChannelType: string;
@@ -19,7 +20,7 @@ interface ShutterChannel {
 /**
  * HomematicIP Thermostat
  */
-export class HmIPShutter implements Updateable {
+export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     private service: Service;
 
     // Values are HomeKit style (100..0)
@@ -28,19 +29,16 @@ export class HmIPShutter implements Updateable {
     private processing: boolean = false;
 
     constructor(
-        private readonly platform: HmIPPlatform,
-        private readonly accessory: PlatformAccessory
+        platform: HmIPPlatform,
+        home: HmIPHome,
+        accessory: PlatformAccessory
     ) {
-        this.accessory.getService(this.platform.Service.AccessoryInformation)!
-            .setCharacteristic(this.platform.Characteristic.Manufacturer, accessory.context.device.oem)
-            .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)
-            .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.device.id)
-            .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);
+        super(platform, home, accessory);
 
         this.service = this.accessory.getService(this.platform.Service.WindowCovering) || this.accessory.addService(this.platform.Service.WindowCovering);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-        this.updateDevice(accessory.context.device, platform.groups);
+        this.updateDevice(home, accessory.context.device, platform.groups);
 
         this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
             .on('get', this.handleCurrentPositionGet.bind(this));
@@ -81,7 +79,8 @@ export class HmIPShutter implements Updateable {
         }
     }
 
-    public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+        this.home = hmIPHome;
         for (const id in hmIPDevice.functionalChannels) {
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType === 'SHUTTER_CHANNEL') {
