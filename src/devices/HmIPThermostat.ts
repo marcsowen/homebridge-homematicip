@@ -6,8 +6,9 @@ import {
     Service
 } from 'homebridge';
 
-import {HmIPPlatform} from './HmIPPlatform';
-import {HmIPDevice, HmIPGroup, Updateable} from "./HmIPState";
+import {HmIPPlatform} from '../HmIPPlatform';
+import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from "../HmIPState";
+import {HmIPGenericDevice} from "./HmIPGenericDevice";
 
 interface WallMountedThermostatProChannel {
     functionalChannelType: string;
@@ -20,7 +21,7 @@ interface WallMountedThermostatProChannel {
 /**
  * HomematicIP Thermostat
  */
-export class HmIPThermostat implements Updateable {
+export class HmIPThermostat extends HmIPGenericDevice implements Updateable {
     private service: Service;
 
     private actualTemperature: number = 0;
@@ -29,19 +30,16 @@ export class HmIPThermostat implements Updateable {
     private heatingGroupId: string = "";
 
     constructor(
-        private readonly platform: HmIPPlatform,
-        private readonly accessory: PlatformAccessory
+        platform: HmIPPlatform,
+        home: HmIPHome,
+        accessory: PlatformAccessory
     ) {
-        this.accessory.getService(this.platform.Service.AccessoryInformation)!
-            .setCharacteristic(this.platform.Characteristic.Manufacturer, accessory.context.device.oem)
-            .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)
-            .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.device.id)
-            .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);
+        super(platform, home, accessory);
 
         this.service = this.accessory.getService(this.platform.Service.Thermostat) || this.accessory.addService(this.platform.Service.Thermostat);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-        this.updateDevice(accessory.context.device, platform.groups);
+        this.updateDevice(home, accessory.context.device, platform.groups);
 
         this.service.getCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState)
             .on('get', this.handleCurrentHeatingCoolingStateGet.bind(this));
@@ -107,11 +105,12 @@ export class HmIPThermostat implements Updateable {
         callback(null, this.humidity);
     }
 
-    public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+        this.home = hmIPHome;
         for (const id in hmIPDevice.functionalChannels) {
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_PRO_CHANNEL') {
-                const wthChannel = <WallMountedThermostatProChannel> channel;
+                const wthChannel = <WallMountedThermostatProChannel>channel;
 
                 if (wthChannel.setPointTemperature != this.setPointTemperature) {
                     this.platform.log.info(`Target temperature of ${this.accessory.displayName} changed to ${wthChannel.setPointTemperature}`);
