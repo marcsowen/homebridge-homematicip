@@ -19,6 +19,7 @@ import {
 } from "./HmIPState";
 import {HmIPShutter} from "./devices/HmIPShutter";
 import {HmIPThermostat} from "./devices/HmIPThermostat";
+import {HmIPHeatingThermostat} from "./devices/HmIPHeatingThermostat";
 import {HmIPHomeControlAccessPoint} from "./devices/HmIPHomeControlAccessPoint";
 import {HmIPGenericDevice} from "./devices/HmIPGenericDevice";
 import {HmIPWeatherDevice} from "./devices/HmIPWeatherDevice";
@@ -205,13 +206,15 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         var homebridgeDevice: HmIPGenericDevice | null = null;
         if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO') {
             homebridgeDevice = new HmIPThermostat(this, home, hmIPAccessory.accessory);
+        } else if (device.type === 'HEATING_THERMOSTAT') {
+            homebridgeDevice = new HmIPHeatingThermostat(this, home, hmIPAccessory.accessory);
         } else if (device.type === 'FULL_FLUSH_SHUTTER') {
             homebridgeDevice = new HmIPShutter(this, home, hmIPAccessory.accessory);
         } else if (device.type === 'HOME_CONTROL_ACCESS_POINT') {
             this.log.debug("Creating: " + JSON.stringify(device));
             homebridgeDevice = new HmIPHomeControlAccessPoint(this, home, hmIPAccessory.accessory);
         } else {
-            this.log.warn(`Device not implemented: ${device.modelType} - ${device.label}`);
+            this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
             return;
         }
         this.deviceMap.set(id, homebridgeDevice);
@@ -237,7 +240,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         // the cached devices we stored in the `configureAccessory` method above
         var existingAccessory = this.getAccessory(uuid);
         if (!existingAccessory) {
-            this.log.debug("Could not find existing accessory in pool: " + this.accessories.map(val => val).join(', '));
+            this.log.debug("Could not find existing accessory in pool: " + this.accessories.map(val => val.displayName + '/' + val.context).join(', '));
         }
         var accessory = existingAccessory ? existingAccessory :  new this.api.platformAccessory(displayName, uuid);
         accessory.context.device = deviceContext;
