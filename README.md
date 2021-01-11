@@ -1,6 +1,6 @@
 # homebridge-homematicip
-[![npm](https://img.shields.io/npm/v/homebridge-fhem.svg?style=plastic)](https://www.npmjs.com/package/homebridge-fhem)
-[![npm](https://img.shields.io/npm/dt/homebridge-fhem.svg?style=plastic)](https://www.npmjs.com/package/homebridge-fhem)
+[![npm](https://img.shields.io/npm/v/homebridge-homematicip.svg?style=plastic)](https://www.npmjs.com/package/homebridge-homematicip)
+[![npm](https://img.shields.io/npm/dt/homebridge-homematicip.svg?style=plastic)](https://www.npmjs.com/package/homebridge-homematicip)
 [![GitHub last commit](https://img.shields.io/github/last-commit/marcsowen/homebridge-homematicip.svg?style=plastic)](https://github.com/marcsowen/homebridge-homematicip)
 
 ## Homematic IP platform plugin for homebridge
