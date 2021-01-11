@@ -4,25 +4,23 @@ import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
-interface HeatingThermostatChannel {
+interface WallMountedThermostatProChannel {
   functionalChannelType: string;
-  valveActualTemperature: number;
+  actualTemperature: number;
   setPointTemperature: number;
-  valvePosition: number;
-  temperatureOffset: number;
-  valveState: string;
+  humidity: number;
   groups: string[];
 }
 
 /**
- * HomematicIP Heating Thermostat
+ * HomematicIP Thermostat
  */
-export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateable {
+export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Updateable {
   private service: Service;
 
-  private valveActualTemperature = 0;
+  private actualTemperature = 0;
   private setPointTemperature = 0;
-  private valvePosition = 0;
+  private humidity = 0;
   private heatingGroupId = '';
 
   constructor(
@@ -55,15 +53,17 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
       .on('get', this.handleTemperatureDisplayUnitsGet.bind(this))
       .on('set', this.handleTemperatureDisplayUnitsSet.bind(this));
 
+    this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
+      .on('get', this.handleCurrentRelativeHumidityGet.bind(this));
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.valveActualTemperature <= (this.setPointTemperature + 0.1) && this.valvePosition > 0 ?
+    callback(null, this.actualTemperature <= (this.setPointTemperature + 0.1) ?
       this.platform.Characteristic.CurrentHeatingCoolingState.HEAT : this.platform.Characteristic.CurrentHeatingCoolingState.COOL);
   }
 
   handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.valveActualTemperature <= (this.setPointTemperature + 0.1) && this.valvePosition > 0 ?
+    callback(null, this.actualTemperature < (this.setPointTemperature + 0.1) ?
       this.platform.Characteristic.CurrentHeatingCoolingState.HEAT : this.platform.Characteristic.CurrentHeatingCoolingState.COOL);
   }
 
@@ -72,7 +72,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   }
 
   handleCurrentTemperatureGet(callback: CharacteristicGetCallback) {
-    callback(null, this.valveActualTemperature);
+    callback(null, this.actualTemperature);
   }
 
   handleTargetTemperatureGet(callback: CharacteristicGetCallback) {
@@ -97,8 +97,8 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     callback(null);
   }
 
-  handleCurrentActuationGet(callback: CharacteristicGetCallback) {
-    callback(null, this.valvePosition);
+  handleCurrentRelativeHumidityGet(callback: CharacteristicGetCallback) {
+    callback(null, this.humidity);
   }
 
   public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -106,8 +106,8 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     this.home = hmIPHome;
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'HEATING_THERMOSTAT_CHANNEL') {
-        const wthChannel = <HeatingThermostatChannel>channel;
+      if (channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_PRO_CHANNEL') {
+        const wthChannel = <WallMountedThermostatProChannel>channel;
 
         if (wthChannel.setPointTemperature !== this.setPointTemperature) {
           this.platform.log.info(`Target temperature of ${this.accessory.displayName} changed to ${wthChannel.setPointTemperature}`);
@@ -115,10 +115,16 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
           this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.setPointTemperature);
         }
 
-        if (wthChannel.valveActualTemperature !== this.valveActualTemperature) {
-          this.platform.log.info(`Current temperature of ${this.accessory.displayName} changed to ${wthChannel.valveActualTemperature}`);
-          this.valveActualTemperature = wthChannel.valveActualTemperature;
-          this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.valveActualTemperature);
+        if (wthChannel.actualTemperature !== this.actualTemperature) {
+          this.platform.log.info(`Current temperature of ${this.accessory.displayName} changed to ${wthChannel.actualTemperature}`);
+          this.actualTemperature = wthChannel.actualTemperature;
+          this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.actualTemperature);
+        }
+
+        if (wthChannel.humidity !== this.humidity) {
+          this.platform.log.info(`Current relative humidity of ${this.accessory.displayName} changed to ${wthChannel.humidity}`);
+          this.humidity = wthChannel.humidity;
+          this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.humidity);
         }
 
         for (const groupId of wthChannel.groups) {

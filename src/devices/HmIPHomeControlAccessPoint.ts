@@ -30,12 +30,9 @@ interface AccessControllerChannel {
  */
 export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Updateable {
 
-  private readonly batteryService: Service;
   private readonly lightService: Service;
-
-  private dutyCycle: boolean = false;
-  private signalBrightness: number = 1;
-  private permanentlyReachable: boolean = false;
+  private signalBrightness = 1;
+  private permanentlyReachable = false;
 
   constructor(
     platform: HmIPPlatform,
@@ -44,24 +41,13 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
   ) {
     super(platform, home, accessory);
 
-    this.batteryService = this.accessory.getService(this.platform.Service.BatteryService) || this.accessory.addService(this.platform.Service.BatteryService)!;
     this.lightService = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb)!;
-
     this.updateDevice(home, accessory.context.device, platform.groups);
-
     this.lightService.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.handlePermanentlyReachableGet.bind(this));
     this.lightService.getCharacteristic(this.platform.Characteristic.Brightness)
       .on('get', this.handleSignalBrightnessGet.bind(this))
       .on('set', this.handleSignalBrightnessSet.bind(this));
-
-    this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel)
-      .on('get', this.handleBatteryLevelGet.bind(this));
-    this.batteryService.getCharacteristic(this.platform.Characteristic.ChargingState)
-      .on('get', this.handleChargingStateGet.bind(this));
-    this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-      .on('get', this.handleStatusLowBatteryGet.bind(this));
-
   }
 
   handlePermanentlyReachableGet(callback: CharacteristicGetCallback) {
@@ -72,31 +58,20 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
     callback(null, this.signalBrightness);
   }
 
-  handleBatteryLevelGet(callback: CharacteristicGetCallback) {
-    callback(null, (this.dutyCycle ? 0 : 100));
-  }
-
-  handleChargingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, (this.dutyCycle ? this.platform.Characteristic.ChargingState.CHARGING : this.platform.Characteristic.ChargingState.NOT_CHARGING));
-  }
-
-  handleStatusLowBatteryGet(callback: CharacteristicGetCallback) {
-    callback(null, (this.dutyCycle ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL));
-  }
-
   async handleSignalBrightnessSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.platform.log.info(`setSignalBrightness for ${this.accessory.displayName} to ${value}`);
-    var number: number = Number(value);
+    const number = Number(value);
     const body = {
       channelIndex: 0,
       deviceId: this.accessory.context.device.id,
       signalBrightness: number / 100,
-    }
-    await this.platform.connector.apiCall('device/configuration/setSignalBrightness', body)
+    };
+    await this.platform.connector.apiCall('device/configuration/setSignalBrightness', body);
     callback(null);
   }
 
   updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }): void {
+    super.updateDevice(hmIPHome, hmIPDevice, groups);
     if (hmIPDevice) {
       if (hmIPDevice.permanentlyReachable != this.permanentlyReachable) {
         this.permanentlyReachable = hmIPDevice.permanentlyReachable;
@@ -114,9 +89,6 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
             }
             if (wthChannel.dutyCycle != this.dutyCycle) {
               this.dutyCycle = wthChannel.dutyCycle;
-              this.batteryService.updateCharacteristic(this.platform.Characteristic.BatteryLevel, (this.dutyCycle ? 0 : 100));
-              this.batteryService.updateCharacteristic(this.platform.Characteristic.ChargingState, (this.dutyCycle ? this.platform.Characteristic.ChargingState.CHARGING : this.platform.Characteristic.ChargingState.NOT_CHARGING));
-              this.batteryService.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, (this.dutyCycle ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL));
             }
           }
         }

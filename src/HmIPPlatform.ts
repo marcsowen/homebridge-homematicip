@@ -3,7 +3,7 @@ import {HmIPConnector} from './HmIPConnector';
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
 import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
 import {HmIPShutter} from './devices/HmIPShutter';
-import {HmIPThermostat} from './devices/HmIPThermostat';
+import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import {HmIPHomeControlAccessPoint} from './devices/HmIPHomeControlAccessPoint';
 import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
 import {HmIPWeatherDevice} from './devices/HmIPWeatherDevice';
@@ -190,7 +190,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     const hmIPAccessory = this.createAccessory(uuid, device.label, device);
     let homebridgeDevice: HmIPGenericDevice | null = null;
     if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO') {
-      homebridgeDevice = new HmIPThermostat(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPWallMountedThermostat(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HEATING_THERMOSTAT') {
       homebridgeDevice = new HmIPHeatingThermostat(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_SHUTTER') {
@@ -226,13 +226,17 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above
     const existingAccessory = this.getAccessory(uuid);
+    let isFromCache = true;
     if (!existingAccessory) {
       this.log.debug('Could not find existing accessory in pool: '
         + this.accessories.map(val => val.displayName + '/' + val.context).join(', '));
+      isFromCache = false;
+    } else {
+      this.log.debug('Accessory already exists: ' + uuid + ', ' + displayName + ', deviceContext: ' + deviceContext);
     }
     const accessory = existingAccessory ? existingAccessory : new this.api.platformAccessory(displayName, uuid);
     accessory.context.device = deviceContext;
-    return new HmIPAccessory(this.api, this.log, accessory, existingAccessory !== null);
+    return new HmIPAccessory(this.api, this.log, accessory, isFromCache);
   }
 
   private getAccessory(uuid: string): PlatformAccessory | undefined {

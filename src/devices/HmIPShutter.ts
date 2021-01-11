@@ -74,6 +74,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   }
 
   public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    super.updateDevice(hmIPHome, hmIPDevice, groups);
     this.home = hmIPHome;
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
