@@ -1,9 +1,7 @@
-import {
-    PlatformAccessory
-} from 'homebridge';
+import {PlatformAccessory} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPHome} from "../HmIPState";
+import {HmIPHome} from '../HmIPState';
 
 /**
  * Generic device
@@ -11,9 +9,9 @@ import {HmIPHome} from "../HmIPState";
 export abstract class HmIPGenericDevice {
 
     protected constructor(
-        protected readonly platform: HmIPPlatform,
-        protected home: HmIPHome,
-        public readonly accessory: PlatformAccessory
+      protected readonly platform: HmIPPlatform,
+      protected home: HmIPHome,
+      public readonly accessory: PlatformAccessory,
     ) {
         this.accessory.getService(this.platform.Service.AccessoryInformation)!
             .setCharacteristic(this.platform.Characteristic.Manufacturer, accessory.context.device.oem)

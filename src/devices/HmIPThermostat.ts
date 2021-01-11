@@ -1,14 +1,8 @@
-import {
-    CharacteristicGetCallback,
-    CharacteristicSetCallback,
-    CharacteristicValue,
-    PlatformAccessory,
-    Service
-} from 'homebridge';
+import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from "../HmIPState";
-import {HmIPGenericDevice} from "./HmIPGenericDevice";
+import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 interface WallMountedThermostatProChannel {
     functionalChannelType: string;
