@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "HomematicIP plugin for homebridge",
   "license": "ISC",
   "author": "Marc Sowen <marc.sowen@gmail.com>",
@@ -37,13 +37,13 @@
     "abort-controller": "^3.0.0",
     "eslint": ">=7.17.0",
     "homebridge": "^1.1.7",
-    "node-fetch": "^3.0.0-beta.9",
     "nodemon": "^2.0.4",
     "rimraf": "^3.0.2",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.3"
   },
   "dependencies": {
+    "node-fetch": "^3.0.0-beta.9",
     "semver": "^7.3.4",
     "ws": "^7.3.0"
   }
