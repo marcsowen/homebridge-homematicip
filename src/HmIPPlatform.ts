@@ -146,7 +146,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
                 delete hmIPState.devices[event.device.id];
                 this.deviceMap.delete(event.device.id);
               } else {
-                this.log.warn('Cannot find device: ' + event.device.id);
+                this.log.debug('Removal event from unregistered device: ' + event.device.id);
               }
             }
             break;
@@ -157,7 +157,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
               if (this.deviceMap.has(event.device.id)) {
                 (<Updateable>this.deviceMap.get(event.device.id)).updateDevice(this.home, event.device, this.groups);
               } else {
-                this.log.warn('Cannot find device: ' + event.device.id);
+                this.log.debug('Device add/change event from unregistered device: ' + event.device.id);
               }
             }
             break;

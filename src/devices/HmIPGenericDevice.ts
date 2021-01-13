@@ -66,7 +66,7 @@ export abstract class HmIPGenericDevice {
           this.platform.log.info(`Unreach of ${this.accessory.displayName} changed to ${baseChannel.unreach}`);
           this.unreach = baseChannel.unreach;
         }
-        if (baseChannel.lowBat !== this.lowBat) {
+        if (baseChannel.lowBat !== null && baseChannel.lowBat !== this.lowBat) {
           this.platform.log.info(`LowBat of ${this.accessory.displayName} changed to ${baseChannel.lowBat}`);
           this.lowBat = baseChannel.lowBat;
           this.batteryService.setCharacteristic(this.platform.Characteristic.StatusLowBattery,
