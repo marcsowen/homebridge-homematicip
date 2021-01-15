@@ -18,9 +18,9 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   private service: Service;
 
   // Values are HomeKit style (100..0)
-  private shutterLevel: number = 0;
-  private shutterLevelTarget: number = 0;
-  private processing: boolean = false;
+  private shutterLevel = 0;
+  private shutterLevelTarget = 0;
+  private processing = false;
 
   constructor(
     platform: HmIPPlatform,
@@ -60,7 +60,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
       shutterLevel: HmIPShutter.homeKitToHmIP(this.shutterLevelTarget),
-    }
+    };
     await this.platform.connector.apiCall('device/control/setShutterLevel', body);
     callback(null);
   }
@@ -93,7 +93,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
           this.platform.log.info(`Processing state of shutter ${this.accessory.displayName} changed to ${shutterChannel.processing}`);
           this.processing = shutterChannel.processing;
           this.service.updateCharacteristic(this.platform.Characteristic.PositionState,
-              shutterChannel.processing ? this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
+            shutterChannel.processing ? this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
         }
       }
     }

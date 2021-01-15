@@ -37,6 +37,8 @@ Then press the button and note the "auth_token" that is being generated, add it 
 - HMIP-WTH (Wall Thermostat)
 - HMIP-WTH-2 (Wall Thermostat with Humidity Sensor)
 - HMIP-BWTH (Brand Wall Thermostat with Humidity Sensor)
+- **HMIP-SWDO (Door / Window Contact - optical) _(since v0.0.5)_**
+- **HMIP-SWDO-I (Door / Window Contact Invisible - optical) _(since v0.0.5)_**
 
 ## TODOs
 - Implement more devices
