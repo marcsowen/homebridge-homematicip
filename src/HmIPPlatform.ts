@@ -1,6 +1,6 @@
 import {API, Characteristic, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service} from 'homebridge';
 import {HmIPConnector} from './HmIPConnector';
-const packageJson = require('../package.json');
+import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
 import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
 import {HmIPShutter} from './devices/HmIPShutter';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
@@ -13,7 +13,6 @@ import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
 import * as os from 'os';
 import {HmIPPushButton} from './devices/HmIPPushButton';
 import {HmIPSmokeDetector} from "./devices/HmIPSmokeDetector";
-import {PLATFORM_NAME} from "./settings";
 
 /**
  * HomematicIP platform
@@ -35,8 +34,6 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
-    log.info("homebridge-homematicip v%s", packageJson.version);
-
     this.connector = new HmIPConnector(
       log,
       config['access_point'],
@@ -77,7 +74,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     if (!(await this.connector.init()).valueOf()) {
       return;
     }
-    const uuid = this.api.hap.uuid.generate(packageJson.name + '_' + os.hostname());
+    const uuid = this.api.hap.uuid.generate(PLUGIN_NAME + '_' + os.hostname());
     if (!(await this.connector.authConnectionRequest(uuid))) {
       this.log.error('Cannot start auth request for access_point=' + accessPointId);
       return;
@@ -154,7 +151,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
               this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
               const hmIPDevice: HmIPGenericDevice | null = this.deviceMap.get(event.device.id);
               if (hmIPDevice) {
-                this.api.unregisterPlatformAccessories(packageJson.name, PLATFORM_NAME, [hmIPDevice.accessory]);
+                this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [hmIPDevice.accessory]);
                 delete hmIPState.devices[event.device.id];
                 this.deviceMap.delete(event.device.id);
               } else {
