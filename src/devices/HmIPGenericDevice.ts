@@ -35,6 +35,7 @@ export abstract class HmIPGenericDevice {
       .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)
       .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.device.id)
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);
+
     this.batteryService = this.accessory.getService(this.platform.Service.BatteryService) || this.accessory.addService(this.platform.Service.BatteryService)!;
     this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel)
       .on('get', this.handleBatteryLevelGet.bind(this));
@@ -53,7 +54,6 @@ export abstract class HmIPGenericDevice {
   }
 
   handleStatusLowBatteryGet(callback: CharacteristicGetCallback) {
-    this.platform.log.info(`LowBat of ${this.accessory.displayName}: ${this.lowBat}`);
     callback(null, (this.lowBat ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL));
   }
 

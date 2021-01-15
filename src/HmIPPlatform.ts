@@ -12,6 +12,7 @@ import {HmIPAccessory} from './HmIPAccessory';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
 import * as os from 'os';
 import {HmIPPushButton} from './devices/HmIPPushButton';
+import {HmIPSmokeDetector} from "./devices/HmIPSmokeDetector";
 
 /**
  * HomematicIP platform
@@ -218,6 +219,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         || device.type === 'KEY_REMOTE_CONTROL_4'
         || device.type === 'KEY_REMOTE_CONTROL_4') {
       homebridgeDevice = new HmIPPushButton(this, home, hmIPAccessory.accessory);
+    } else if (device.type === 'SMOKE_DETECTOR') {
+      homebridgeDevice = new HmIPSmokeDetector(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HOME_CONTROL_ACCESS_POINT') {
       homebridgeDevice = new HmIPHomeControlAccessPoint(this, home, hmIPAccessory.accessory);
     } else {
