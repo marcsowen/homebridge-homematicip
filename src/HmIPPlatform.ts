@@ -5,11 +5,13 @@ import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable}
 import {HmIPShutter} from './devices/HmIPShutter';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import {HmIPHomeControlAccessPoint} from './devices/HmIPHomeControlAccessPoint';
+import {HmIPShutterContact} from './devices/HmIPShutterContact';
 import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
 import {HmIPWeatherDevice} from './devices/HmIPWeatherDevice';
 import {HmIPAccessory} from './HmIPAccessory';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
 import * as os from 'os';
+import {HmIPPushButton} from './devices/HmIPPushButton';
 
 /**
  * HomematicIP platform
@@ -98,7 +100,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   }
 
   /**
-   * This is an example method showing how to register discovered accessories.
+   * Register discovered Homematic IP accessories.
    * Accessories must only be registered once, previously created accessories
    * must not be registered again to prevent "duplicate UUID" errors.
    */
@@ -108,8 +110,13 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     }
 
     const hmIPState = <HmIPState>await this.connector.apiCall('home/getCurrentState', this.connector.clientCharacteristics);
+    if (!hmIPState || !hmIPState.devices) {
+      this.log.info(`HomematicIP response is incomplete or could not be parsed: ${hmIPState}`);
+      return;
+    }
+
     this.groups = hmIPState.groups;
-    this.setHome(hmIPState.home);
+    // this.setHome(hmIPState.home);
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const id in hmIPState.devices) {
@@ -117,6 +124,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       this.updateAccessory(id, this.home, device);
     }
 
+    // Start websocket immediately and register handlers
     await this.connector.connectWs(data => {
       const stateChange = <HmIPStateChange>JSON.parse(data.toString());
       for (const id in stateChange.events) {
@@ -164,7 +172,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
           case 'HOME_CHANGED':
             if (event.home) {
               this.log.debug(`${event.pushEventType}: ${event.home.id} ${JSON.stringify(event.home)}`);
-              this.setHome(event.home);
+              // this.setHome(event.home);
               this.deviceMap.forEach(device => {
                 device.home = event.home;
                 device.updateDevice(device, this.groups);
@@ -178,12 +186,14 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     });
   }
 
+  /*
   private setHome(home: HmIPHome) {
     home.oem = 'eQ-3';
     home.modelType = 'HmIPHome';
     home.firmwareVersion = home.currentAPVersion;
-    // this.updateHomeAccessories(home);
+    this.updateHomeAccessories(home);
   }
+   */
 
   private updateAccessory(id: string, home: HmIPHome, device: HmIPDevice) {
     const uuid = this.api.hap.uuid.generate(id);
@@ -195,8 +205,20 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPHeatingThermostat(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_SHUTTER') {
       homebridgeDevice = new HmIPShutter(this, home, hmIPAccessory.accessory);
+    } else if (device.type === 'SHUTTER_CONTACT'
+        || device.type === 'SHUTTER_CONTACT_INVISIBLE'
+        || device.type === 'SHUTTER_CONTACT_MAGNETIC'
+        || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS') {
+      homebridgeDevice = new HmIPShutterContact(this, home, hmIPAccessory.accessory);
+    } else if (device.type === 'PUSH_BUTTON'
+        || device.type === 'BRAND_PUSH_BUTTON'
+        || device.type === 'PUSH_BUTTON_6'
+        || device.type === 'REMOTE_CONTROL_8'
+        || device.type === 'REMOTE_CONTROL_8_MODULE'
+        || device.type === 'KEY_REMOTE_CONTROL_4'
+        || device.type === 'KEY_REMOTE_CONTROL_4') {
+      homebridgeDevice = new HmIPPushButton(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HOME_CONTROL_ACCESS_POINT') {
-      this.log.debug('Creating: ' + JSON.stringify(device));
       homebridgeDevice = new HmIPHomeControlAccessPoint(this, home, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
@@ -208,9 +230,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
   /*
   private updateHomeAccessories(home: HmIPHome) {
-    //this.updateHomeWeatherAccessory(home);
+    this.updateHomeWeatherAccessory(home);
   }
-   */
 
   private updateHomeWeatherAccessory(homeOriginal: HmIPHome) {
     const home = Object.assign({}, homeOriginal);
@@ -221,6 +242,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     this.deviceMap.set(home.id, homeBridgeDevice);
     hmIPAccessory.register();
   }
+   */
 
   private createAccessory(uuid: string, displayName: string, deviceContext: unknown): HmIPAccessory {
     // see if an accessory with the same uuid has already been registered and restored from
@@ -232,7 +254,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         + this.accessories.map(val => val.displayName + '/' + val.context).join(', '));
       isFromCache = false;
     } else {
-      this.log.debug('Accessory already exists: ' + uuid + ', ' + displayName + ', deviceContext: ' + deviceContext);
+      this.log.debug('Accessory already exists: ' + uuid + ', ' + displayName + ', deviceContext: ' + JSON.stringify(deviceContext));
     }
     const accessory = existingAccessory ? existingAccessory : new this.api.platformAccessory(displayName, uuid);
     accessory.context.device = deviceContext;
