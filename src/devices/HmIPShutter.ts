@@ -67,7 +67,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
 
   handlePositionStateGet(callback: CharacteristicGetCallback) {
     if (this.processing) {
-      callback(null, this.platform.Characteristic.PositionState.INCREASING);
+      callback(null, this.platform.Characteristic.PositionState.DECREASING);
     } else {
       callback(null, this.platform.Characteristic.PositionState.STOPPED);
     }
@@ -85,13 +85,15 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
         if (shutterLevelHomeKit != this.shutterLevel) {
           this.platform.log.info(`Current shutter level of ${this.accessory.displayName} changed to ${shutterLevelHomeKit}`);
           this.shutterLevel = shutterLevelHomeKit;
-          this.shutterLevelTarget = shutterLevelHomeKit; // We don't have a target but we must set it somehow
+          this.shutterLevelTarget = shutterLevelHomeKit; // We don't have a target but we must set it somehow in case of external trigger
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, shutterLevelHomeKit);
         }
 
         if (shutterChannel.processing != this.processing) {
           this.platform.log.info(`Processing state of shutter ${this.accessory.displayName} changed to ${shutterChannel.processing}`);
           this.processing = shutterChannel.processing;
+          this.service.updateCharacteristic(this.platform.Characteristic.PositionState,
+              shutterChannel.processing ? this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
         }
       }
     }
