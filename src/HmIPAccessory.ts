@@ -1,5 +1,6 @@
 import {API, Logger, PlatformAccessory} from 'homebridge';
-import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
+import {PLATFORM_NAME} from './settings';
+const packageJson = require('../package.json')
 
 /**
  * Accessory wrapper
@@ -20,7 +21,7 @@ export class HmIPAccessory {
       this.api.updatePlatformAccessories([this.accessory]);
     } else {
       this.log.info(`Register accessory: ${this.accessory.context.device.label} (${this.accessory.context.device.id}) -> uuid ${this.accessory.UUID}`);
-      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [this.accessory]);
+      this.api.registerPlatformAccessories(packageJson.name, PLATFORM_NAME, [this.accessory]);
     }
   }
 }

@@ -3,8 +3,8 @@ import * as crypto from 'crypto';
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
 import {Logger} from 'homebridge';
-import {PLUGIN_NAME, PLUGIN_VERSION} from './settings';
 import Timeout = NodeJS.Timeout;
+const packageJson = require('../package.json');
 
 interface LookUpResult {
   urlREST: string;
@@ -45,8 +45,8 @@ export class HmIPConnector {
       'clientCharacteristics':
         {
           'apiVersion': '10',
-          'applicationIdentifier': PLUGIN_NAME,
-          'applicationVersion': PLUGIN_VERSION,
+          'applicationIdentifier': packageJson.name,
+          'applicationVersion': packageJson.version,
           'deviceManufacturer': 'none',
           'deviceType': 'Computer',
           'language': 'de_DE',
@@ -231,7 +231,7 @@ export class HmIPConnector {
   authConnectionRequest(deviceId: string): Promise<boolean> {
     const request = {
       'deviceId': deviceId,
-      'deviceName': PLUGIN_NAME,
+      'deviceName': packageJson.name,
       'sgtin': this.accessPoint,
     };
     return this._apiCall(false, true, 'auth/connectionRequest', request);
