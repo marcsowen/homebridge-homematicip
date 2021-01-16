@@ -37,9 +37,22 @@ Then press the button and note the "auth_token" that is being generated, add it 
 - HMIP-WTH (Wall Thermostat)
 - HMIP-WTH-2 (Wall Thermostat with Humidity Sensor)
 - HMIP-BWTH (Brand Wall Thermostat with Humidity Sensor)
-- **HMIP-SWDO (Door / Window Contact - optical) _(since v0.0.5)_**
-- **HMIP-SWDO-I (Door / Window Contact Invisible - optical) _(since v0.0.5)_**
-- **HMIP-SWSD (Smoke detector) _(since v0.0.6)_**
+- HMIP-SWDO (Door / Window Contact - optical)
+- HMIP-SWDO-I (Door / Window Contact Invisible - optical)
+- HMIP-SWSD (Smoke detector)
+- HMIP-PS (Pluggable Switch)
+- HMIP-PCBS (Switch Circuit Board - 1 channel)
+- HMIP-PCBS-BAT (Printed Circuit Board Switch Battery)
+- HMIP-PCBS2 (Switch Circuit Board - 2x channels) (*)
+- HMIP-MOD-OC8 ( Open Collector Module ) (*)
+- HMIP-WHS2 (Switch Actuator for heating systems – 2x channels) (*)
+- HMIPW-DRS8 (Homematic IP Wired Switch Actuator – 8x channels) (*)
+- HMIP-DRSI4 (Homematic IP Switch Actuator for DIN rail mount – 4x channels) (*)
+- HMIP-PSM (Pluggable Switch and Meter)
+- HMIP-BSM (Brand Switch and Meter)
+- HMIP-FSM, HMIP-FSM16 (Full flush Switch and Meter)
+
+(*) Currently, only first channel is supported.
 
 ## TODOs
 - Implement more devices

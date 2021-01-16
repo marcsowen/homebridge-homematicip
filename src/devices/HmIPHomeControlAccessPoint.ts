@@ -83,10 +83,14 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
           if (channel.functionalChannelType === 'ACCESS_CONTROLLER_CHANNEL') {
             const wthChannel = <AccessControllerChannel>channel;
             this.platform.log.debug(`Updating device ${hmIPDevice.id} by channel: ${JSON.stringify(channel)}`);
+
             if (wthChannel.signalBrightness != this.signalBrightness) {
+              this.platform.log.info(`Brightness of access point ${this.accessory.displayName} changed to ${wthChannel.signalBrightness}`);
+
               this.signalBrightness = wthChannel.signalBrightness * 100;
               this.lightService.updateCharacteristic(this.platform.Characteristic.Brightness, this.signalBrightness);
             }
+
             if (wthChannel.dutyCycle != this.dutyCycle) {
               this.dutyCycle = wthChannel.dutyCycle;
             }

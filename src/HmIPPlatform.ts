@@ -1,18 +1,18 @@
 import {API, Characteristic, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service} from 'homebridge';
 import {HmIPConnector} from './HmIPConnector';
-import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
+import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings';
 import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
 import {HmIPShutter} from './devices/HmIPShutter';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import {HmIPHomeControlAccessPoint} from './devices/HmIPHomeControlAccessPoint';
 import {HmIPShutterContact} from './devices/HmIPShutterContact';
 import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
-import {HmIPWeatherDevice} from './devices/HmIPWeatherDevice';
 import {HmIPAccessory} from './HmIPAccessory';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
 import * as os from 'os';
 import {HmIPPushButton} from './devices/HmIPPushButton';
-import {HmIPSmokeDetector} from "./devices/HmIPSmokeDetector";
+import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
+import {HmIPSwitch} from './devices/HmIPSwitch';
 
 /**
  * HomematicIP platform
@@ -34,6 +34,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
+    this.log.info('%s v%s', PLUGIN_NAME, PLUGIN_VERSION);
+
     this.connector = new HmIPConnector(
       log,
       config['access_point'],
@@ -221,6 +223,18 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPPushButton(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'SMOKE_DETECTOR') {
       homebridgeDevice = new HmIPSmokeDetector(this, home, hmIPAccessory.accessory);
+    } else if ( device.type === 'PLUGABLE_SWITCH'
+        || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_BATTERY'
+        || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_2' // Only first channel
+        || device.type === 'OPEN_COLLECTOR_8_MODULE' // Only first channel
+        || device.type === 'HEATING_SWITCH_2' // Only first channel
+        || device.type === 'WIRED_SWITCH_8' // Only first channel
+        || device.type === 'DIN_RAIL_SWITCH_4' // Only first channel
+        || device.type === 'PLUGABLE_SWITCH_MEASURING'
+        || device.type === 'BRAND_SWITCH_MEASURING'
+        || device.type === 'FULL_FLUSH_SWITCH_MEASURING'
+    ) {
+      homebridgeDevice = new HmIPSwitch(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HOME_CONTROL_ACCESS_POINT') {
       homebridgeDevice = new HmIPHomeControlAccessPoint(this, home, hmIPAccessory.accessory);
     } else {

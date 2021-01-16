@@ -12,7 +12,11 @@ interface ShutterChannel {
 }
 
 /**
- * HomematicIP Thermostat
+ * HomematicIP shutter
+ *
+ * HMIP-FROLL (Shutter Actuator - flush-mount)
+ * HMIP-BROLL (Shutter Actuator - Brand-mount)
+ *
  */
 export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   private service: Service;

@@ -17,7 +17,9 @@ interface SmokeDetectorChannel {
 }
 
 /**
- * HomematicIP Window shutter contact
+ * HomematicIP smoke detector
+ *
+ * HMIP-SWSD (Smoke Alarm with Q label)
  */
 export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
     private service: Service;
@@ -55,7 +57,6 @@ export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
             ? this.platform.Characteristic.StatusTampered.TAMPERED
             : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
     }
-
 
     public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
         super.updateDevice(hmIPHome, hmIPDevice, groups);

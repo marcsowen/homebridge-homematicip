@@ -16,10 +16,12 @@ export class HmIPAccessory {
 
   public register() {
     if (this.isFromCache) {
-      this.log.debug(`Updating accessory: ${this.accessory.context.device.label} (${this.accessory.context.device.id})-> uuid ${this.accessory.UUID}`);
+      this.log.debug('Updating accessory: %s (%s) -> uuid %s',
+        this.accessory.context.device.label, this.accessory.context.device.id, this.accessory.UUID);
       this.api.updatePlatformAccessories([this.accessory]);
     } else {
-      this.log.info(`Register accessory: ${this.accessory.context.device.label} (${this.accessory.context.device.id}) -> uuid ${this.accessory.UUID}`);
+      this.log.info('Register accessory: %s (%s) -> uuid %s',
+        this.accessory.context.device.label, this.accessory.context.device.id, this.accessory.UUID);
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [this.accessory]);
     }
   }

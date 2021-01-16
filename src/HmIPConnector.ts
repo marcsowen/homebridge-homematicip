@@ -87,8 +87,9 @@ export class HmIPConnector {
     });
     const result = <LookUpResult>await response.json();
     if (response.status !== 200 || !result.urlREST || !result.urlWebSocket) {
-      this.log.error('Cannot lookup device: request=' + JSON.stringify(this.clientCharacteristics) + ', headers=' + JSON.stringify(headers) + ', code='
-        + response.status + ', message=' + response.statusText + ', json=' + JSON.stringify(result));
+      this.log.error('Cannot lookup device: request=' + JSON.stringify(this.clientCharacteristics)
+          + ', headers=' + JSON.stringify(headers) + ', code='
+          + response.status + ', message=' + response.statusText + ', json=' + JSON.stringify(result));
       return false;
     }
     this.urlREST = result.urlREST;
