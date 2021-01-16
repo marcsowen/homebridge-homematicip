@@ -59,7 +59,7 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
   }
 
   async handleSignalBrightnessSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info(`setSignalBrightness for ${this.accessory.displayName} to ${value}`);
+    this.platform.log.info(`Setting signal brightness for ${this.accessory.displayName} to ${value}`);
     const number = Number(value);
     const body = {
       channelIndex: 0,
@@ -84,10 +84,10 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
             const wthChannel = <AccessControllerChannel>channel;
             this.platform.log.debug(`Updating device ${hmIPDevice.id} by channel: ${JSON.stringify(channel)}`);
 
-            if (wthChannel.signalBrightness != this.signalBrightness) {
-              this.platform.log.info(`Brightness of access point ${this.accessory.displayName} changed to ${wthChannel.signalBrightness}`);
-
-              this.signalBrightness = wthChannel.signalBrightness * 100;
+            let homeKitBrightness = wthChannel.signalBrightness * 100;
+            if (homeKitBrightness != this.signalBrightness) {
+              this.signalBrightness = homeKitBrightness;
+              this.platform.log.info(`Signal brightness of access point ${this.accessory.displayName} changed to ${this.signalBrightness}`);
               this.lightService.updateCharacteristic(this.platform.Characteristic.Brightness, this.signalBrightness);
             }
 
