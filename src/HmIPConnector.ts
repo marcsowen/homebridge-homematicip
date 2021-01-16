@@ -59,7 +59,7 @@ export class HmIPConnector {
     this.clientAuthToken = crypto
       .createHash('sha512')
       .setEncoding('utf-8')
-      .update(accessPoint + 'jiLpVitHvWnIGD1yo7MA')
+      .update(this.accessPoint + 'jiLpVitHvWnIGD1yo7MA')
       .digest('hex')
       .toUpperCase();
   }
