@@ -11,4 +11,4 @@ export const PLUGIN_NAME = 'homebridge-homematicip';
 /**
  * Version to be used in protocol communication
  */
-export const PLUGIN_VERSION = '0.0.9';
+export const PLUGIN_VERSION = '0.0.10';

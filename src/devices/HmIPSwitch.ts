@@ -91,7 +91,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 
                 if (switchChannel.on != this.on) {
                     this.on = switchChannel.on;
-                    this.platform.log.info("Switch state of ${this.accessory.displayName} changed to %s", this.on ? "on" : "off");
+                    this.platform.log.info("Switch state of %s changed to %s", this.accessory.displayName, this.on ? "on" : "off");
                     this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
                 }
             }
@@ -102,7 +102,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 
                 if (switchMeasuringChannel.on != this.on) {
                     this.on = switchMeasuringChannel.on;
-                    this.platform.log.info("Switch state of ${this.accessory.displayName} changed to %s", this.on ? "on" : "off");
+                    this.platform.log.info("Switch state of %s changed to %s", this.accessory.displayName, this.on ? "on" : "off");
                     this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
                 }
             }
