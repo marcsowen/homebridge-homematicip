@@ -47,6 +47,9 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
 
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
       .on('get', this.handlePositionStateGet.bind(this));
+
+    this.service.getCharacteristic(this.platform.Characteristic.HoldPosition)
+      .on('set', this.handleHoldPositionSet.bind(this));
   }
 
   handleCurrentPositionGet(callback: CharacteristicGetCallback) {
@@ -75,6 +78,18 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     } else {
       callback(null, this.platform.Characteristic.PositionState.STOPPED);
     }
+  }
+
+  async handleHoldPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.platform.log.info(`Setting window covering hold position for ${this.accessory.displayName} to ${value}`);
+    if (value === true) {
+      const body = {
+        channelIndex: 1,
+        deviceId: this.accessory.context.device.id
+      };
+      await this.platform.connector.apiCall('device/control/stop', body);
+    }
+    callback(null);
   }
 
   public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
