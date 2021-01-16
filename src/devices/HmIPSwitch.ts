@@ -69,7 +69,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
     }
 
     async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        this.platform.log.info(`Setting switch ${this.accessory.displayName} to ${value}`);
+        this.platform.log.info("Setting switch %s to %s", this.accessory.displayName, value ? "on" : "off");
         this.on = <boolean>value;
         const body = {
             channelIndex: 1,
