@@ -206,7 +206,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPWallMountedThermostat(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HEATING_THERMOSTAT') {
       homebridgeDevice = new HmIPHeatingThermostat(this, home, hmIPAccessory.accessory);
-    } else if (device.type === 'FULL_FLUSH_SHUTTER') {
+    } else if (device.type === 'FULL_FLUSH_SHUTTER'
+        || device.type === 'BRAND_SHUTTER') {
       homebridgeDevice = new HmIPShutter(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'SHUTTER_CONTACT'
         || device.type === 'SHUTTER_CONTACT_INVISIBLE'
