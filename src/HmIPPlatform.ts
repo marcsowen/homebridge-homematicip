@@ -37,10 +37,10 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     this.log.info('%s v%s', PLUGIN_NAME, PLUGIN_VERSION);
 
     this.connector = new HmIPConnector(
-        log,
-        config['access_point'],
-        config['auth_token'],
-        config['pin']
+      log,
+      config['access_point'],
+      config['auth_token'],
+      config['pin'],
     );
     if (!this.connector.isReadyForUse() && !this.connector.isReadyForPairing()) {
       log.error('Please configure \'access_point\' in \'config.json\' (sticker on the back) and make ' +
@@ -99,8 +99,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       this.log.error('Cannot confirm auth token for access_point=' + accessPointId + ', authToken=' + authTokenResponse.authToken);
       return;
     }
-    this.log.info('SUCCESS! Your auth_token is: ' + authTokenResponse.authToken + ' (Access Point ID: ' + accessPointId
-      + ', Client ID: ' + confirmResponse.clientId + '). Update \'auth_token\' in config and restart. We recommend removing \'pin\' from config again.');
+    this.log.info('SUCCESS! Your auth_token is: ' + authTokenResponse.authToken + ' (Access Point ID: '
+      + accessPointId + ', Client ID: ' + confirmResponse.clientId + '). Update \'auth_token\' in config and restart.'
+      + 'We recommend removing \'pin\' from config again.');
   }
 
   /**

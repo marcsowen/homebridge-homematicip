@@ -105,13 +105,13 @@ export class HmIPConnector {
 
   async _apiCall<T>(addTokens: boolean, logError: boolean, path: string, _body?: Record<string, unknown>) {
     const url = `${this.urlREST}/hmip/${path}`;
-    let headers = {
-        'content-type': 'application/json',
-        'accept': 'application/json',
-        'VERSION': '12',
-        'AUTHTOKEN': <string><unknown>undefined,
-        'CLIENTAUTH': this.clientAuthToken,
-        'PIN': this.pin
+    const headers = {
+      'content-type': 'application/json',
+      'accept': 'application/json',
+      'VERSION': '12',
+      'AUTHTOKEN': <string><unknown>undefined,
+      'CLIENTAUTH': this.clientAuthToken,
+      'PIN': this.pin,
     };
 
     if (addTokens) {
