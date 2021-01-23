@@ -62,7 +62,7 @@ export abstract class HmIPGenericDevice {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'DEVICE_OPERATIONLOCK' || channel.functionalChannelType === 'DEVICE_BASE') {
         const baseChannel = <DeviceBaseChannel><unknown>channel;
-        if (baseChannel.unreach !== this.unreach) {
+        if (baseChannel.unreach != null && baseChannel.unreach !== this.unreach) {
           this.platform.log.info(`Unreach of ${this.accessory.displayName} changed to ${baseChannel.unreach}`);
           this.unreach = baseChannel.unreach;
         }
