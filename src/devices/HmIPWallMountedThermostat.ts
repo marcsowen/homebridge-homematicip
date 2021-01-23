@@ -1,7 +1,7 @@
 import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, HmIPHeatingGroup, HmIPHome, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 interface WallMountedThermostatProChannel {
@@ -22,6 +22,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private setPointTemperature = 0;
   private humidity = 0;
   private heatingGroupId = '';
+  private cooling = false;
 
   constructor(
     platform: HmIPPlatform,
@@ -58,13 +59,13 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.actualTemperature <= (this.setPointTemperature + 0.1) ?
-      this.platform.Characteristic.CurrentHeatingCoolingState.HEAT : this.platform.Characteristic.CurrentHeatingCoolingState.COOL);
+    callback(null, this.cooling ?
+      this.platform.Characteristic.CurrentHeatingCoolingState.COOL : this.platform.Characteristic.CurrentHeatingCoolingState.HEAT);
   }
 
   handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.actualTemperature < (this.setPointTemperature + 0.1) ?
-      this.platform.Characteristic.CurrentHeatingCoolingState.HEAT : this.platform.Characteristic.CurrentHeatingCoolingState.COOL);
+    callback(null, this.cooling ?
+      this.platform.Characteristic.CurrentHeatingCoolingState.COOL : this.platform.Characteristic.CurrentHeatingCoolingState.HEAT);
   }
 
   handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
@@ -130,8 +131,15 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
         for (const groupId of wthChannel.groups) {
           if (groups[groupId].type === 'HEATING') {
             this.heatingGroupId = groupId;
+            const heatingGroup = <HmIPHeatingGroup>groups[groupId];
+
+            if (heatingGroup.cooling !== null && heatingGroup.cooling !== this.cooling) {
+              this.cooling = heatingGroup.cooling;
+              this.platform.log.info(`Cooling mode of ${this.accessory.displayName} changed to ${this.cooling}`);
+            }
           }
         }
+
       }
     }
   }

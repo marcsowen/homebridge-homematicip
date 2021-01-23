@@ -31,6 +31,12 @@ export interface HmIPGroup {
   type: string;
 }
 
+export interface HmIPHeatingGroup{
+  id: string;
+  type: string;
+  cooling: boolean;
+}
+
 export interface HmIPHome {
   oem: string;
   modelType: string;
