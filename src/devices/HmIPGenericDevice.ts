@@ -37,9 +37,9 @@ export abstract class HmIPGenericDevice {
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);
 
     this.batteryService = this.accessory.getService(this.platform.Service.BatteryService) || this.accessory.addService(this.platform.Service.BatteryService)!;
-    this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel)
+    this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel) // this is actually optional since iOS 14
       .on('get', this.handleBatteryLevelGet.bind(this));
-    this.batteryService.getCharacteristic(this.platform.Characteristic.ChargingState)
+    this.batteryService.getCharacteristic(this.platform.Characteristic.ChargingState) // this is actually optional since iOS 14
       .on('get', this.handleChargingStateGet.bind(this));
     this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
       .on('get', this.handleStatusLowBatteryGet.bind(this));

@@ -1,21 +1,36 @@
-import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
+import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
-interface ShutterContactChannel {
-  windowState: string;
+enum WindowState {
+  OPEN = "OPEN",
+  CLOSED = "CLOSED",
+  TILTED = "TILTED"
+}
+
+interface ContactChannel {
+  functionalChannelType: string;
+  windowState: WindowState;
   eventDelay: number;
 }
 
 /**
- * HomematicIP Window shutter contact
+ * HomematicIP contact devices
+ *
+ * HMIP-SWDO (Door / Window Contact - optical)
+ * HMIP-SWDO-I (Door / Window Contact Invisible - optical)
+ * HMIP-SWDM /  HMIP-SWDM-B2  (Door / Window Contact - magnetic)
+ * HmIP-SWDO-PL ( Window / Door Contact – optical, plus)
+ * HMIP-SCI (Contact Interface Sensor)
+ * HMIP-SRH
+ *
  */
-export class HmIPShutterContact extends HmIPGenericDevice implements Updateable {
+export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
   private service: Service;
 
-  private windowState = 'CLOSED';
+  private windowState = WindowState.CLOSED;
   private eventDelay = 0;
 
   constructor(
@@ -25,7 +40,7 @@ export class HmIPShutterContact extends HmIPGenericDevice implements Updateable 
   ) {
     super(platform, home, accessory);
 
-    this.platform.log.debug(`Created HmIPShutterContact ${accessory.context.device.label}`);
+    this.platform.log.debug(`Created HmIPContactSensor ${accessory.context.device.label}`);
     this.service = this.accessory.getService(this.platform.Service.ContactSensor) || this.accessory.addService(this.platform.Service.ContactSensor);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
@@ -33,42 +48,32 @@ export class HmIPShutterContact extends HmIPGenericDevice implements Updateable 
 
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .on('get', this.handleContactSensorStateGet.bind(this));
-
-    this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
-      .on('get', this.handleCurrentDoorStateGet.bind(this));
   }
 
   handleContactSensorStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.windowState === 'CLOSED'
+    callback(null, this.windowState === WindowState.CLOSED
       ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
       : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
   }
-
-  handleCurrentDoorStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.windowState === 'CLOSED'
-      ? this.platform.Characteristic.CurrentDoorState.CLOSED
-      : this.platform.Characteristic.CurrentDoorState.OPEN);
-  }
-
 
   public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPHome, hmIPDevice, groups);
     this.home = hmIPHome;
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'SHUTTER_CONTACT_CHANNEL') {
-        const wthChannel = <ShutterContactChannel><unknown>channel;
-        this.platform.log.debug(`Shutter contact update: ${JSON.stringify(channel)}`);
+      if (channel.functionalChannelType === 'SHUTTER_CONTACT_CHANNEL'
+          || channel.functionalChannelType === 'CONTACT_INTERFACE_CHANNEL'
+          || channel.functionalChannelType === 'ROTARY_HANDLE_CHANNEL') {
+
+        const wthChannel = <ContactChannel>channel;
+        this.platform.log.debug(`Contact update: ${JSON.stringify(channel)}`);
 
         if (wthChannel.windowState !== this.windowState) {
-          this.platform.log.info(`Window state of ${this.accessory.displayName} changed to '${wthChannel.windowState}'`);
+          this.platform.log.info(`Contact state of ${this.accessory.displayName} changed to '${wthChannel.windowState}'`);
           this.windowState = wthChannel.windowState;
-          this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.windowState === 'CLOSED'
+          this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.windowState === WindowState.CLOSED
             ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
             : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
-          this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState, this.windowState === 'CLOSED'
-            ? this.platform.Characteristic.CurrentDoorState.CLOSED
-            : this.platform.Characteristic.CurrentDoorState.OPEN);
         }
 
         if (wthChannel.eventDelay !== this.eventDelay) {

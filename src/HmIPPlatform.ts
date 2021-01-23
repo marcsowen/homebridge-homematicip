@@ -5,7 +5,7 @@ import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable}
 import {HmIPShutter} from './devices/HmIPShutter';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import {HmIPHomeControlAccessPoint} from './devices/HmIPHomeControlAccessPoint';
-import {HmIPShutterContact} from './devices/HmIPShutterContact';
+import {HmIPContactSensor} from './devices/HmIPContactSensor';
 import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
 import {HmIPAccessory} from './HmIPAccessory';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
@@ -210,10 +210,12 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         || device.type === 'BRAND_SHUTTER') {
       homebridgeDevice = new HmIPShutter(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'SHUTTER_CONTACT'
+        || device.type === 'SHUTTER_CONTACT_INTERFACE'
         || device.type === 'SHUTTER_CONTACT_INVISIBLE'
         || device.type === 'SHUTTER_CONTACT_MAGNETIC'
-        || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS') {
-      homebridgeDevice = new HmIPShutterContact(this, home, hmIPAccessory.accessory);
+        || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS'
+        || device.type === 'ROTARY_HANDLE_CHANNEL') {
+      homebridgeDevice = new HmIPContactSensor(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'PUSH_BUTTON'
         || device.type === 'BRAND_PUSH_BUTTON'
         || device.type === 'PUSH_BUTTON_6'

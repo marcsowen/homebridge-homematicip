@@ -19,38 +19,43 @@ options that you can set:
 }
 ```
 
-The Access Point ID is printed on the back of your Homematic IP Access Point (HMIP-HAP) and is 
+The Access Point ID is printed on the back of your Homematic IP Access Point (HmIP-HAP) and is 
 labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx. 
 
 ### Pairing 
 
-If you do not have an auth_token or don't know it, 
-leave it empty. After startup, watch the logs and wait for "Press blue, glowing link button of HmIP Access Point now!".
+<ins>Note</ins>: Pairing with PIN enabled is currently not supported.
+
+If you do not have an auth_token or don't know it, leave it empty. After startup, watch the logs and wait for "Press blue, glowing link button of HmIP Access Point now!".
 Then press the button and note the "auth_token" that is being generated, add it to your config.json and restart.
 
 ## Currently supported devices
-- HMIP-HAP (Access Point)
-- HMIP-eTRV (Radiator Thermostat)
-- HMIP-eTRV-C (Heating-thermostat compact without display)
-- HMIP-FROLL (Shutter Actuator - flush-mount)
-- HMIP-BROLL (Shutter Actuator - Brand-mount)
-- HMIP-WTH (Wall Thermostat)
-- HMIP-WTH-2 (Wall Thermostat with Humidity Sensor)
-- HMIP-BWTH (Brand Wall Thermostat with Humidity Sensor)
-- HMIP-SWDO (Door / Window Contact - optical)
-- HMIP-SWDO-I (Door / Window Contact Invisible - optical)
-- HMIP-SWSD (Smoke detector)
-- HMIP-PS (Pluggable Switch)
-- HMIP-PCBS (Switch Circuit Board - 1 channel)
-- HMIP-PCBS-BAT (Printed Circuit Board Switch Battery)
-- HMIP-PCBS2 (Switch Circuit Board - 2x channels) (*)
-- HMIP-MOD-OC8 ( Open Collector Module ) (*)
-- HMIP-WHS2 (Switch Actuator for heating systems – 2x channels) (*)
-- HMIPW-DRS8 (Homematic IP Wired Switch Actuator – 8x channels) (*)
-- HMIP-DRSI4 (Homematic IP Switch Actuator for DIN rail mount – 4x channels) (*)
-- HMIP-PSM (Pluggable Switch and Meter)
-- HMIP-BSM (Brand Switch and Meter)
-- HMIP-FSM, HMIP-FSM16 (Full flush Switch and Meter)
+- HmIP-HAP (Access Point)
+- HmIP-eTRV (Radiator Thermostat)
+- HmIP-eTRV-C (Heating-thermostat compact without display)
+- HmIP-FROLL (Shutter Actuator - flush-mount)
+- HmIP-BROLL (Shutter Actuator - brand-mount)
+- HmIP-WTH (Wall Thermostat)
+- HmIP-WTH-2 (Wall Thermostat with Humidity Sensor)
+- HmIP-BWTH (Brand Wall Thermostat with Humidity Sensor)
+- HmIP-SWDO (Door / Window Contact - optical)
+- HmIP-SWDO-I (Door / Window Contact - optical, invisible)
+- HmIP-SWDO-PL (Door / Window Contact – optical, plus)
+- HmIP-SWDM / HMIP-SWDM-B2  (Door / Window Contact - magnetic)
+- HmIP-SCI (Contact Interface Sensor)
+- HmIP-SRH (Rotary handle switch)
+- HmIP-SWSD (Smoke detector)
+- HmIP-PS (Pluggable Switch)
+- HmIP-PCBS (Switch Circuit Board - 1 channel)
+- HmIP-PCBS-BAT (Printed Circuit Board Switch Battery)
+- HmIP-PCBS2 (Switch Circuit Board - 2x channels) (*)
+- HmIP-MOD-OC8 ( Open Collector Module ) (*)
+- HmIP-WHS2 (Switch Actuator for heating systems – 2x channels) (*)
+- HmIP-DRS8 (Homematic IP Wired Switch Actuator – 8x channels) (*)
+- HmIP-DRSI4 (Homematic IP Switch Actuator for DIN rail mount – 4x channels) (*)
+- HmIP-PSM (Pluggable Switch and Meter)
+- HmIP-BSM (Brand Switch and Meter)
+- HmIP-FSM, HmIP-FSM16 (Full flush Switch and Meter)
 
 (*) Currently, only first channel is supported.
 
@@ -60,6 +65,7 @@ Then press the button and note the "auth_token" that is being generated, add it 
 - Implement PIN protection
 - Implement META-Group (Homematic IP rooms) to HomeKit room-Mapping
 - Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App) 
+- Implement custom EVE logging (https://github.com/simont77/fakegato-history)
 
 ## Thanks to coreGreenberet
 https://github.com/coreGreenberet/homematicip-rest-api

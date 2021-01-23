@@ -6,7 +6,7 @@ import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 enum SmokeDetectorAlarmType {
     IDLE_OFF = "IDLE_OFF",                  // Idle, waiting for smoke
-    PRIMARY_ALARM = "PRIMARY_ALARM",        // Smoke
+    PRIMARY_ALARM = "PRIMARY_ALARM",        // Smoke?
     INTRUSION_ALARM = "INTRUSION_ALARM",    // Tampered or alarm from window contact?
     SECONDARY_ALARM = "SECONDARY_ALARM"     // Alarm triggered by another smoke sensor or alarm from window contact?
 }
