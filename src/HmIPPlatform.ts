@@ -13,6 +13,7 @@ import * as os from 'os';
 import {HmIPPushButton} from './devices/HmIPPushButton';
 import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
 import {HmIPSwitch} from './devices/HmIPSwitch';
+import {HmIPGarageDoor} from './devices/HmIPGarageDoor';
 
 /**
  * HomematicIP platform
@@ -240,6 +241,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         || device.type === 'FULL_FLUSH_SWITCH_MEASURING'
     ) {
       homebridgeDevice = new HmIPSwitch(this, home, hmIPAccessory.accessory);
+    } else if (device.type === 'TORMATIC_MODULE'
+        || device.type === 'HOERMANN_DRIVES_MODULE') {
+      homebridgeDevice = new HmIPGarageDoor(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HOME_CONTROL_ACCESS_POINT') {
       homebridgeDevice = new HmIPHomeControlAccessPoint(this, home, hmIPAccessory.accessory);
     } else {
