@@ -215,7 +215,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         || device.type === 'SHUTTER_CONTACT_INVISIBLE'
         || device.type === 'SHUTTER_CONTACT_MAGNETIC'
         || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS'
-        || device.type === 'ROTARY_HANDLE_CHANNEL') {
+        || device.type === 'ROTARY_HANDLE_SENSOR') {
       homebridgeDevice = new HmIPContactSensor(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'PUSH_BUTTON'
         || device.type === 'BRAND_PUSH_BUTTON'
