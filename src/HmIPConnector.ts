@@ -24,6 +24,7 @@ export class HmIPConnector {
   private readonly accessPoint: string;
   private readonly authToken: string;
   private readonly clientAuthToken: string;
+  private readonly pin: string;
   public readonly clientCharacteristics: Record<string, unknown>;
 
   private readonly log: Logger;
@@ -37,9 +38,10 @@ export class HmIPConnector {
   private wsReconnectIntervalMillis = 10000;
   private ws: WebSocket | null = null;
 
-  constructor(log: Logger, accessPoint: string, authToken: string) {
+  constructor(log: Logger, accessPoint: string, authToken: string, pin: string) {
     this.log = log;
     this.authToken = authToken;
+    this.pin = pin;
     this.accessPoint = accessPoint ? accessPoint.replace(/[^a-fA-F0-9 ]/g, '').toUpperCase() : '';
     this.clientCharacteristics = {
       'clientCharacteristics':
@@ -103,23 +105,19 @@ export class HmIPConnector {
 
   async _apiCall<T>(addTokens: boolean, logError: boolean, path: string, _body?: Record<string, unknown>) {
     const url = `${this.urlREST}/hmip/${path}`;
-    let headers;
+    let headers = {
+        'content-type': 'application/json',
+        'accept': 'application/json',
+        'VERSION': '12',
+        'AUTHTOKEN': <string><unknown>undefined,
+        'CLIENTAUTH': this.clientAuthToken,
+        'PIN': this.pin
+    };
+
     if (addTokens) {
-      headers = {
-        'content-type': 'application/json',
-        'accept': 'application/json',
-        'VERSION': '12',
-        'AUTHTOKEN': this.authToken,
-        'CLIENTAUTH': this.clientAuthToken,
-      };
-    } else {
-      headers = {
-        'content-type': 'application/json',
-        'accept': 'application/json',
-        'VERSION': '12',
-        'CLIENTAUTH': this.clientAuthToken,
-      };
+      headers.AUTHTOKEN = this.authToken;
     }
+
     const body = _body ? JSON.stringify(_body) : null;
     this.log.debug('Requesting ' + url + ': ' + JSON.stringify(body) + ', headers=' + JSON.stringify(headers));
     const response = await fetch(url, {

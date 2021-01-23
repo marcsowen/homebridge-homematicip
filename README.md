@@ -1,11 +1,12 @@
 # homebridge-homematicip
+
 [![npm](https://img.shields.io/npm/v/homebridge-homematicip.svg?style=plastic)](https://www.npmjs.com/package/homebridge-homematicip)
 [![npm](https://img.shields.io/npm/dt/homebridge-homematicip.svg?style=plastic)](https://www.npmjs.com/package/homebridge-homematicip)
 [![GitHub last commit](https://img.shields.io/github/last-commit/marcsowen/homebridge-homematicip.svg?style=plastic)](https://github.com/marcsowen/homebridge-homematicip)
 
 ## Homematic IP platform plugin for homebridge
 
-Uses the inofficial HTTP API and WebSockets for continuous channel updates. 
+Uses the unofficial HTTP API and WebSockets for continuous channel updates. 
 
 Add one (or more) Homematic IP Access Points to config.json. There are two configuration
 options that you can set:
@@ -24,12 +25,21 @@ labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 
 ### Pairing 
 
-<ins>Note</ins>: Pairing with PIN enabled is currently not supported.
+```
+{
+    "platform": "HomematicIP",
+    "name": "HomematicIP",
+    "access_point": "<your access point ID>",
+    "pin": "<your PIN if set in the app>"
+}
+```
 
-If you do not have an auth_token or don't know it, leave it empty. After startup, watch the logs and wait for "Press blue, glowing link button of HmIP Access Point now!".
-Then press the button and note the "auth_token" that is being generated, add it to your config.json and restart.
+If you do not have an auth_token or don't know it, leave it empty. Be sure to add the "pin" property if it is set in the app. 
+After startup, watch the logs and wait for "Press blue, glowing link button of HmIP Access Point now!". Then press the
+button and note the "auth_token" that is being generated, add it to your config.json, remove the pin and restart.
 
 ## Currently supported devices
+
 - HmIP-HAP (Access Point)
 - HmIP-eTRV (Radiator Thermostat)
 - HmIP-eTRV-C (Heating-thermostat compact without display)
@@ -60,6 +70,7 @@ Then press the button and note the "auth_token" that is being generated, add it 
 (*) Currently, only first channel is supported.
 
 ## TODOs
+
 - Implement more devices
 - Implement weather device
 - Implement PIN protection
@@ -67,8 +78,8 @@ Then press the button and note the "auth_token" that is being generated, add it 
 - Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App) 
 - Implement custom EVE logging (https://github.com/simont77/fakegato-history)
 
-## Thanks to coreGreenberet
-https://github.com/coreGreenberet/homematicip-rest-api
+## Many thanks to coreGreenberet
 
+https://github.com/coreGreenberet/homematicip-rest-api
 
 ## Help needed!
