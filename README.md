@@ -66,6 +66,8 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-PSM (Pluggable Switch and Meter)
 - HmIP-BSM (Brand Switch and Meter)
 - HmIP-FSM, HmIP-FSM16 (Full flush Switch and Meter)
+- HmIP-MOD-TM (Garage Door Module Tormatic)
+- HmIP-MOD-HO (Garage Door Module for Hörmann)
 
 (*) Currently, only first channel is supported.
 
@@ -73,7 +75,6 @@ button and note the "auth_token" that is being generated, add it to your config.
 
 - Implement more devices
 - Implement weather device
-- Implement PIN protection
 - Implement META-Group (Homematic IP rooms) to HomeKit room-Mapping
 - Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App) 
 - Implement custom EVE logging (https://github.com/simont77/fakegato-history)
