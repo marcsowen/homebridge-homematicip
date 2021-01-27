@@ -43,6 +43,7 @@ interface DoorChannel {
  */
 export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     private service: Service;
+    private switchService: Service;
 
     private currentDoorState: DoorState = DoorState.CLOSED;
     private processing: boolean = false;
@@ -60,9 +61,6 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
         this.platform.log.debug(`Created garage door ${accessory.context.device.label}`);
         this.service = this.accessory.getService(this.platform.Service.GarageDoorOpener) || this.accessory.addService(this.platform.Service.GarageDoorOpener);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
-
-        this.updateDevice(home, accessory.context.device, platform.groups);
-
         this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
             .on('get', this.handleCurrentDoorStateGet.bind(this));
 
@@ -72,6 +70,13 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
 
         this.service.getCharacteristic(this.platform.Characteristic.ObstructionDetected)
             .on('get', this.handleObstructionDetectedGet.bind(this));
+
+        this.switchService = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
+        this.switchService.getCharacteristic(this.platform.Characteristic.On)
+            .on('get', this.handleOnGet.bind(this))
+            .on('set', this.handleOnSet.bind(this));
+
+        this.updateDevice(home, accessory.context.device, platform.groups);
     }
 
     handleCurrentDoorStateGet(callback: CharacteristicGetCallback) {
@@ -97,6 +102,21 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
 
     handleObstructionDetectedGet(callback: CharacteristicGetCallback) {
         callback(null, false);
+    }
+
+    handleOnGet(callback: CharacteristicGetCallback) {
+        callback(null, this.on);
+    }
+
+    async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+        this.platform.log.info("Setting light of garage door %s to %s", this.accessory.displayName, value);
+        const body = {
+            channelIndex: 1,
+            deviceId: this.accessory.context.device.id,
+            on: value,
+        };
+        await this.platform.connector.apiCall('device/control/setSwitchState', body);
+        callback(null);
     }
 
     public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -131,7 +151,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
 
                 if (doorChannel.on != null && doorChannel.on != this.on) {
                     this.on = doorChannel.on;
-                    this.platform.log.info("Garage door on state of %s changed to %s", this.accessory.displayName, this.on);
+                    this.platform.log.info("Garage door light of %s changed to %s", this.accessory.displayName, this.on);
                 }
             }
         }
