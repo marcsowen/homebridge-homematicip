@@ -48,6 +48,8 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-WTH (Wall Thermostat)
 - HmIP-WTH-2 (Wall Thermostat with Humidity Sensor)
 - HmIP-BWTH (Brand Wall Thermostat with Humidity Sensor)
+- HMIP-WTH-B (Wall Thermostat – basic)
+- ALPHA-IP-RBG (Alpha IP Wall Thermostat Display)
 - HmIP-SWDO (Door / Window Contact - optical)
 - HmIP-SWDO-I (Door / Window Contact - optical, invisible)
 - HmIP-SWDO-PL (Door / Window Contact – optical, plus)

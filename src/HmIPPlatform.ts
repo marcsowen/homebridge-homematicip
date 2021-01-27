@@ -14,6 +14,7 @@ import {HmIPPushButton} from './devices/HmIPPushButton';
 import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
 import {HmIPSwitch} from './devices/HmIPSwitch';
 import {HmIPGarageDoor} from './devices/HmIPGarageDoor';
+import {HmIPClimateSensor} from './devices/HmIPClimateSensor';
 
 /**
  * HomematicIP platform
@@ -205,8 +206,15 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     const uuid = this.api.hap.uuid.generate(id);
     const hmIPAccessory = this.createAccessory(uuid, device.label, device);
     let homebridgeDevice: HmIPGenericDevice | null = null;
-    if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO') {
+    if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO'
+        || device.type === 'BRAND_WALL_MOUNTED_THERMOSTAT'
+        || device.type === 'ROOM_CONTROL_DEVICE'
+        || device.type === 'WALL_MOUNTED_THERMOSTAT_BASIC_HUMIDITY') {
       homebridgeDevice = new HmIPWallMountedThermostat(this, home, hmIPAccessory.accessory);
+    } else if (device.type === 'TEMPERATURE_HUMIDITY_SENSOR'
+        || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_OUTDOOR'
+        || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_DISPLAY') {
+      homebridgeDevice = new HmIPClimateSensor(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HEATING_THERMOSTAT') {
       homebridgeDevice = new HmIPHeatingThermostat(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_SHUTTER'
@@ -238,8 +246,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         || device.type === 'DIN_RAIL_SWITCH_4' // Only first channel
         || device.type === 'PLUGABLE_SWITCH_MEASURING'
         || device.type === 'BRAND_SWITCH_MEASURING'
-        || device.type === 'FULL_FLUSH_SWITCH_MEASURING'
-    ) {
+        || device.type === 'FULL_FLUSH_SWITCH_MEASURING') {
       homebridgeDevice = new HmIPSwitch(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'TORMATIC_MODULE'
         || device.type === 'HOERMANN_DRIVES_MODULE') {

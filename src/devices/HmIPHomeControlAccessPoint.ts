@@ -31,8 +31,7 @@ interface AccessControllerChannel {
 export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Updateable {
 
   private readonly lightService: Service;
-  private signalBrightness = 1;
-  private permanentlyReachable = false;
+  private signalBrightness = 100;
 
   constructor(
     platform: HmIPPlatform,
@@ -44,14 +43,14 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
     this.lightService = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb)!;
     this.updateDevice(home, accessory.context.device, platform.groups);
     this.lightService.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handlePermanentlyReachableGet.bind(this));
+      .on('get', this.handleOnGet.bind(this));
     this.lightService.getCharacteristic(this.platform.Characteristic.Brightness)
       .on('get', this.handleSignalBrightnessGet.bind(this))
       .on('set', this.handleSignalBrightnessSet.bind(this));
   }
 
-  handlePermanentlyReachableGet(callback: CharacteristicGetCallback) {
-    callback(null, (this.permanentlyReachable ? this.permanentlyReachable : true));
+  handleOnGet(callback: CharacteristicGetCallback) {
+    callback(null, this.signalBrightness > 0);
   }
 
   handleSignalBrightnessGet(callback: CharacteristicGetCallback) {
@@ -73,10 +72,6 @@ export class HmIPHomeControlAccessPoint extends HmIPGenericDevice implements Upd
   updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }): void {
     super.updateDevice(hmIPHome, hmIPDevice, groups);
     if (hmIPDevice) {
-      if (hmIPDevice.permanentlyReachable != this.permanentlyReachable) {
-        this.permanentlyReachable = hmIPDevice.permanentlyReachable;
-        this.lightService.setCharacteristic(this.platform.Characteristic.On, this.permanentlyReachable);
-      }
       if (hmIPDevice.functionalChannels) {
         for (const id in hmIPDevice.functionalChannels) {
           const channel = hmIPDevice.functionalChannels[id];

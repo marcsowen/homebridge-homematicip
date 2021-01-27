@@ -14,6 +14,13 @@ interface WallMountedThermostatProChannel {
 
 /**
  * HomematicIP Thermostat
+ *
+ * HmIP-WTH
+ * HmIP-WTH-2
+ * HMIP-WTH-B
+ * HmIP-BWTH
+ * ALPHA-IP-RBG
+ *
  */
 export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Updateable {
   private service: Service;
