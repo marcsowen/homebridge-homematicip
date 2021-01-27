@@ -152,6 +152,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
                 if (doorChannel.on != null && doorChannel.on != this.on) {
                     this.on = doorChannel.on;
                     this.platform.log.info("Garage door light of %s changed to %s", this.accessory.displayName, this.on);
+                    this.switchService.updateCharacteristic(this.platform.Characteristic.On, this.on);
                 }
             }
         }
