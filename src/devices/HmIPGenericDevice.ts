@@ -4,6 +4,7 @@ import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, HmIPHome} from '../HmIPState';
 
 interface DeviceBaseChannel {
+  functionalChannelType: string;
   unreach: boolean;
   lowBat: boolean;
   rssiDeviceValue: number;
@@ -17,7 +18,7 @@ interface DeviceBaseChannel {
  */
 export abstract class HmIPGenericDevice {
 
-  protected unreach= false;
+  protected unreach = false;
   protected lowBat = false;
   protected rssiDeviceValue = 0.0;
   protected rssiPeerValue = 0;
@@ -61,11 +62,13 @@ export abstract class HmIPGenericDevice {
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'DEVICE_OPERATIONLOCK' || channel.functionalChannelType === 'DEVICE_BASE') {
-        const baseChannel = <DeviceBaseChannel><unknown>channel;
+        const baseChannel = <DeviceBaseChannel>channel;
+
         if (baseChannel.unreach != null && baseChannel.unreach !== this.unreach) {
           this.platform.log.info(`Unreach of ${this.accessory.displayName} changed to ${baseChannel.unreach}`);
           this.unreach = baseChannel.unreach;
         }
+
         if (baseChannel.lowBat !== null && baseChannel.lowBat !== this.lowBat) {
           this.platform.log.info(`LowBat of ${this.accessory.displayName} changed to ${baseChannel.lowBat}`);
           this.lowBat = baseChannel.lowBat;

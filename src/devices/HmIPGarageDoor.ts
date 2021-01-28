@@ -109,7 +109,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     }
 
     async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        this.platform.log.info("Setting light of garage door %s to %s", this.accessory.displayName, value);
+        this.platform.log.info("Setting light of garage door %s to %s", this.accessory.displayName, value ? "ON" : "OFF");
         const body = {
             channelIndex: 1,
             deviceId: this.accessory.context.device.id,
@@ -131,9 +131,13 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
                 if (doorChannel.doorState != null && doorChannel.doorState != this.currentDoorState) {
                     this.currentDoorState = doorChannel.doorState;
                     this.platform.log.info("Garage door state of %s changed to %s", this.accessory.displayName, this.currentDoorState);
-                    if (this.currentDoorState != DoorState.POSITION_UNKNOWN) {
-                        this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState,
-                            this.getHmKitCurrentDoorState(this.currentDoorState));
+                    this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState,
+                        this.getHmKitCurrentDoorState(this.currentDoorState));
+
+                    if (this.currentDoorState === DoorState.CLOSED) {
+                        this.targetDoorState = this.platform.Characteristic.TargetDoorState.CLOSED;
+                    } else if (this.currentDoorState === DoorState.OPEN) {
+                        this.targetDoorState = this.platform.Characteristic.TargetDoorState.OPEN;
                     }
                 }
 
@@ -151,7 +155,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
 
                 if (doorChannel.on != null && doorChannel.on != this.on) {
                     this.on = doorChannel.on;
-                    this.platform.log.info("Garage door light of %s changed to %s", this.accessory.displayName, this.on);
+                    this.platform.log.info("Garage door light of %s changed to %s", this.accessory.displayName, this.on ? "ON" : "OFF");
                     this.switchService.updateCharacteristic(this.platform.Characteristic.On, this.on);
                 }
             }

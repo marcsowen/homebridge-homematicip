@@ -4,11 +4,22 @@ import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
+/**
+ * SmokeDetectorAlarmType
+ *
+ * IDLE_OFF       : Idle, waiting for smoke
+ * PRIMARY_ALARM  : This smoke detector signals smoke alarm triggered by itself
+ * INTRUSION_ALARM: This smoke detector signals burglar alarm triggered by e.g. a window contact
+ * SECONDARY_ALARM: This smoke detector signals smoke alarm triggered by another smoke detector
+ *
+ * Note: We only alert PRIMARY_ALARM since we want to detect where the smoke is actually coming from.
+ *
+ */
 enum SmokeDetectorAlarmType {
-    IDLE_OFF = "IDLE_OFF",                  // Idle, waiting for smoke
-    PRIMARY_ALARM = "PRIMARY_ALARM",        // Smoke?
-    INTRUSION_ALARM = "INTRUSION_ALARM",    // Tampered or alarm from window contact?
-    SECONDARY_ALARM = "SECONDARY_ALARM"     // Alarm triggered by another smoke sensor or alarm from window contact?
+    IDLE_OFF = "IDLE_OFF",
+    PRIMARY_ALARM = "PRIMARY_ALARM",
+    INTRUSION_ALARM = "INTRUSION_ALARM",
+    SECONDARY_ALARM = "SECONDARY_ALARM"
 }
 
 interface SmokeDetectorChannel {
@@ -41,21 +52,12 @@ export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
 
         this.service.getCharacteristic(this.platform.Characteristic.SmokeDetected)
             .on('get', this.handleSmokeDetectedGet.bind(this));
-
-        this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
-            .on('get', this.handleStatusTamperedGet.bind(this));
     }
 
     handleSmokeDetectedGet(callback: CharacteristicGetCallback) {
         callback(null, this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
             ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
             : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED);
-    }
-
-    handleStatusTamperedGet(callback: CharacteristicGetCallback) {
-        callback(null, this.smokeDetectorAlarmType === SmokeDetectorAlarmType.INTRUSION_ALARM
-            ? this.platform.Characteristic.StatusTampered.TAMPERED
-            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
     }
 
     public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -74,11 +76,6 @@ export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
                     this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
                         ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
                         : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED);
-
-                    this.service.updateCharacteristic(this.platform.Characteristic.StatusTampered,
-                        this.smokeDetectorAlarmType === SmokeDetectorAlarmType.INTRUSION_ALARM
-                            ? this.platform.Characteristic.StatusTampered.TAMPERED
-                            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
                 }
             }
         }

@@ -70,6 +70,7 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-FSM, HmIP-FSM16 (Full flush Switch and Meter)
 - HmIP-MOD-TM (Garage Door Module Tormatic)
 - HmIP-MOD-HO (Garage Door Module for Hörmann)
+- HmIP-SWD (Water sensor)
 
 (*) Currently, only first channel is supported.
 

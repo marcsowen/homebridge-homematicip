@@ -4,7 +4,6 @@ import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings';
 import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
 import {HmIPShutter} from './devices/HmIPShutter';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
-import {HmIPHomeControlAccessPoint} from './devices/HmIPHomeControlAccessPoint';
 import {HmIPContactSensor} from './devices/HmIPContactSensor';
 import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
 import {HmIPAccessory} from './HmIPAccessory';
@@ -15,6 +14,7 @@ import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
 import {HmIPSwitch} from './devices/HmIPSwitch';
 import {HmIPGarageDoor} from './devices/HmIPGarageDoor';
 import {HmIPClimateSensor} from './devices/HmIPClimateSensor';
+import {HmIPWaterSensor} from './devices/HmIPWaterSensor';
 
 /**
  * HomematicIP platform
@@ -251,8 +251,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     } else if (device.type === 'TORMATIC_MODULE'
         || device.type === 'HOERMANN_DRIVES_MODULE') {
       homebridgeDevice = new HmIPGarageDoor(this, home, hmIPAccessory.accessory);
-    } else if (device.type === 'HOME_CONTROL_ACCESS_POINT') {
-      homebridgeDevice = new HmIPHomeControlAccessPoint(this, home, hmIPAccessory.accessory);
+    } else if (device.type === 'WATER_SENSOR') {
+      homebridgeDevice = new HmIPWaterSensor(this, home, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;
