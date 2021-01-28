@@ -43,6 +43,7 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
     this.updateDevice(home, accessory.context.device, platform.groups);
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+        .setProps({minValue: -100})
         .on('get', this.handleCurrentTemperatureGet.bind(this));
 
     this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)

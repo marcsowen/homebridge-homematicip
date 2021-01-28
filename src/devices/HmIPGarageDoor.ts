@@ -134,10 +134,12 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
                     this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState,
                         this.getHmKitCurrentDoorState(this.currentDoorState));
 
-                    if (this.currentDoorState === DoorState.CLOSED) {
+                    if (this.currentDoorState === DoorState.CLOSED && this.targetDoorState != this.platform.Characteristic.TargetDoorState.CLOSED) {
                         this.targetDoorState = this.platform.Characteristic.TargetDoorState.CLOSED;
-                    } else if (this.currentDoorState === DoorState.OPEN) {
+                        this.service.updateCharacteristic(this.platform.Characteristic.TargetDoorState, this.targetDoorState);
+                    } else if (this.currentDoorState === DoorState.OPEN && this.targetDoorState != this.platform.Characteristic.TargetDoorState.OPEN) {
                         this.targetDoorState = this.platform.Characteristic.TargetDoorState.OPEN;
+                        this.service.updateCharacteristic(this.platform.Characteristic.TargetDoorState, this.targetDoorState);
                     }
                 }
 

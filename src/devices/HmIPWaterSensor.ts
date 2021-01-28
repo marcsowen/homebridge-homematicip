@@ -16,7 +16,6 @@ interface WaterSensorChannel {
  * HmIP-SWD
  */
 export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
-    private moistureService: Service;
     private waterLevelService: Service;
 
     private moistureDetected: boolean = false;
@@ -30,25 +29,14 @@ export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
         super(platform, home, accessory);
 
         this.platform.log.debug(`Created water sensor ${accessory.context.device.label}`);
-        this.moistureService = this.accessory.getService(this.platform.Service.LeakSensor) || this.accessory.addService(this.platform.Service.LeakSensor);
-        this.moistureService.setCharacteristic(this.platform.Characteristic.Name, "Moisture");
-
-        this.moistureService.getCharacteristic(this.platform.Characteristic.LeakDetected)
-            .on('get', this.handleMoistureDetectedGet.bind(this));
 
         this.waterLevelService = this.accessory.getService(this.platform.Service.LeakSensor) || this.accessory.addService(this.platform.Service.LeakSensor);
-        this.waterLevelService.setCharacteristic(this.platform.Characteristic.Name, "Water level");
+        this.waterLevelService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
         this.waterLevelService.getCharacteristic(this.platform.Characteristic.LeakDetected)
             .on('get', this.handleWaterLevelDetectedGet.bind(this));
 
         this.updateDevice(home, accessory.context.device, platform.groups);
-    }
-
-    handleMoistureDetectedGet(callback: CharacteristicGetCallback) {
-        callback(null, this.moistureDetected
-            ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
-            : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED);
     }
 
     handleWaterLevelDetectedGet(callback: CharacteristicGetCallback) {
@@ -69,10 +57,6 @@ export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
                 if (waterSensorChannel.moistureDetected !== null && waterSensorChannel.moistureDetected !== this.moistureDetected) {
                     this.moistureDetected = waterSensorChannel.moistureDetected;
                     this.platform.log.info("Water sensor moisture detection of %s changed to %s", this.accessory.displayName, this.moistureDetected);
-                    this.moistureService.updateCharacteristic(this.platform.Characteristic.LeakDetected,
-                    this.moistureDetected
-                        ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
-                        : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED);
                 }
 
                 if (waterSensorChannel.waterlevelDetected !== null && waterSensorChannel.waterlevelDetected !== this.waterlevelDetected) {
