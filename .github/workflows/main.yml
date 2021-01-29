@@ -1,25 +1,22 @@
 name: Node.js CI
 
-on:
-  push:
-    branches: [ $default-branch ]
-  pull_request:
-    branches: [ $default-branch ]
+on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [14.x, 15.x]
-
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2.1.4
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm install
-    - run: npm run build
+    - name: Clean install dependencies
+      run: npm ci
+    - name: Run lint
+      run: npm run lint
+    - name: Build
+      run: npm run build
