@@ -1,3 +1,9 @@
+## 0.1.2 (2021-01-29)
+
+### Improvements
+
+- **General**: Automatically remove unsupported devices from cache
+
 ## 0.1.1 (2021-01-28)
 
 ### Improvements

@@ -24,8 +24,8 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
   private temperatureService: Service;
   private humidityService: Service;
 
-  private actualTemperature = 0;
-  private humidity = 0;
+  private actualTemperature: number = 0;
+  private humidity: number = 0;
 
   constructor(
     platform: HmIPPlatform,

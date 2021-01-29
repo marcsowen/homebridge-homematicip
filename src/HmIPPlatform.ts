@@ -131,6 +131,24 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       this.updateAccessory(id, this.home, device);
     }
 
+    // find cached but now removed accessories and unregister them
+    const accessoriesToBeRemoved: PlatformAccessory[] = [];
+    for (const id in hmIPState.devices) {
+      if (!this.deviceMap.has(id)) {
+        const uuid = this.api.hap.uuid.generate(id);
+        const cachedAccessory = this.getAccessory(uuid);
+        if (cachedAccessory !== undefined) {
+          const device = hmIPState.devices[id];
+          this.log.info('Removing accessory %s', device.label);
+          accessoriesToBeRemoved.push(cachedAccessory);
+        }
+      }
+    }
+
+    if (accessoriesToBeRemoved.length > 0) {
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, accessoriesToBeRemoved);
+    }
+
     // Start websocket immediately and register handlers
     await this.connector.connectWs(data => {
       const stateChange = <HmIPStateChange>JSON.parse(data.toString());
@@ -207,49 +225,49 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     const hmIPAccessory = this.createAccessory(uuid, device.label, device);
     let homebridgeDevice: HmIPGenericDevice | null = null;
     if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO'
-        || device.type === 'BRAND_WALL_MOUNTED_THERMOSTAT'
-        || device.type === 'ROOM_CONTROL_DEVICE'
-        || device.type === 'WALL_MOUNTED_THERMOSTAT_BASIC_HUMIDITY') {
+      || device.type === 'BRAND_WALL_MOUNTED_THERMOSTAT'
+      || device.type === 'ROOM_CONTROL_DEVICE'
+      || device.type === 'WALL_MOUNTED_THERMOSTAT_BASIC_HUMIDITY') {
       homebridgeDevice = new HmIPWallMountedThermostat(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'TEMPERATURE_HUMIDITY_SENSOR'
-        || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_OUTDOOR'
-        || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_DISPLAY') {
+      || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_OUTDOOR'
+      || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_DISPLAY') {
       homebridgeDevice = new HmIPClimateSensor(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'HEATING_THERMOSTAT') {
       homebridgeDevice = new HmIPHeatingThermostat(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_SHUTTER'
-        || device.type === 'BRAND_SHUTTER') {
+      || device.type === 'BRAND_SHUTTER') {
       homebridgeDevice = new HmIPShutter(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'SHUTTER_CONTACT'
-        || device.type === 'SHUTTER_CONTACT_INTERFACE'
-        || device.type === 'SHUTTER_CONTACT_INVISIBLE'
-        || device.type === 'SHUTTER_CONTACT_MAGNETIC'
-        || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS'
-        || device.type === 'ROTARY_HANDLE_SENSOR') {
+      || device.type === 'SHUTTER_CONTACT_INTERFACE'
+      || device.type === 'SHUTTER_CONTACT_INVISIBLE'
+      || device.type === 'SHUTTER_CONTACT_MAGNETIC'
+      || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS'
+      || device.type === 'ROTARY_HANDLE_SENSOR') {
       homebridgeDevice = new HmIPContactSensor(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'PUSH_BUTTON'
-        || device.type === 'BRAND_PUSH_BUTTON'
-        || device.type === 'PUSH_BUTTON_6'
-        || device.type === 'REMOTE_CONTROL_8'
-        || device.type === 'REMOTE_CONTROL_8_MODULE'
-        || device.type === 'KEY_REMOTE_CONTROL_4'
-        || device.type === 'KEY_REMOTE_CONTROL_4') {
+      || device.type === 'BRAND_PUSH_BUTTON'
+      || device.type === 'PUSH_BUTTON_6'
+      || device.type === 'REMOTE_CONTROL_8'
+      || device.type === 'REMOTE_CONTROL_8_MODULE'
+      || device.type === 'KEY_REMOTE_CONTROL_4'
+      || device.type === 'KEY_REMOTE_CONTROL_4') {
       homebridgeDevice = new HmIPPushButton(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'SMOKE_DETECTOR') {
       homebridgeDevice = new HmIPSmokeDetector(this, home, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH'
-        || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_BATTERY'
-        || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_2' // Only first channel
-        || device.type === 'OPEN_COLLECTOR_8_MODULE' // Only first channel
-        || device.type === 'HEATING_SWITCH_2' // Only first channel
-        || device.type === 'WIRED_SWITCH_8' // Only first channel
-        || device.type === 'DIN_RAIL_SWITCH_4' // Only first channel
-        || device.type === 'PLUGABLE_SWITCH_MEASURING'
-        || device.type === 'BRAND_SWITCH_MEASURING'
-        || device.type === 'FULL_FLUSH_SWITCH_MEASURING') {
+      || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_BATTERY'
+      || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_2' // Only first channel
+      || device.type === 'OPEN_COLLECTOR_8_MODULE' // Only first channel
+      || device.type === 'HEATING_SWITCH_2' // Only first channel
+      || device.type === 'WIRED_SWITCH_8' // Only first channel
+      || device.type === 'DIN_RAIL_SWITCH_4' // Only first channel
+      || device.type === 'PLUGABLE_SWITCH_MEASURING'
+      || device.type === 'BRAND_SWITCH_MEASURING'
+      || device.type === 'FULL_FLUSH_SWITCH_MEASURING') {
       homebridgeDevice = new HmIPSwitch(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'TORMATIC_MODULE'
-        || device.type === 'HOERMANN_DRIVES_MODULE') {
+      || device.type === 'HOERMANN_DRIVES_MODULE') {
       homebridgeDevice = new HmIPGarageDoor(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'WATER_SENSOR') {
       homebridgeDevice = new HmIPWaterSensor(this, home, hmIPAccessory.accessory);
