@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/homebridge-homematicip.svg?style=plastic)](https://www.npmjs.com/package/homebridge-homematicip)
 [![npm](https://img.shields.io/npm/dt/homebridge-homematicip.svg?style=plastic)](https://www.npmjs.com/package/homebridge-homematicip)
 [![GitHub last commit](https://img.shields.io/github/last-commit/marcsowen/homebridge-homematicip.svg?style=plastic)](https://github.com/marcsowen/homebridge-homematicip)
+![GitHub build](https://img.shields.io/github/workflow/status/marcsowen/homebridge-homematicip/Node.js%20CI/master?style=plastic)
 
 ## Homematic IP platform plugin for homebridge
 
