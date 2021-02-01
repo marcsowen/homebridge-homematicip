@@ -54,11 +54,11 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   }
 
   async handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info(`Setting target window covering position for ${this.accessory.displayName} to ${value}`);
+    this.platform.log.info('Setting target shutter position for %s to %s', this.accessory.displayName, value);
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
-      shutterLevel: HmIPShutter.homeKitToHmIP(<number>value),
+      shutterLevel: HmIPShutter.shutterHomeKitToHmIP(<number>value),
     };
     await this.platform.connector.apiCall('device/control/setShutterLevel', body);
     callback(null);
@@ -73,7 +73,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   }
 
   async handleHoldPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info(`Setting window covering hold position for ${this.accessory.displayName} to ${value}`);
+    this.platform.log.info('Setting shutter hold position for %s to %s', this.accessory.displayName, value);
     if (value === true) {
       const body = {
         channelIndex: 1,
@@ -92,16 +92,16 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
       if (channel.functionalChannelType === 'SHUTTER_CHANNEL' || channel.functionalChannelType === 'BLIND_CHANNEL') {
         const shutterChannel = <ShutterChannel>channel;
 
-        const shutterLevelHomeKit = HmIPShutter.hmIPToHomeKit(shutterChannel.shutterLevel);
+        const shutterLevelHomeKit = HmIPShutter.shutterHmIPToHomeKit(shutterChannel.shutterLevel);
         if (shutterLevelHomeKit != this.shutterLevel) {
-          this.platform.log.info(`Current shutter level of ${this.accessory.displayName} changed to ${shutterLevelHomeKit}`);
           this.shutterLevel = shutterLevelHomeKit;
-          this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, shutterLevelHomeKit);
+          this.platform.log.info('Current shutter level of %s changed to %s', this.accessory.displayName, this.shutterLevel);
+          this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.shutterLevel);
         }
 
         if (shutterChannel.processing != this.processing) {
-          this.platform.log.info(`Processing state of shutter/blind ${this.accessory.displayName} changed to ${shutterChannel.processing}`);
           this.processing = shutterChannel.processing;
+          this.platform.log.info('Processing state of shutter/blind %s changed to %s', this.accessory.displayName, this.processing);
           this.service.updateCharacteristic(this.platform.Characteristic.PositionState,
             shutterChannel.processing ? this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
         }
@@ -109,11 +109,11 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     }
   }
 
-  private static hmIPToHomeKit(hmIPValue: number): number {
+  private static shutterHmIPToHomeKit(hmIPValue: number): number {
     return (1 - hmIPValue) * 100.0;
   }
 
-  private static homeKitToHmIP(homeKitValue: number): number {
+  private static shutterHomeKitToHmIP(homeKitValue: number): number {
     return (100 - homeKitValue) / 100.0;
   }
 }

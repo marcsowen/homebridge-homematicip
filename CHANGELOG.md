@@ -1,3 +1,10 @@
+## 0.1.4 (2021-02-01)
+
+### Improvements
+
+- **GarageDoor**: Removed explicit target door position which is not known anyway. This might improve display
+  of animation in Home App.
+
 ## 0.1.3 (2021-02-01)
 
 ### New devices
