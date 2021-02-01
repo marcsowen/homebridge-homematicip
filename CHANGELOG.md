@@ -1,3 +1,10 @@
+## 0.1.3 (2021-02-01)
+
+### New devices
+
+- **HmIP-FBL**: Blind Actuator - flush-mount
+- **HmIP-BBL**: Blind Actuator - brand-mount
+
 ## 0.1.2 (2021-01-29)
 
 ### Improvements

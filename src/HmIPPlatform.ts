@@ -15,6 +15,7 @@ import {HmIPSwitch} from './devices/HmIPSwitch';
 import {HmIPGarageDoor} from './devices/HmIPGarageDoor';
 import {HmIPClimateSensor} from './devices/HmIPClimateSensor';
 import {HmIPWaterSensor} from './devices/HmIPWaterSensor';
+import {HmIPBlind} from './devices/HmIPBlind';
 
 /**
  * HomematicIP platform
@@ -238,6 +239,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     } else if (device.type === 'FULL_FLUSH_SHUTTER'
       || device.type === 'BRAND_SHUTTER') {
       homebridgeDevice = new HmIPShutter(this, home, hmIPAccessory.accessory);
+    } else if (device.type === 'FULL_FLUSH_BLIND'
+      || device.type === 'BRAND_BLIND') {
+      homebridgeDevice = new HmIPBlind(this, home, hmIPAccessory.accessory);
     } else if (device.type === 'SHUTTER_CONTACT'
       || device.type === 'SHUTTER_CONTACT_INTERFACE'
       || device.type === 'SHUTTER_CONTACT_INVISIBLE'

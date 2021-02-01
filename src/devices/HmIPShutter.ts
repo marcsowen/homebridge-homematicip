@@ -6,8 +6,7 @@ import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 interface ShutterChannel {
   functionalChannelType: string;
-  // Values are HmIP-Style 0..1
-  shutterLevel: number;
+  shutterLevel: number; // 0.0 = open, 1.0 = closed
   processing: boolean;
 }
 
@@ -19,11 +18,10 @@ interface ShutterChannel {
  *
  */
 export class HmIPShutter extends HmIPGenericDevice implements Updateable {
-  private service: Service;
+  protected service: Service;
 
   // Values are HomeKit style (100..0)
   private shutterLevel = 0;
-  private shutterLevelTarget = 0;
   private processing = false;
 
   constructor(
@@ -42,7 +40,6 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
       .on('get', this.handleCurrentPositionGet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-      .on('get', this.handleTargetPositionGet.bind(this))
       .on('set', this.handleTargetPositionSet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
@@ -56,17 +53,12 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     callback(null, this.shutterLevel);
   }
 
-  handleTargetPositionGet(callback: CharacteristicGetCallback) {
-    callback(null, this.shutterLevelTarget);
-  }
-
   async handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.platform.log.info(`Setting target window covering position for ${this.accessory.displayName} to ${value}`);
-    this.shutterLevelTarget = <number>value;
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
-      shutterLevel: HmIPShutter.homeKitToHmIP(this.shutterLevelTarget),
+      shutterLevel: HmIPShutter.homeKitToHmIP(<number>value),
     };
     await this.platform.connector.apiCall('device/control/setShutterLevel', body);
     callback(null);
@@ -97,19 +89,18 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     this.home = hmIPHome;
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'SHUTTER_CHANNEL') {
+      if (channel.functionalChannelType === 'SHUTTER_CHANNEL' || channel.functionalChannelType === 'BLIND_CHANNEL') {
         const shutterChannel = <ShutterChannel>channel;
 
         const shutterLevelHomeKit = HmIPShutter.hmIPToHomeKit(shutterChannel.shutterLevel);
         if (shutterLevelHomeKit != this.shutterLevel) {
           this.platform.log.info(`Current shutter level of ${this.accessory.displayName} changed to ${shutterLevelHomeKit}`);
           this.shutterLevel = shutterLevelHomeKit;
-          this.shutterLevelTarget = shutterLevelHomeKit; // We don't have a target but we must set it somehow in case of external trigger
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, shutterLevelHomeKit);
         }
 
         if (shutterChannel.processing != this.processing) {
-          this.platform.log.info(`Processing state of shutter ${this.accessory.displayName} changed to ${shutterChannel.processing}`);
+          this.platform.log.info(`Processing state of shutter/blind ${this.accessory.displayName} changed to ${shutterChannel.processing}`);
           this.processing = shutterChannel.processing;
           this.service.updateCharacteristic(this.platform.Characteristic.PositionState,
             shutterChannel.processing ? this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
