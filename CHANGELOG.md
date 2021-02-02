@@ -1,3 +1,14 @@
+## 0.1.5 (2021-02-02)
+
+### Improvements
+
+- **GarageDoor**: Introduced assumed target position. Enhanced state logic.
+
+### Bug Fixes
+
+- **Blind**: Set correct (current) shutter level when setting slats level. This should prevent the shutter from going
+all the way up when changing slats level.
+
 ## 0.1.4 (2021-02-01)
 
 ### Improvements

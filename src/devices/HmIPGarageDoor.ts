@@ -46,8 +46,10 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     private switchService: Service;
 
     private currentDoorState: DoorState = DoorState.CLOSED;
+    private previousDoorState: DoorState = DoorState.CLOSED;
     private processing: boolean = false;
     private on: boolean = false;
+    private targetDoorState: number = this.platform.Characteristic.TargetDoorState.CLOSED;
 
     constructor(
         platform: HmIPPlatform,
@@ -64,7 +66,8 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
             .on('get', this.handleCurrentDoorStateGet.bind(this));
 
         this.service.getCharacteristic(this.platform.Characteristic.TargetDoorState)
-            .on('set', this.handleTargetDoorStateSet.bind(this));
+          .on('get', this.handleTargetDoorStateGet.bind(this))
+          .on('set', this.handleTargetDoorStateSet.bind(this));
 
         this.service.getCharacteristic(this.platform.Characteristic.ObstructionDetected)
             .on('get', this.handleObstructionDetectedGet.bind(this));
@@ -82,7 +85,12 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
         callback(null, this.getHmKitCurrentDoorState(this.currentDoorState));
     }
 
+    handleTargetDoorStateGet(callback: CharacteristicGetCallback) {
+        callback(null, this.targetDoorState);
+    }
+
     async handleTargetDoorStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+        this.targetDoorState = <number>value;
         this.platform.log.info("Setting garage door %s to %s", this.accessory.displayName,
             value === this.platform.Characteristic.TargetDoorState.OPEN ? "open" : "closed");
         const body = {
@@ -123,6 +131,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
                 this.platform.log.debug(`Garage door update: ${JSON.stringify(channel)}`);
 
                 if (doorChannel.doorState != null && doorChannel.doorState != this.currentDoorState) {
+                    this.previousDoorState = this.currentDoorState;
                     this.currentDoorState = doorChannel.doorState;
                     this.platform.log.info("Garage door state of %s changed to %s", this.accessory.displayName, this.currentDoorState);
                     this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState,
@@ -132,14 +141,13 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
                 if (doorChannel.processing != null && doorChannel.processing != this.processing) {
                     this.processing = doorChannel.processing;
                     this.platform.log.info("Garage door processing state of %s changed to %s", this.accessory.displayName, this.processing);
-                    if (this.processing) {
-                        this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState,
-                            this.platform.Characteristic.CurrentDoorState.OPENING);
-                    } else if (this.currentDoorState !== DoorState.OPEN && this.currentDoorState !== DoorState.CLOSED){
+                    if (!this.processing && this.currentDoorState !== DoorState.OPEN && this.currentDoorState !== DoorState.CLOSED){
                         this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState,
                             this.platform.Characteristic.CurrentDoorState.STOPPED);
                     }
                 }
+
+                this.updateTargetDoorState();
 
                 if (doorChannel.on != null && doorChannel.on != this.on) {
                     this.on = doorChannel.on;
@@ -159,7 +167,35 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
             case DoorState.VENTILATION_POSITION:
                 return this.platform.Characteristic.CurrentDoorState.STOPPED;
             case DoorState.POSITION_UNKNOWN:
-                return this.platform.Characteristic.CurrentDoorState.OPENING;
+                if (this.previousDoorState === DoorState.CLOSED) {
+                    return this.platform.Characteristic.CurrentDoorState.OPENING;
+                } else {
+                    return this.platform.Characteristic.CurrentDoorState.CLOSING;
+                }
+        }
+    }
+
+    private updateTargetDoorState() {
+        let newTargetDoorState: number;
+
+        if (this.processing) {
+            if (this.previousDoorState === DoorState.CLOSED) {
+                newTargetDoorState = this.platform.Characteristic.TargetDoorState.OPEN;
+            } else {
+                newTargetDoorState = this.platform.Characteristic.TargetDoorState.CLOSED;
+            }
+        } else {
+            if (this.currentDoorState === DoorState.CLOSED) {
+                newTargetDoorState = this.platform.Characteristic.TargetDoorState.CLOSED;
+            } else {
+                newTargetDoorState = this.platform.Characteristic.TargetDoorState.OPEN;
+            }
+        }
+
+        if (newTargetDoorState !== this.targetDoorState) {
+            this.targetDoorState = newTargetDoorState;
+            this.platform.log.info("Garage door target door state of %s logically changed to %s", this.accessory.displayName, this.targetDoorState);
+            this.service.updateCharacteristic(this.platform.Characteristic.TargetDoorState, this.targetDoorState);
         }
     }
 

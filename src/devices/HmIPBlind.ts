@@ -47,6 +47,7 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
+      shutterLevel: HmIPShutter.shutterHomeKitToHmIP(this.shutterLevel),
       slatsLevel: HmIPBlind.slatsHomeKitToHmIP(<number>value),
     };
     await this.platform.connector.apiCall('device/control/setSlatsLevel', body);

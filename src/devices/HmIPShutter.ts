@@ -21,7 +21,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   protected service: Service;
 
   // Values are HomeKit style (100..0)
-  private shutterLevel = 0;
+  protected shutterLevel = 0;
   private processing = false;
 
   constructor(
@@ -109,11 +109,11 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     }
   }
 
-  private static shutterHmIPToHomeKit(hmIPValue: number): number {
+  protected static shutterHmIPToHomeKit(hmIPValue: number): number {
     return (1 - hmIPValue) * 100.0;
   }
 
-  private static shutterHomeKitToHmIP(homeKitValue: number): number {
+  protected static shutterHomeKitToHmIP(homeKitValue: number): number {
     return (100 - homeKitValue) / 100.0;
   }
 }
