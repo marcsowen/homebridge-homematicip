@@ -1,5 +1,4 @@
 import {
-    Characteristic,
     CharacteristicGetCallback,
     CharacteristicSetCallback,
     CharacteristicValue,
@@ -8,9 +7,8 @@ import {
 } from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
-import * as HomeKitTypes from "hap-nodejs/dist/lib/gen";
 
 enum DoorState {
     CLOSED = "CLOSED",
@@ -53,10 +51,9 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
 
     constructor(
         platform: HmIPPlatform,
-        home: HmIPHome,
         accessory: PlatformAccessory,
     ) {
-        super(platform, home, accessory);
+        super(platform, accessory);
 
         this.platform.log.debug(`Created garage door ${accessory.context.device.label}`);
         this.service = this.accessory.getService(this.platform.Service.GarageDoorOpener) || this.accessory.addService(this.platform.Service.GarageDoorOpener);
@@ -78,7 +75,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
             .on('get', this.handleOnGet.bind(this))
             .on('set', this.handleOnSet.bind(this));
 
-        this.updateDevice(home, accessory.context.device, platform.groups);
+        this.updateDevice(accessory.context.device, platform.groups);
     }
 
     handleCurrentDoorStateGet(callback: CharacteristicGetCallback) {
@@ -121,9 +118,8 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
         callback(null);
     }
 
-    public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-        super.updateDevice(hmIPHome, hmIPDevice, groups);
-        this.home = hmIPHome;
+    public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+        super.updateDevice(hmIPDevice, groups);
         for (const id in hmIPDevice.functionalChannels) {
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType === 'DOOR_CHANNEL') {

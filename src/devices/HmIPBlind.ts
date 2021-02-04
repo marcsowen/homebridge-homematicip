@@ -1,7 +1,7 @@
 import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPShutter} from "./HmIPShutter";
 
 interface BlindChannel {
@@ -26,10 +26,9 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    home: HmIPHome,
     accessory: PlatformAccessory,
   ) {
-    super(platform, home, accessory);
+    super(platform, accessory);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentHorizontalTiltAngle)
       .on('get', this.handleCurrentHorizontalTiltAngleGet.bind(this));
@@ -54,8 +53,8 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
     callback(null);
   }
 
-  public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPHome, hmIPDevice, groups);
+  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'BLIND_CHANNEL') {

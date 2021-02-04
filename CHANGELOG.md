@@ -1,3 +1,15 @@
+## 0.2.0 (2021-02-04)
+
+### Improvements
+
+- **Switch**: Split switch device into switch and measuring switch device to expose more features.
+- **SwitchMeasuring**: Added EVE characteristics ElectricPower and ElectricalEnergy for measuring switches. Those values
+  can be viewed e.g. by using the EVE App on iOS.
+- **General**: Code clean-up. Removed dozens of unused home references.
+- **General**: Removed unused weather device.
+- **WallMountedThermostat**: Target heating mode is now AUTO by default. Current heating mode depends on cooling state
+of heating group.
+  
 ## 0.1.5 (2021-02-02)
 
 ### Improvements

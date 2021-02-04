@@ -1,7 +1,13 @@
-import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
+import {
+    CharacteristicGetCallback,
+    CharacteristicSetCallback,
+    CharacteristicValue,
+    PlatformAccessory,
+    Service
+} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 interface SwitchChannel {
@@ -9,15 +15,6 @@ interface SwitchChannel {
     on: boolean;
     profileMode: string;
     userDesiredProfileMode: string;
-}
-
-interface SwitchMeasuringChannel {
-    functionalChannelType: string;
-    on: boolean;
-    profileMode: string;
-    userDesiredProfileMode: string;
-    energyCounter: number;
-    currentPowerConsumption: number;
 }
 
 /**
@@ -34,12 +31,6 @@ interface SwitchMeasuringChannel {
  * HMIPW-DRS8 (Homematic IP Wired Switch Actuator – 8x channels)
  * HMIP-DRSI4 (Homematic IP Switch Actuator for DIN rail mount – 4x channels) """
  *
- * Measuring switches
- *
- * HMIP-PSM (Pluggable Switch and Meter)
- * HMIP-BSM (Brand Switch and Meter)
- * HMIP-FSM, HMIP-FSM16 (Full flush Switch and Meter)
- *
  */
 export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
     private service: Service;
@@ -48,16 +39,15 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 
     constructor(
         platform: HmIPPlatform,
-        home: HmIPHome,
         accessory: PlatformAccessory,
     ) {
-        super(platform, home, accessory);
+        super(platform, accessory);
 
         this.platform.log.debug(`Created switch ${accessory.context.device.label}`);
         this.service = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-        this.updateDevice(home, accessory.context.device, platform.groups);
+        this.updateDevice(accessory.context.device, platform.groups);
 
         this.service.getCharacteristic(this.platform.Characteristic.On)
             .on('get', this.handleOnGet.bind(this))
@@ -79,9 +69,8 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
         callback(null);
     }
 
-    public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-        super.updateDevice(hmIPHome, hmIPDevice, groups);
-        this.home = hmIPHome;
+    public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+        super.updateDevice(hmIPDevice, groups);
         for (const id in hmIPDevice.functionalChannels) {
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType === 'SWITCH_CHANNEL') {
@@ -95,16 +84,6 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
                 }
             }
 
-            if (channel.functionalChannelType == "SWITCH_MEASURING_CHANNEL") {
-                const switchMeasuringChannel = <SwitchMeasuringChannel>channel;
-                this.platform.log.debug(`Switch (measuring) update: ${JSON.stringify(channel)}`);
-
-                if (switchMeasuringChannel.on != this.on) {
-                    this.on = switchMeasuringChannel.on;
-                    this.platform.log.info("Switch state of %s changed to %s", this.accessory.displayName, this.on ? "on" : "off");
-                    this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
-                }
-            }
         }
     }
 }

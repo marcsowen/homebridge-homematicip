@@ -1,7 +1,7 @@
 import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome} from '../HmIPState';
+import {HmIPDevice, HmIPGroup} from '../HmIPState';
 
 interface DeviceBaseChannel {
   functionalChannelType: string;
@@ -28,7 +28,6 @@ export abstract class HmIPGenericDevice {
 
   protected constructor(
     protected readonly platform: HmIPPlatform,
-    protected home: HmIPHome,
     public readonly accessory: PlatformAccessory,
   ) {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
@@ -58,7 +57,7 @@ export abstract class HmIPGenericDevice {
     callback(null, (this.lowBat ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL));
   }
 
-  protected updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  protected updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'DEVICE_OPERATIONLOCK' || channel.functionalChannelType === 'DEVICE_BASE') {

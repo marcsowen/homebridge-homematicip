@@ -1,7 +1,7 @@
-import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
+import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 interface WaterSensorChannel {
@@ -23,10 +23,9 @@ export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
 
     constructor(
         platform: HmIPPlatform,
-        home: HmIPHome,
         accessory: PlatformAccessory,
     ) {
-        super(platform, home, accessory);
+        super(platform, accessory);
 
         this.platform.log.debug(`Created water sensor ${accessory.context.device.label}`);
 
@@ -36,7 +35,7 @@ export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
         this.waterLevelService.getCharacteristic(this.platform.Characteristic.LeakDetected)
             .on('get', this.handleWaterLevelDetectedGet.bind(this));
 
-        this.updateDevice(home, accessory.context.device, platform.groups);
+        this.updateDevice(accessory.context.device, platform.groups);
     }
 
     handleWaterLevelDetectedGet(callback: CharacteristicGetCallback) {
@@ -45,9 +44,8 @@ export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
             : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED);
     }
 
-    public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-        super.updateDevice(hmIPHome, hmIPDevice, groups);
-        this.home = hmIPHome;
+    public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+        super.updateDevice(hmIPDevice, groups);
         for (const id in hmIPDevice.functionalChannels) {
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType === 'WATER_SENSOR_CHANNEL') {

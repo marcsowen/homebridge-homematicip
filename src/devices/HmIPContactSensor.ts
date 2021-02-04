@@ -1,7 +1,7 @@
 import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 enum WindowState {
@@ -35,16 +35,15 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    home: HmIPHome,
     accessory: PlatformAccessory,
   ) {
-    super(platform, home, accessory);
+    super(platform, accessory);
 
     this.platform.log.debug(`Created HmIPContactSensor ${accessory.context.device.label}`);
     this.service = this.accessory.getService(this.platform.Service.ContactSensor) || this.accessory.addService(this.platform.Service.ContactSensor);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-    this.updateDevice(home, accessory.context.device, platform.groups);
+    this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .on('get', this.handleContactSensorStateGet.bind(this));
@@ -56,9 +55,8 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
       : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
   }
 
-  public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPHome, hmIPDevice, groups);
-    this.home = hmIPHome;
+  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'SHUTTER_CONTACT_CHANNEL'

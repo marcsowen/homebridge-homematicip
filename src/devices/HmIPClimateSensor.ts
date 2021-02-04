@@ -1,7 +1,7 @@
-import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
+import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHeatingGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 interface ClimateSensorChannel {
@@ -29,10 +29,9 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    home: HmIPHome,
     accessory: PlatformAccessory,
   ) {
-    super(platform, home, accessory);
+    super(platform, accessory);
 
     this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor) || this.accessory.addService(this.platform.Service.TemperatureSensor);
     this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
@@ -40,7 +39,7 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
     this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor) || this.accessory.addService(this.platform.Service.HumiditySensor);
     this.humidityService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-    this.updateDevice(home, accessory.context.device, platform.groups);
+    this.updateDevice(accessory.context.device, platform.groups);
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
         .setProps({minValue: -100})
@@ -59,9 +58,8 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
   }
 
 
-  public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPHome, hmIPDevice, groups);
-    this.home = hmIPHome;
+  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'CLIMATE_SENSOR_CHANNEL'

@@ -1,7 +1,13 @@
-import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
+import {
+  CharacteristicGetCallback,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  PlatformAccessory,
+  Service
+} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHome, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 interface ShutterChannel {
@@ -26,15 +32,14 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    home: HmIPHome,
     accessory: PlatformAccessory,
   ) {
-    super(platform, home, accessory);
+    super(platform, accessory);
 
     this.service = this.accessory.getService(this.platform.Service.WindowCovering) || this.accessory.addService(this.platform.Service.WindowCovering);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-    this.updateDevice(home, accessory.context.device, platform.groups);
+    this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
       .on('get', this.handleCurrentPositionGet.bind(this));
@@ -84,9 +89,8 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     callback(null);
   }
 
-  public updateDevice(hmIPHome: HmIPHome, hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPHome, hmIPDevice, groups);
-    this.home = hmIPHome;
+  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'SHUTTER_CHANNEL' || channel.functionalChannelType === 'BLIND_CHANNEL') {

@@ -1,4 +1,12 @@
-import {API, Characteristic, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service} from 'homebridge';
+import {
+  API,
+  Characteristic,
+  DynamicPlatformPlugin,
+  Logger,
+  PlatformAccessory,
+  PlatformConfig,
+  Service,
+} from 'homebridge';
 import {HmIPConnector} from './HmIPConnector';
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings';
 import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
@@ -16,6 +24,7 @@ import {HmIPGarageDoor} from './devices/HmIPGarageDoor';
 import {HmIPClimateSensor} from './devices/HmIPClimateSensor';
 import {HmIPWaterSensor} from './devices/HmIPWaterSensor';
 import {HmIPBlind} from './devices/HmIPBlind';
+import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring';
 
 /**
  * HomematicIP platform
@@ -189,7 +198,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
             if (event.device) {
               this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
               if (this.deviceMap.has(event.device.id)) {
-                (<Updateable>this.deviceMap.get(event.device.id)).updateDevice(this.home, event.device, this.groups);
+                (<Updateable>this.deviceMap.get(event.device.id)).updateDevice(event.device, this.groups);
               } else {
                 this.log.debug('Device add/change event from unregistered device: ' + event.device.id);
               }
@@ -198,11 +207,6 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
           case 'HOME_CHANGED':
             if (event.home) {
               this.log.debug(`${event.pushEventType}: ${event.home.id} ${JSON.stringify(event.home)}`);
-              // this.setHome(event.home);
-              this.deviceMap.forEach(device => {
-                device.home = event.home;
-                device.updateDevice(device, this.groups);
-              });
             }
             break;
           default:
@@ -229,26 +233,26 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       || device.type === 'BRAND_WALL_MOUNTED_THERMOSTAT'
       || device.type === 'ROOM_CONTROL_DEVICE'
       || device.type === 'WALL_MOUNTED_THERMOSTAT_BASIC_HUMIDITY') {
-      homebridgeDevice = new HmIPWallMountedThermostat(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPWallMountedThermostat(this, hmIPAccessory.accessory);
     } else if (device.type === 'TEMPERATURE_HUMIDITY_SENSOR'
       || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_OUTDOOR'
       || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_DISPLAY') {
-      homebridgeDevice = new HmIPClimateSensor(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPClimateSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'HEATING_THERMOSTAT') {
-      homebridgeDevice = new HmIPHeatingThermostat(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPHeatingThermostat(this, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_SHUTTER'
       || device.type === 'BRAND_SHUTTER') {
-      homebridgeDevice = new HmIPShutter(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPShutter(this, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_BLIND'
       || device.type === 'BRAND_BLIND') {
-      homebridgeDevice = new HmIPBlind(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPBlind(this, hmIPAccessory.accessory);
     } else if (device.type === 'SHUTTER_CONTACT'
       || device.type === 'SHUTTER_CONTACT_INTERFACE'
       || device.type === 'SHUTTER_CONTACT_INVISIBLE'
       || device.type === 'SHUTTER_CONTACT_MAGNETIC'
       || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS'
       || device.type === 'ROTARY_HANDLE_SENSOR') {
-      homebridgeDevice = new HmIPContactSensor(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPContactSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'PUSH_BUTTON'
       || device.type === 'BRAND_PUSH_BUTTON'
       || device.type === 'PUSH_BUTTON_6'
@@ -256,25 +260,26 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       || device.type === 'REMOTE_CONTROL_8_MODULE'
       || device.type === 'KEY_REMOTE_CONTROL_4'
       || device.type === 'KEY_REMOTE_CONTROL_4') {
-      homebridgeDevice = new HmIPPushButton(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPPushButton(this, hmIPAccessory.accessory);
     } else if (device.type === 'SMOKE_DETECTOR') {
-      homebridgeDevice = new HmIPSmokeDetector(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPSmokeDetector(this, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH'
       || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_BATTERY'
       || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_2' // Only first channel
       || device.type === 'OPEN_COLLECTOR_8_MODULE' // Only first channel
       || device.type === 'HEATING_SWITCH_2' // Only first channel
       || device.type === 'WIRED_SWITCH_8' // Only first channel
-      || device.type === 'DIN_RAIL_SWITCH_4' // Only first channel
-      || device.type === 'PLUGABLE_SWITCH_MEASURING'
+      || device.type === 'DIN_RAIL_SWITCH_4') { // Only first channel
+      homebridgeDevice = new HmIPSwitch(this, hmIPAccessory.accessory);
+    } else if ( device.type === 'PLUGABLE_SWITCH_MEASURING'
       || device.type === 'BRAND_SWITCH_MEASURING'
       || device.type === 'FULL_FLUSH_SWITCH_MEASURING') {
-      homebridgeDevice = new HmIPSwitch(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPSwitchMeasuring(this, hmIPAccessory.accessory);
     } else if (device.type === 'TORMATIC_MODULE'
       || device.type === 'HOERMANN_DRIVES_MODULE') {
-      homebridgeDevice = new HmIPGarageDoor(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPGarageDoor(this, hmIPAccessory.accessory);
     } else if (device.type === 'WATER_SENSOR') {
-      homebridgeDevice = new HmIPWaterSensor(this, home, hmIPAccessory.accessory);
+      homebridgeDevice = new HmIPWaterSensor(this, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;
