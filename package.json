@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc.sowen@gmail.com>",
@@ -30,7 +30,7 @@
     "homebridge": ">=1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^14.0.5",
+    "@types/node": "^14.14.25",
     "@types/ws": "^7.2.4",
     "@typescript-eslint/eslint-plugin": "^4.12.0",
     "@typescript-eslint/parser": "^4.12.0",

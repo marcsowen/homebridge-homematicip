@@ -80,6 +80,8 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.platform.log.info('Ignoring setting heating/cooling state for %s to %s', this.accessory.displayName,
+      this.getTargetHeatingCoolingStateName(<number>value));
     callback(null);
   }
 
@@ -92,7 +94,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   async handleTargetTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info(`Setting target temperature for ${this.accessory.displayName} to ${value}`);
+    this.platform.log.info('Setting target temperature for %s to %s', this.accessory.displayName, value);
     const body = {
       groupId: this.heatingGroupId,
       setPointTemperature: value,
@@ -106,6 +108,8 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   handleTemperatureDisplayUnitsSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.platform.log.info('Ignoring setting display units for %s to %s', this.accessory.displayName,
+      value == 0 ? "CELSIUS" : "FAHRENHEIT");
     callback(null);
   }
 
@@ -146,11 +150,27 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
             if (heatingGroup.cooling !== null && heatingGroup.cooling !== this.cooling) {
               this.cooling = heatingGroup.cooling;
               this.platform.log.info('Cooling mode of %s changed to %s', this.accessory.displayName, this.cooling);
+              this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.cooling ?
+                this.platform.Characteristic.CurrentHeatingCoolingState.COOL : this.platform.Characteristic.CurrentHeatingCoolingState.HEAT);
             }
           }
         }
-
       }
+    }
+  }
+
+  private getTargetHeatingCoolingStateName(heatingCoolingState: number): string {
+    switch (heatingCoolingState) {
+      case this.platform.Characteristic.TargetHeatingCoolingState.OFF:
+        return "OFF";
+      case this.platform.Characteristic.TargetHeatingCoolingState.HEAT:
+        return "HEAT";
+      case this.platform.Characteristic.TargetHeatingCoolingState.COOL:
+        return "COOL";
+      case this.platform.Characteristic.TargetHeatingCoolingState.AUTO:
+        return "AUTO";
+      default:
+        return "UNKNOWN";
     }
   }
 }

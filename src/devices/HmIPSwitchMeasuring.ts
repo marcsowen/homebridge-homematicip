@@ -9,7 +9,7 @@ import {
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
-import {ElectricPower, ElectricalEnergy} from "../EveCharacteristics";
+import {CustomCharacteristic} from "../CustomCharacteristic";
 
 interface SwitchMeasuringChannel {
     functionalChannelType: string;
@@ -23,9 +23,9 @@ interface SwitchMeasuringChannel {
 /**
  * HomematicIP switch (measuring)
  *
- * HMIP-PSM (Pluggable Switch and Meter)
- * HMIP-BSM (Brand Switch and Meter)
- * HMIP-FSM, HMIP-FSM16 (Full flush Switch and Meter)
+ * HmIP-PSM (Pluggable Switch and Meter)
+ * HmIP-BSM (Brand Switch and Meter)
+ * HmIP-FSM, HMIP-FSM16 (Full flush Switch and Meter)
  *
  */
 export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable {
@@ -44,6 +44,8 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
         this.platform.log.debug(`Created switch (measuring) ${accessory.context.device.label}`);
         this.service = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+        this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower);
+        this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy);
 
         this.updateDevice(accessory.context.device, platform.groups);
 
@@ -51,10 +53,10 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
           .on('get', this.handleOnGet.bind(this))
           .on('set', this.handleOnSet.bind(this));
 
-        this.service.getCharacteristic(ElectricPower)
+        this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower)
           .on('get', this.handleElectricPowerGet.bind(this));
 
-        this.service.getCharacteristic(ElectricalEnergy)
+        this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy)
           .on('get', this.handleElectricalEnergyGet.bind(this));
     }
 
@@ -98,13 +100,13 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
                 if (switchMeasuringChannel.currentPowerConsumption != null && switchMeasuringChannel.currentPowerConsumption != this.currentPowerConsumption) {
                     this.currentPowerConsumption = switchMeasuringChannel.currentPowerConsumption;
                     this.platform.log.info("Switch power consumption of %s changed to %s", this.accessory.displayName, this.currentPowerConsumption);
-                    this.service.updateCharacteristic(ElectricPower, this.currentPowerConsumption);
+                    this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower, this.currentPowerConsumption);
                 }
 
                 if (switchMeasuringChannel.energyCounter != null && switchMeasuringChannel.energyCounter != this.energyCounter) {
                     this.energyCounter = switchMeasuringChannel.energyCounter;
                     this.platform.log.info("Switch energy counter of %s changed to %s", this.accessory.displayName, this.energyCounter);
-                    this.service.updateCharacteristic(ElectricalEnergy, this.energyCounter);
+                    this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy, this.energyCounter);
                 }
             }
         }

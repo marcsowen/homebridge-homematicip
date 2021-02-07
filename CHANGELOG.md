@@ -1,3 +1,14 @@
+## 0.2.1 (2021-02-07)
+
+### Improvements
+
+- **WallMountedThermostat**: Added info log when changing target heating/cooling state or display unit. These changes 
+  are ignored.
+
+### Bug Fixes
+
+- **General**: Fixed dependency problem preventing plugin to start.
+
 ## 0.2.0 (2021-02-04)
 
 ### Improvements

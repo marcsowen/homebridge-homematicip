@@ -9,7 +9,7 @@ import {
 } from 'homebridge';
 import {HmIPConnector} from './HmIPConnector';
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings';
-import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
+import {HmIPDevice, HmIPGroup, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
 import {HmIPShutter} from './devices/HmIPShutter';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import {HmIPContactSensor} from './devices/HmIPContactSensor';
@@ -25,6 +25,7 @@ import {HmIPClimateSensor} from './devices/HmIPClimateSensor';
 import {HmIPWaterSensor} from './devices/HmIPWaterSensor';
 import {HmIPBlind} from './devices/HmIPBlind';
 import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring';
+import {CustomCharacteristic} from './CustomCharacteristic';
 
 /**
  * HomematicIP platform
@@ -38,8 +39,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
   public readonly connector: HmIPConnector;
   public groups!: { [key: string]: HmIPGroup };
-  private home!: HmIPHome;
   private deviceMap = new Map();
+  public customCharacteristic: CustomCharacteristic;
 
   constructor(
     public readonly log: Logger,
@@ -47,6 +48,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     public readonly api: API,
   ) {
     this.log.info('%s v%s', PLUGIN_NAME, PLUGIN_VERSION);
+
+    this.customCharacteristic = new CustomCharacteristic(api);
 
     this.connector = new HmIPConnector(
       log,
@@ -138,7 +141,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     // loop over the discovered devices and register each one if it has not already been registered
     for (const id in hmIPState.devices) {
       const device = hmIPState.devices[id];
-      this.updateAccessory(id, this.home, device);
+      this.updateAccessory(id, device);
     }
 
     // find cached but now removed accessories and unregister them
@@ -225,7 +228,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   }
    */
 
-  private updateAccessory(id: string, home: HmIPHome, device: HmIPDevice) {
+  private updateAccessory(id: string, device: HmIPDevice) {
     const uuid = this.api.hap.uuid.generate(id);
     const hmIPAccessory = this.createAccessory(uuid, device.label, device);
     let homebridgeDevice: HmIPGenericDevice | null = null;

@@ -83,7 +83,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
                     this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
                 }
             }
-
         }
     }
+
 }
