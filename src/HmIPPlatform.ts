@@ -26,6 +26,7 @@ import {HmIPWaterSensor} from './devices/HmIPWaterSensor';
 import {HmIPBlind} from './devices/HmIPBlind';
 import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring';
 import {CustomCharacteristic} from './CustomCharacteristic';
+import {HmIPLightSensor} from './devices/HmIPLightSensor';
 
 /**
  * HomematicIP platform
@@ -283,6 +284,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPGarageDoor(this, hmIPAccessory.accessory);
     } else if (device.type === 'WATER_SENSOR') {
       homebridgeDevice = new HmIPWaterSensor(this, hmIPAccessory.accessory);
+    } else if (device.type === 'LIGHT_SENSOR') {
+      homebridgeDevice = new HmIPLightSensor(this, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;

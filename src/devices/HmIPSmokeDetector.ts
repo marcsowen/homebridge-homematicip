@@ -30,7 +30,7 @@ interface SmokeDetectorChannel {
 /**
  * HomematicIP smoke detector
  *
- * HMIP-SWSD (Smoke Alarm with Q label)
+ * HmIP-SWSD (Smoke Alarm with Q label)
  */
 export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
     private service: Service;
@@ -43,7 +43,7 @@ export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
     ) {
         super(platform, accessory);
 
-        this.platform.log.debug(`Created SmokeDetector ${accessory.context.device.label}`);
+        this.platform.log.debug('Created SmokeDetector %s', accessory.context.device.label);
         this.service = this.accessory.getService(this.platform.Service.SmokeSensor) || this.accessory.addService(this.platform.Service.SmokeSensor);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
@@ -65,11 +65,11 @@ export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType === 'SMOKE_DETECTOR_CHANNEL') {
                 const smokeDetectorChannel = <SmokeDetectorChannel>channel;
-                this.platform.log.debug(`Smoke detector update: ${JSON.stringify(channel)}`);
+                this.platform.log.debug('Smoke detector update: %s', JSON.stringify(channel));
 
                 if (smokeDetectorChannel.smokeDetectorAlarmType !== null && smokeDetectorChannel.smokeDetectorAlarmType !== this.smokeDetectorAlarmType) {
-                    this.platform.log.info(`Smoke detector state of ${this.accessory.displayName} changed to '${smokeDetectorChannel.smokeDetectorAlarmType}'`);
                     this.smokeDetectorAlarmType = smokeDetectorChannel.smokeDetectorAlarmType;
+                    this.platform.log.info('Smoke detector state of %s changed to %s', this.accessory.displayName, this.smokeDetectorAlarmType);
                     this.service.updateCharacteristic(this.platform.Characteristic.SmokeDetected,
                     this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
                         ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED

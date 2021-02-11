@@ -63,7 +63,7 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
         const slatsLevelHomeKit = HmIPBlind.slatsHmIPToHomeKit(blindChannel.slatsLevel);
         if (slatsLevelHomeKit != this.slatsLevel) {
           this.slatsLevel = slatsLevelHomeKit;
-          this.platform.log.info('Current blind slats level of %s changed to %s', this.accessory.displayName, this.slatsLevel);
+          this.platform.log.info('Current blind slats level of %s changed to %s', this.accessory.displayName, this.slatsLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentHorizontalTiltAngle, slatsLevelHomeKit);
         }
 

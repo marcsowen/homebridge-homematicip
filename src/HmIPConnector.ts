@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import {Logger} from 'homebridge';
 import {PLUGIN_NAME, PLUGIN_VERSION} from './settings';
 import Timeout = NodeJS.Timeout;
+import Bottleneck from 'bottleneck';
 
 interface LookUpResult {
   urlREST: string;
@@ -37,6 +38,7 @@ export class HmIPConnector {
   private wsReconnectIntervalId: Timeout | null = null;
   private wsReconnectIntervalMillis = 10000;
   private ws: WebSocket | null = null;
+  private limiter: Bottleneck;
 
   constructor(log: Logger, accessPoint: string, authToken: string, pin: string) {
     this.log = log;
@@ -64,6 +66,11 @@ export class HmIPConnector {
       .update(this.accessPoint + 'jiLpVitHvWnIGD1yo7MA')
       .digest('hex')
       .toUpperCase();
+
+    this.limiter = new Bottleneck({
+      maxConcurrent: 1,
+      minTime: 500,
+    });
   }
 
   isReadyForUse() {
@@ -120,11 +127,11 @@ export class HmIPConnector {
 
     const body = _body ? JSON.stringify(_body) : null;
     this.log.debug('Requesting ' + url + ': ' + JSON.stringify(body) + ', headers=' + JSON.stringify(headers));
-    const response = await fetch(url, {
+    const response = await this.limiter.schedule(() => fetch(url, {
       method: 'POST',
       headers: headers,
       body: body,
-    });
+    }));
     if (response.status >= 400) {
       if (logError) {
         this.log.error('Cannot request: url=' + url + ', request=' + JSON.stringify(body) + ', headers=' + JSON.stringify(headers)

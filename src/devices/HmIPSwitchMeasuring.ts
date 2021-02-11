@@ -9,7 +9,6 @@ import {
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
-import {CustomCharacteristic} from "../CustomCharacteristic";
 
 interface SwitchMeasuringChannel {
     functionalChannelType: string;
@@ -41,7 +40,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
     ) {
         super(platform, accessory);
 
-        this.platform.log.debug(`Created switch (measuring) ${accessory.context.device.label}`);
+        this.platform.log.debug('Created switch (measuring) %s', accessory.context.device.label);
         this.service = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
         this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower);
@@ -89,7 +88,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
             const channel = hmIPDevice.functionalChannels[id];
             if (channel.functionalChannelType == "SWITCH_MEASURING_CHANNEL") {
                 const switchMeasuringChannel = <SwitchMeasuringChannel>channel;
-                this.platform.log.debug(`Switch (measuring) update: ${JSON.stringify(channel)}`);
+                this.platform.log.debug('Switch (measuring) update: %s', JSON.stringify(channel));
 
                 if (switchMeasuringChannel.on != this.on) {
                     this.on = switchMeasuringChannel.on;
@@ -99,13 +98,13 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
 
                 if (switchMeasuringChannel.currentPowerConsumption != null && switchMeasuringChannel.currentPowerConsumption != this.currentPowerConsumption) {
                     this.currentPowerConsumption = switchMeasuringChannel.currentPowerConsumption;
-                    this.platform.log.info("Switch power consumption of %s changed to %s", this.accessory.displayName, this.currentPowerConsumption);
+                    this.platform.log.info("Switch power consumption of %s changed to %s", this.accessory.displayName, this.currentPowerConsumption.toFixed(1));
                     this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower, this.currentPowerConsumption);
                 }
 
                 if (switchMeasuringChannel.energyCounter != null && switchMeasuringChannel.energyCounter != this.energyCounter) {
                     this.energyCounter = switchMeasuringChannel.energyCounter;
-                    this.platform.log.info("Switch energy counter of %s changed to %s", this.accessory.displayName, this.energyCounter);
+                    this.platform.log.info("Switch energy counter of %s changed to %s", this.accessory.displayName, this.energyCounter.toFixed(3));
                     this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy, this.energyCounter);
                 }
             }

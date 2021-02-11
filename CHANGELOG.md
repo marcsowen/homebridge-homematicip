@@ -1,3 +1,17 @@
+## 0.2.2 (2021-02-11)
+
+### New devices
+
+- **HmIP-SLO**: Light Sensor outdoor
+
+### Improvements
+
+- **General**: Added API call rate limiter to prevent 60 minutes IP blocks by eq-3 when using fast firing GUI elements
+like the shutter slider in EVE app.
+- **SwitchMeasuring**: Show power and energy with less decimal places.
+- **Shutter/Blind**: Show shutter and slats level without decimal places.
+- **General**: Minor code cleanup.
+
 ## 0.2.1 (2021-02-07)
 
 ### Improvements

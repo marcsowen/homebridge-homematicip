@@ -99,7 +99,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
         const shutterLevelHomeKit = HmIPShutter.shutterHmIPToHomeKit(shutterChannel.shutterLevel);
         if (shutterLevelHomeKit != this.shutterLevel) {
           this.shutterLevel = shutterLevelHomeKit;
-          this.platform.log.info('Current shutter level of %s changed to %s', this.accessory.displayName, this.shutterLevel);
+          this.platform.log.info('Current shutter level of %s changed to %s', this.accessory.displayName, this.shutterLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.shutterLevel);
         }
 

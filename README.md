@@ -74,6 +74,7 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-MOD-TM (Garage Door Module Tormatic)
 - HmIP-MOD-HO (Garage Door Module for Hörmann)
 - HmIP-SWD (Water sensor)
+  HmIP-SLO (Light Sensor outdoor)
 
 (*) Currently, only first channel is supported.
 
