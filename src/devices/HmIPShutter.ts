@@ -9,6 +9,7 @@ import {
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
+import {HmIPBlind} from './HmIPBlind';
 
 interface ShutterChannel {
   functionalChannelType: string;
@@ -28,7 +29,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
 
   // Values are HomeKit style (100..0)
   protected shutterLevel = 0;
-  private processing = false;
+  protected processing = false;
 
   constructor(
     platform: HmIPPlatform,
@@ -106,10 +107,19 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
         if (shutterChannel.processing != this.processing) {
           this.processing = shutterChannel.processing;
           this.platform.log.info('Processing state of shutter/blind %s changed to %s', this.accessory.displayName, this.processing);
-          this.service.updateCharacteristic(this.platform.Characteristic.PositionState,
-            shutterChannel.processing ? this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
+          this.updateProcessingState();
         }
+
       }
+    }
+  }
+
+  protected updateProcessingState() {
+    if (this.processing) {
+      this.service.updateCharacteristic(this.platform.Characteristic.PositionState, this.platform.Characteristic.PositionState.DECREASING);
+    } else {
+      this.service.updateCharacteristic(this.platform.Characteristic.PositionState, this.platform.Characteristic.PositionState.STOPPED);
+      this.service.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.shutterLevel);
     }
   }
 

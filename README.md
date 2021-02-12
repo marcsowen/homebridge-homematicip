@@ -43,7 +43,9 @@ button and note the "auth_token" that is being generated, add it to your config.
 
 - HmIP-HAP (Access Point)
 - HmIP-eTRV (Radiator Thermostat)
-- HmIP-eTRV-C (Heating-thermostat compact without display)
+- HmIP-eTRV-2 (Radiator Thermostat)
+- HmIP-eTRV-B (Radiator Thermostat - basic)
+- HmIP-eTRV-C (Heating-thermostat - compact without display)
 - HmIP-FROLL (Shutter Actuator - flush-mount)
 - HmIP-BROLL (Shutter Actuator - brand-mount)
 - HmIP-FBL (Blind Actuator - flush-mount)

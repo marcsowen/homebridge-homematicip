@@ -1,3 +1,23 @@
+## 0.2.3 (2021-02-12)
+
+### New devices
+
+- **HmIP-eTRV-C**: Heating-thermostat compact without display
+
+### Improvements
+
+- **HmIP-eTRV**: Fixed update of valve position. Show valve position changes in logs.
+- **HmIP-eTRV**: Valve position > 0 indicates current cooling/heating state: HEAT. Valve position = 0 indicates current
+  heating cooling/heating state: OFF.
+- **HmIP-eTRV**: Added logs for setting ignored values (target cooling/heating mode, display units).
+- **HmIP-eTRV**: Target cooling/heating mode is now ignored. Will be used for future mapping of custom states.
+- **HmIP-eTRV**: Show changes of valve state in logs.
+
+### Bugfix
+
+- **Shutter/Blind**: Fixed spinning progress indicator in Home app.
+- **HmIP-eTRV-C**: HmIP-eTRV-C was listed but not actually supported. 
+
 ## 0.2.2 (2021-02-11)
 
 ### New devices

@@ -10,13 +10,25 @@ import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
+enum ValveState {
+  STATE_NOT_AVAILABLE   = "STATE_NOT_AVAILABLE",
+  RUN_TO_START          = "RUN_TO_START",
+  WAIT_FOR_ADAPTION     = "WAIT_FOR_ADAPTION",
+  ADAPTION_IN_PROGRESS  = "ADAPTION_IN_PROGRESS",
+  ADAPTION_DONE         = "ADAPTION_DONE",
+  TOO_TIGHT             = "TOO_TIGHT",
+  ADJUSTMENT_TOO_BIG    = "ADJUSTMENT_TOO_BIG",
+  ADJUSTMENT_TOO_SMALL  = "ADJUSTMENT_TOO_SMALL",
+  ERROR_POSITION        = "ERROR_POSITION",
+}
+
 interface HeatingThermostatChannel {
   functionalChannelType: string;
   valveActualTemperature: number;
   setPointTemperature: number;
   valvePosition: number;
   temperatureOffset: number;
-  valveState: string;
+  valveState: ValveState;
   groups: string[];
 }
 
@@ -29,6 +41,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   private valveActualTemperature = 0;
   private setPointTemperature = 0;
   private valvePosition = 0;
+  private valveState: ValveState = ValveState.ERROR_POSITION;
   private heatingGroupId = '';
 
   constructor(
@@ -59,20 +72,20 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     this.service.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
       .on('get', this.handleTemperatureDisplayUnitsGet.bind(this))
       .on('set', this.handleTemperatureDisplayUnitsSet.bind(this));
-
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.valveActualTemperature <= (this.setPointTemperature + 0.1) && this.valvePosition > 0 ?
-      this.platform.Characteristic.CurrentHeatingCoolingState.HEAT : this.platform.Characteristic.CurrentHeatingCoolingState.COOL);
+    callback(null, this.valvePosition > 0 ?
+      this.platform.Characteristic.CurrentHeatingCoolingState.HEAT : this.platform.Characteristic.CurrentHeatingCoolingState.OFF);
   }
 
   handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.valveActualTemperature <= (this.setPointTemperature + 0.1) && this.valvePosition > 0 ?
-      this.platform.Characteristic.CurrentHeatingCoolingState.HEAT : this.platform.Characteristic.CurrentHeatingCoolingState.COOL);
+    callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
   }
 
   handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.platform.log.info('Ignoring setting heating/cooling state for %s to %s', this.accessory.displayName,
+      this.getTargetHeatingCoolingStateName(<number>value));
     callback(null);
   }
 
@@ -99,11 +112,9 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   }
 
   handleTemperatureDisplayUnitsSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.platform.log.info('Ignoring setting display units for %s to %s', this.accessory.displayName,
+      value == 0 ? "CELSIUS" : "FAHRENHEIT");
     callback(null);
-  }
-
-  handleCurrentActuationGet(callback: CharacteristicGetCallback) {
-    callback(null, this.valvePosition);
   }
 
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -111,21 +122,31 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'HEATING_THERMOSTAT_CHANNEL') {
-        const wthChannel = <HeatingThermostatChannel>channel;
+        const heatingThermostatChannel = <HeatingThermostatChannel>channel;
 
-        if (wthChannel.setPointTemperature !== this.setPointTemperature) {
-          this.platform.log.info(`Target temperature of ${this.accessory.displayName} changed to ${wthChannel.setPointTemperature}`);
-          this.setPointTemperature = wthChannel.setPointTemperature;
+        if (heatingThermostatChannel.setPointTemperature !== this.setPointTemperature) {
+          this.setPointTemperature = heatingThermostatChannel.setPointTemperature;
+          this.platform.log.info('Target temperature of %s changed to %s', this.accessory.displayName, this.setPointTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.setPointTemperature);
         }
 
-        if (wthChannel.valveActualTemperature !== this.valveActualTemperature) {
-          this.platform.log.info(`Current temperature of ${this.accessory.displayName} changed to ${wthChannel.valveActualTemperature}`);
-          this.valveActualTemperature = wthChannel.valveActualTemperature;
+        if (heatingThermostatChannel.valveActualTemperature !== this.valveActualTemperature) {
+          this.valveActualTemperature = heatingThermostatChannel.valveActualTemperature;
+          this.platform.log.info('Current temperature of %s changed to %s', this.accessory.displayName, this.valveActualTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.valveActualTemperature);
         }
 
-        for (const groupId of wthChannel.groups) {
+        if (heatingThermostatChannel.valvePosition !== this.valvePosition) {
+          this.valvePosition = heatingThermostatChannel.valvePosition;
+          this.platform.log.info('Current valve position of %s changed to %s', this.accessory.displayName, this.valvePosition);
+        }
+
+        if (heatingThermostatChannel.valveState !== this.valveState) {
+          this.valveState = heatingThermostatChannel.valveState;
+          this.platform.log.info('Current valve state of %s changed to %s', this.accessory.displayName, this.valveState);
+        }
+
+        for (const groupId of heatingThermostatChannel.groups) {
           if (groups[groupId].type === 'HEATING') {
             this.heatingGroupId = groupId;
           }
@@ -133,4 +154,20 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
       }
     }
   }
+
+  private getTargetHeatingCoolingStateName(heatingCoolingState: number): string {
+    switch (heatingCoolingState) {
+      case this.platform.Characteristic.TargetHeatingCoolingState.OFF:
+        return "OFF";
+      case this.platform.Characteristic.TargetHeatingCoolingState.HEAT:
+        return "HEAT";
+      case this.platform.Characteristic.TargetHeatingCoolingState.COOL:
+        return "COOL";
+      case this.platform.Characteristic.TargetHeatingCoolingState.AUTO:
+        return "AUTO";
+      default:
+        return "UNKNOWN";
+    }
+  }
+
 }
