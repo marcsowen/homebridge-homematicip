@@ -46,6 +46,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
       .on('get', this.handleCurrentPositionGet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
+      .on('get', this.handleTargetPositionGet.bind(this))
       .on('set', this.handleTargetPositionSet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
@@ -56,6 +57,10 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   }
 
   handleCurrentPositionGet(callback: CharacteristicGetCallback) {
+    callback(null, this.shutterLevel);
+  }
+
+  handleTargetPositionGet(callback: CharacteristicGetCallback) {
     callback(null, this.shutterLevel);
   }
 
@@ -102,24 +107,17 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
           this.shutterLevel = shutterLevelHomeKit;
           this.platform.log.info('Current shutter level of %s changed to %s', this.accessory.displayName, this.shutterLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.shutterLevel);
+          this.service.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.shutterLevel);
         }
 
         if (shutterChannel.processing != this.processing) {
           this.processing = shutterChannel.processing;
           this.platform.log.info('Processing state of shutter/blind %s changed to %s', this.accessory.displayName, this.processing);
-          this.updateProcessingState();
+          this.service.updateCharacteristic(this.platform.Characteristic.PositionState, this.processing ?
+            this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
         }
 
       }
-    }
-  }
-
-  protected updateProcessingState() {
-    if (this.processing) {
-      this.service.updateCharacteristic(this.platform.Characteristic.PositionState, this.platform.Characteristic.PositionState.DECREASING);
-    } else {
-      this.service.updateCharacteristic(this.platform.Characteristic.PositionState, this.platform.Characteristic.PositionState.STOPPED);
-      this.service.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.shutterLevel);
     }
   }
 

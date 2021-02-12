@@ -34,10 +34,15 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
       .on('get', this.handleCurrentHorizontalTiltAngleGet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetHorizontalTiltAngle)
+      .on('get', this.handleTargetHorizontalTiltAngleGet.bind(this))
       .on('set', this.handleTargetHorizontalTiltAngleSet.bind(this));
   }
 
   handleCurrentHorizontalTiltAngleGet(callback: CharacteristicGetCallback) {
+    callback(null, this.slatsLevel);
+  }
+
+  handleTargetHorizontalTiltAngleGet(callback: CharacteristicGetCallback) {
     callback(null, this.slatsLevel);
   }
 
@@ -65,15 +70,9 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
           this.slatsLevel = slatsLevelHomeKit;
           this.platform.log.info('Current blind slats level of %s changed to %s', this.accessory.displayName, this.slatsLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentHorizontalTiltAngle, this.slatsLevel);
+          this.service.updateCharacteristic(this.platform.Characteristic.TargetHorizontalTiltAngle, this.slatsLevel);
         }
       }
-    }
-  }
-
-  protected updateProcessingState() {
-    super.updateProcessingState();
-    if (!this.processing) {
-      this.service.updateCharacteristic(this.platform.Characteristic.TargetHorizontalTiltAngle, this.slatsLevel);
     }
   }
 

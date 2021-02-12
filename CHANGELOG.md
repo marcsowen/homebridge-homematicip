@@ -1,3 +1,10 @@
+## 0.2.5 (2021-02-12)
+
+### Improvements
+
+- **Shutter/Blind**: Improved target position behavior even further. Now target always follows the current position. The
+spinning progress indicator was actually spinning because current and target position were not the same.
+
 ## 0.2.4 (2021-02-12)
 
 ### Improvements
