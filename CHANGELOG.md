@@ -1,3 +1,10 @@
+## 0.2.4 (2021-02-12)
+
+### Improvements
+
+- **General**: Removed all push button type devices. I haven't figured out a way to get push events from the HmIP-Cloud.
+My guess is it is not possible. Now those devices not shown as unsupported devices in the Home App.
+  
 ## 0.2.3 (2021-02-12)
 
 ### New devices

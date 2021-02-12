@@ -17,7 +17,6 @@ import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
 import {HmIPAccessory} from './HmIPAccessory';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
 import * as os from 'os';
-import {HmIPPushButton} from './devices/HmIPPushButton';
 import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
 import {HmIPSwitch} from './devices/HmIPSwitch';
 import {HmIPGarageDoor} from './devices/HmIPGarageDoor';
@@ -258,14 +257,6 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS'
       || device.type === 'ROTARY_HANDLE_SENSOR') {
       homebridgeDevice = new HmIPContactSensor(this, hmIPAccessory.accessory);
-    } else if (device.type === 'PUSH_BUTTON'
-      || device.type === 'BRAND_PUSH_BUTTON'
-      || device.type === 'PUSH_BUTTON_6'
-      || device.type === 'REMOTE_CONTROL_8'
-      || device.type === 'REMOTE_CONTROL_8_MODULE'
-      || device.type === 'KEY_REMOTE_CONTROL_4'
-      || device.type === 'KEY_REMOTE_CONTROL_4') {
-      homebridgeDevice = new HmIPPushButton(this, hmIPAccessory.accessory);
     } else if (device.type === 'SMOKE_DETECTOR') {
       homebridgeDevice = new HmIPSmokeDetector(this, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH'
