@@ -19,13 +19,12 @@ export class CustomCharacteristic {
     }, 'Electrical Energy');
   }
 
-  private createCharacteristics(key: string, uuid: string, props: Partial<CharacteristicProps>, displayName: string = key) {
+  private createCharacteristics(key: string, uuid: string, props: CharacteristicProps, displayName: string = key) {
     this.characteristic[key] = class extends this.api.hap.Characteristic {
       static readonly UUID: string = uuid;
 
       constructor() {
-        super(displayName, uuid);
-        this.setProps(props);
+        super(displayName, uuid, props);
         this.value = this.getDefaultValue();
       }
     };
