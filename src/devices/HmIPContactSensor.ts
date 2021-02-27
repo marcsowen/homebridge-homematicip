@@ -1,4 +1,4 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
@@ -28,7 +28,8 @@ interface ContactChannel {
  *
  */
 export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
-  private service: Service;
+  private contactService: Service;
+  private windowService: Service;
 
   private windowState = WindowState.CLOSED;
   private eventDelay = 0;
@@ -40,19 +41,57 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
     super(platform, accessory);
 
     this.platform.log.debug(`Created HmIPContactSensor ${accessory.context.device.label}`);
-    this.service = this.accessory.getService(this.platform.Service.ContactSensor) || this.accessory.addService(this.platform.Service.ContactSensor);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.contactService = this.accessory.getService(this.platform.Service.ContactSensor) || this.accessory.addService(this.platform.Service.ContactSensor);
+    this.contactService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.contactService.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .on('get', this.handleContactSensorStateGet.bind(this));
+
+    this.windowService = this.accessory.getService(this.platform.Service.Window) || this.accessory.addService(this.platform.Service.Window);
+    this.windowService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.windowService.getCharacteristic(this.platform.Characteristic.CurrentPosition)
+      .on('get', this.handleWindowCurrentPositionGet.bind(this));
+    this.windowService.getCharacteristic(this.platform.Characteristic.PositionState)
+      .on('get', this.handleWindowPositionStateGet.bind(this));
+    this.windowService.getCharacteristic(this.platform.Characteristic.TargetPosition)
+      .on('get', this.handleWindowTargetPositionGet.bind(this))
+      .on('set', this.handleWindowTargetPositionSet.bind(this));
 
     this.updateDevice(accessory.context.device, platform.groups);
-
-    this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .on('get', this.handleContactSensorStateGet.bind(this));
   }
 
   handleContactSensorStateGet(callback: CharacteristicGetCallback) {
     callback(null, this.windowState === WindowState.CLOSED
       ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
       : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+  }
+
+  handleWindowCurrentPositionGet(callback: CharacteristicGetCallback) {
+    callback(null, this.getWindowPosition());
+  }
+
+  handleWindowPositionStateGet(callback: CharacteristicGetCallback) {
+    callback(null, this.platform.Characteristic.PositionState.STOPPED);
+  }
+
+  handleWindowTargetPositionGet(callback: CharacteristicGetCallback) {
+    callback(null, this.getWindowPosition());
+  }
+
+  handleWindowTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.platform.log.info('Ignoring setting target position for %s to %s', this.accessory.displayName, value);
+    callback(null);
+  }
+
+
+  private getWindowPosition(): number {
+    switch (this.windowState) {
+      case WindowState.CLOSED:
+        return 0;
+      case WindowState.TILTED:
+        return 50;
+      case WindowState.OPEN:
+        return 100;
+    }
   }
 
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -69,9 +108,12 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
         if (wthChannel.windowState !== this.windowState) {
           this.platform.log.info(`Contact state of ${this.accessory.displayName} changed to '${wthChannel.windowState}'`);
           this.windowState = wthChannel.windowState;
-          this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.windowState === WindowState.CLOSED
-            ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-            : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+          this.contactService.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
+            this.windowState === WindowState.CLOSED
+              ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+              : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+          this.windowService.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.getWindowPosition());
+          this.windowService.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.getWindowPosition());
         }
 
         if (wthChannel.eventDelay !== this.eventDelay) {

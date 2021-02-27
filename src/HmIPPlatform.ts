@@ -9,7 +9,7 @@ import {
 } from 'homebridge';
 import {HmIPConnector} from './HmIPConnector';
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings';
-import {HmIPDevice, HmIPGroup, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
+import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
 import {HmIPShutter} from './devices/HmIPShutter';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import {HmIPContactSensor} from './devices/HmIPContactSensor';
@@ -26,6 +26,7 @@ import {HmIPBlind} from './devices/HmIPBlind';
 import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring';
 import {CustomCharacteristic} from './CustomCharacteristic';
 import {HmIPLightSensor} from './devices/HmIPLightSensor';
+import {HmIPSecuritySystem} from './HmIPSecuritySystem';
 
 /**
  * HomematicIP platform
@@ -41,6 +42,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   public groups!: { [key: string]: HmIPGroup };
   private deviceMap = new Map();
   public customCharacteristic: CustomCharacteristic;
+
+  public securitySystem: HmIPSecuritySystem | undefined;
 
   constructor(
     public readonly log: Logger,
@@ -162,6 +165,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, accessoriesToBeRemoved);
     }
 
+    this.securitySystem = this.createSecuritySystem(hmIPState.home);
+
     // Start websocket immediately and register handlers
     await this.connector.connectWs(data => {
       const stateChange = <HmIPStateChange>JSON.parse(data.toString());
@@ -171,9 +176,12 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
           case 'GROUP_CHANGED':
           case 'GROUP_ADDED':
             if (event.group) {
-              this.log.debug(`${event.pushEventType}: ${event.group.id}`);
+              this.log.debug(`${event.pushEventType}: ${event.group.id} ${JSON.stringify(event.group)}`);
               hmIPState.groups[event.group.id] = event.group;
               this.groups[event.group.id] = event.group;
+              if (event.group.type === 'SECURITY_ZONE') {
+                this.securitySystem?.updateGroup(event.group);
+              }
             }
             break;
           case 'GROUP_REMOVED':
@@ -210,7 +218,11 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
           case 'HOME_CHANGED':
             if (event.home) {
               this.log.debug(`${event.pushEventType}: ${event.home.id} ${JSON.stringify(event.home)}`);
+              this.securitySystem?.updateHome(event.home);
             }
+            break;
+          case 'SECURITY_JOURNAL_CHANGED':
+            this.log.debug(`${event.pushEventType}: ${JSON.stringify(event)}`);
             break;
           default:
             this.log.debug(`Unhandled event type: ${event.pushEventType} group=${event.group} device=${event.device}`);
@@ -218,15 +230,6 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       }
     });
   }
-
-  /*
-  private setHome(home: HmIPHome) {
-    home.oem = 'eQ-3';
-    home.modelType = 'HmIPHome';
-    home.firmwareVersion = home.currentAPVersion;
-    this.updateHomeAccessories(home);
-  }
-   */
 
   private updateAccessory(id: string, device: HmIPDevice) {
     const uuid = this.api.hap.uuid.generate(id);
@@ -286,22 +289,6 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     hmIPAccessory.register();
   }
 
-  /*
-  private updateHomeAccessories(home: HmIPHome) {
-    this.updateHomeWeatherAccessory(home);
-  }
-
-  private updateHomeWeatherAccessory(homeOriginal: HmIPHome) {
-    const home = Object.assign({}, homeOriginal);
-    home.id = home.id + '__weather';
-    const uuid = this.api.hap.uuid.generate(home.id);
-    const hmIPAccessory = this.createAccessory(uuid, 'HmIPWeather', home);
-    const homeBridgeDevice = new HmIPWeatherDevice(this, home, hmIPAccessory.accessory);
-    this.deviceMap.set(home.id, homeBridgeDevice);
-    hmIPAccessory.register();
-  }
-   */
-
   private createAccessory(uuid: string, displayName: string, deviceContext: unknown): HmIPAccessory {
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above
@@ -323,4 +310,12 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     return this.accessories.find(accessoryFound => accessoryFound.UUID === uuid);
   }
 
+  private createSecuritySystem(home: HmIPHome): HmIPSecuritySystem {
+    const uuid = this.api.hap.uuid.generate(home.id + '_security');
+    const hmIPAccessory = this.createAccessory(uuid, 'Home Security System', home);
+    const securitySystem = new HmIPSecuritySystem(this, hmIPAccessory.accessory);
+    hmIPAccessory.register();
+
+    return securitySystem;
+  }
 }

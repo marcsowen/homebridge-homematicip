@@ -1,3 +1,19 @@
+## 0.3.0 (2021-02-28)
+
+### New devices
+
+- **SecuritySystem**: Added security system including internal and external alarm zones. This is definitely beta, so 
+  please don't trust the alarm to go off inside HomeKit. Also check the HomematicIP app to be sure the right alarm
+  setting is applied.
+
+### Improvements
+
+- **ContactSensor**: Added "window" service to contact sensor. The window service supports "tilted" windows by
+  displaying a current position of 50%.
+- **General**: Only add battery service if device actually has a battery.
+- **General**: Removed now optional characteristics "battery level" and "charging state" which are not supported by
+  HomematicIP anyway.
+
 ## 0.2.5 (2021-02-12)
 
 ### Improvements

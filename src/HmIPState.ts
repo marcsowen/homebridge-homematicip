@@ -41,7 +41,6 @@ export interface HmIPHome {
   oem: string;
   modelType: string;
   firmwareVersion: string;
-
   id: string;
   carrierSense: string;
   weather: HmIPWeather;
@@ -60,12 +59,18 @@ export interface HmIPHome {
   apExchangeClientId: string;
   apExchangeState: string;
   accessPointUpdateStates: { [key: string]: HmIPAccessPointUpdateState };
+  functionalHomes: { [key: string]: HmIPFunctionalHome };
 }
 
 export interface HmIPAccessPointUpdateState {
   accessPointUpdateState: string;
   successfulUpdateTimestamp: number;
   updateStateChangedTimestamp: number;
+}
+
+export interface HmIPFunctionalHome {
+  solution: string;
+  active: boolean;
 }
 
 export interface HmIPWeather {
