@@ -97,6 +97,11 @@ export interface HmIPState {
   home: HmIPHome;
 }
 
+export interface SabotageChannel {
+  functionalChannelType: string;
+  sabotage: boolean;
+}
+
 export interface Updateable {
   updateDevice(device: HmIPDevice, groups: { [key: string]: HmIPGroup }): void;
 }

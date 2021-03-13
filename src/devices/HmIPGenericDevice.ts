@@ -49,6 +49,7 @@ export abstract class HmIPGenericDevice {
   protected rssiPeerValue = 0;
   protected dutyCycle = false;
   protected configPending = false;
+  protected featureSabotage = false;
   private readonly batteryService: Service | undefined;
 
   protected constructor(
@@ -66,11 +67,16 @@ export abstract class HmIPGenericDevice {
 
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'DEVICE_OPERATIONLOCK' || channel.functionalChannelType === 'DEVICE_BASE') {
+      if (channel.functionalChannelType === 'DEVICE_OPERATIONLOCK'
+        || channel.functionalChannelType === 'DEVICE_BASE'
+        || channel.functionalChannelType === 'DEVICE_SABOTAGE') {
         const baseChannel = <DeviceBaseChannel>channel;
 
         featureLowBat = baseChannel.supportedOptionalFeatures.IOptionalFeatureLowBat;
-        break;
+
+        if (channel.functionalChannelType === 'DEVICE_SABOTAGE') {
+          this.featureSabotage = true;
+        }
       }
     }
 
@@ -105,7 +111,9 @@ export abstract class HmIPGenericDevice {
   protected updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'DEVICE_OPERATIONLOCK' || channel.functionalChannelType === 'DEVICE_BASE') {
+      if (channel.functionalChannelType === 'DEVICE_OPERATIONLOCK'
+        || channel.functionalChannelType === 'DEVICE_BASE'
+        || channel.functionalChannelType === 'DEVICE_SABOTAGE') {
         const baseChannel = <DeviceBaseChannel>channel;
 
         if (baseChannel.unreach != null && baseChannel.unreach !== this.unreach) {

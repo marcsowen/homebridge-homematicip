@@ -1,3 +1,13 @@
+## 0.3.6 (2021-03-13)
+
+### Improvements
+
+- **ContactSensor**: Added sabotage state (tampered state) for contact sensors which support it.
+
+### Bugfix
+
+- **General**: Fixed low battery display for all devices with sabotage channel.
+
 ## 0.3.5 (2021-03-13)
 
 ### Improvements

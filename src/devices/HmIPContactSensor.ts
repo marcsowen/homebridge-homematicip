@@ -1,7 +1,7 @@
 import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
+import {HmIPDevice, HmIPGroup, SabotageChannel, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 enum WindowState {
@@ -30,6 +30,7 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
   private service: Service;
 
   private windowState = WindowState.CLOSED;
+  private sabotage = false;
 
   constructor(
     platform: HmIPPlatform,
@@ -40,7 +41,6 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
     this.platform.log.debug('Created HmIPContactSensor %s', accessory.context.device.label);
 
     const windowService = this.accessory.getService(this.platform.Service.Window);
-
     if (windowService != undefined) {
       this.platform.log.info("Removing obsolete window service from %s", accessory.context.device.label);
       this.accessory.removeService(windowService);
@@ -50,6 +50,11 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .on('get', this.handleContactSensorStateGet.bind(this));
+
+    if (this.featureSabotage) {
+      this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
+        .on('get', this.handleStatusTamperedGet.bind(this));
+    }
 
     if (this.service.testCharacteristic(this.platform.Characteristic.CurrentDoorState)) {
       this.platform.log.info("Removing obsolete current door state characteristic from %s", accessory.context.device.label);
@@ -63,6 +68,10 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
     callback(null, this.windowState === WindowState.CLOSED
       ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
       : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+  }
+
+  handleStatusTamperedGet(callback: CharacteristicGetCallback) {
+    callback(null, this.sabotage);
   }
 
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -82,6 +91,15 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
             this.windowState === WindowState.CLOSED
               ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
               : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+        }
+      }
+
+      if (channel.functionalChannelType === 'DEVICE_SABOTAGE') {
+        const sabotageChannel = <SabotageChannel>channel;
+        if (sabotageChannel.sabotage != null && sabotageChannel.sabotage !== this.sabotage) {
+          this.sabotage = sabotageChannel.sabotage;
+          this.platform.log.info('Sabotage state of %s changed to %s', this.accessory.displayName, this.sabotage);
+          this.service.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage);
         }
       }
     }
