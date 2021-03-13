@@ -1,3 +1,9 @@
+## 0.3.2 (2021-03-13)
+
+### Improvements
+
+- **ContactSensor**: Removed obsolete current door state characteristic.
+
 ## 0.3.1 (2021-03-13)
 
 ### Improvements

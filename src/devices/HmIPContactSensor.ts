@@ -51,6 +51,13 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .on('get', this.handleContactSensorStateGet.bind(this));
 
+    const doorCharacteristics = this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState);
+
+    if (doorCharacteristics != undefined) {
+      this.platform.log.info("Removing obsolete current door state characteristic from %s", accessory.context.device.label);
+      this.service.removeCharacteristic(doorCharacteristics);
+    }
+
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
