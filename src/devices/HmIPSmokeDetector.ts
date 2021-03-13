@@ -47,6 +47,11 @@ export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
         this.service = this.accessory.getService(this.platform.Service.SmokeSensor) || this.accessory.addService(this.platform.Service.SmokeSensor);
         this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
+        if (this.service.testCharacteristic(this.platform.Characteristic.StatusTampered)) {
+            this.platform.log.info("Removing obsolete tampered characteristic from %s", accessory.context.device.label);
+            this.service.removeCharacteristic(this.service.getCharacteristic(this.platform.Characteristic.StatusTampered));
+        }
+
         this.updateDevice(accessory.context.device, platform.groups);
 
         this.service.getCharacteristic(this.platform.Characteristic.SmokeDetected)

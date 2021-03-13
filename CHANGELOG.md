@@ -1,3 +1,9 @@
+## 0.3.5 (2021-03-13)
+
+### Improvements
+
+- **SmokeDetector**: Removed obsolete tampered characteristic.
+
 ## 0.3.4 (2021-03-13)
 
 ### Bugfix
