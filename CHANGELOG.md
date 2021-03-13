@@ -1,3 +1,9 @@
+## 0.3.3 (2021-03-13)
+
+### Improvements
+
+- **General**: Removed obsolete battery services and characteristics.
+
 ## 0.3.2 (2021-03-13)
 
 ### Improvements
