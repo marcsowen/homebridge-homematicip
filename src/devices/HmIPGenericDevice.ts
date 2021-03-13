@@ -79,16 +79,14 @@ export abstract class HmIPGenericDevice {
       this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
         .on('get', this.handleStatusLowBatteryGet.bind(this));
 
-      const batteryLevel = this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel);
-      if (batteryLevel != undefined) {
+      if (this.batteryService.testCharacteristic(this.platform.Characteristic.BatteryLevel)) {
         this.platform.log.info("Removing obsolete battery level characteristic from %s", accessory.context.device.label);
-        this.batteryService.removeCharacteristic(batteryLevel);
+        this.batteryService.removeCharacteristic(this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel));
       }
 
-      const chargingState = this.batteryService.getCharacteristic(this.platform.Characteristic.ChargingState);
-      if (chargingState != undefined) {
+      if (this.batteryService.testCharacteristic(this.platform.Characteristic.ChargingState)) {
         this.platform.log.info("Removing obsolete charging state characteristic from %s", accessory.context.device.label);
-        this.batteryService.removeCharacteristic(chargingState);
+        this.batteryService.removeCharacteristic(this.batteryService.getCharacteristic(this.platform.Characteristic.ChargingState));
       }
     } else {
       const batteryService = this.accessory.getService(this.platform.Service.Battery);
