@@ -1,3 +1,9 @@
+## 0.3.7 (2021-03-13)
+
+### Bugfix
+
+- **General**: Fixed tampered state mapping.
+
 ## 0.3.6 (2021-03-13)
 
 ### Improvements

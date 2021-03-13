@@ -71,7 +71,9 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
   }
 
   handleStatusTamperedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.sabotage);
+    callback(null, this.sabotage
+      ? this.platform.Characteristic.StatusTampered.TAMPERED
+      : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
   }
 
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -99,7 +101,9 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
         if (sabotageChannel.sabotage != null && sabotageChannel.sabotage !== this.sabotage) {
           this.sabotage = sabotageChannel.sabotage;
           this.platform.log.info('Sabotage state of %s changed to %s', this.accessory.displayName, this.sabotage);
-          this.service.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage);
+          this.service.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage
+            ? this.platform.Characteristic.StatusTampered.TAMPERED
+            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
         }
       }
     }
