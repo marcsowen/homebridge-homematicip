@@ -1,3 +1,12 @@
+## 0.3.1 (2021-03-13)
+
+### Improvements
+
+- **ContactSensor**: Removed additional "window" service which prevents display of two window sensors when there is only
+  one.
+- **RotaryHandleSensor**: Use window service for the rotary handle sensor exclusively. Removed contact service for this
+  device.
+
 ## 0.3.0 (2021-02-28)
 
 ### New devices

@@ -27,6 +27,7 @@ import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring';
 import {CustomCharacteristic} from './CustomCharacteristic';
 import {HmIPLightSensor} from './devices/HmIPLightSensor';
 import {HmIPSecuritySystem} from './HmIPSecuritySystem';
+import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor';
 
 /**
  * HomematicIP platform
@@ -257,9 +258,10 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       || device.type === 'SHUTTER_CONTACT_INTERFACE'
       || device.type === 'SHUTTER_CONTACT_INVISIBLE'
       || device.type === 'SHUTTER_CONTACT_MAGNETIC'
-      || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS'
-      || device.type === 'ROTARY_HANDLE_SENSOR') {
+      || device.type === 'SHUTTER_CONTACT_OPTICAL_PLUS') {
       homebridgeDevice = new HmIPContactSensor(this, hmIPAccessory.accessory);
+    } else if (device.type === 'ROTARY_HANDLE_SENSOR') {
+      homebridgeDevice = new HmIPRotaryHandleSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'SMOKE_DETECTOR') {
       homebridgeDevice = new HmIPSmokeDetector(this, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH'
