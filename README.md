@@ -77,13 +77,16 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-MOD-HO (Garage Door Module for Hörmann)
 - HmIP-SWD (Water sensor)
 - HmIP-SLO (Light Sensor outdoor)
+- HmIP-SMI (Motion Detector with Brightness Sensor - indoor)
+- HmIP-SMO-A (Motion Detector with Brightness Sensor - outdoor)
+- HmIP-SMI55 (Motion Detector with Brightness Sensor and Remote Control - 2-button)
+- HmIP-SPI (Presence Sensor - indoor)
 
 (*) Currently, only first channel is supported.
 
 ## TODOs
 
 - Implement more devices
-- Implement weather device
 - Implement META-Group (Homematic IP rooms) to HomeKit room-Mapping
 - Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App) 
 - Implement custom EVE logging (https://github.com/simont77/fakegato-history)

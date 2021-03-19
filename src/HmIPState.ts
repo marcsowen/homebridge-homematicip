@@ -102,6 +102,14 @@ export interface SabotageChannel {
   sabotage: boolean;
 }
 
+export enum MotionDetectionSendInterval {
+  SECONDS_30 = 'SECONDS_30',
+  SECONDS_60 = 'SECONDS_60',
+  SECONDS_120 = 'SECONDS_120',
+  SECONDS_240 = 'SECONDS_240',
+  SECONDS_480 = 'SECONDS_480'
+}
+
 export interface Updateable {
   updateDevice(device: HmIPDevice, groups: { [key: string]: HmIPGroup }): void;
 }

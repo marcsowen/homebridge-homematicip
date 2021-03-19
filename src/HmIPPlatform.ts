@@ -28,6 +28,8 @@ import {CustomCharacteristic} from './CustomCharacteristic';
 import {HmIPLightSensor} from './devices/HmIPLightSensor';
 import {HmIPSecuritySystem} from './HmIPSecuritySystem';
 import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor';
+import {HmIPMotionDetector} from './devices/HmIPMotionDetector';
+import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector';
 
 /**
  * HomematicIP platform
@@ -283,6 +285,12 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPWaterSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'LIGHT_SENSOR') {
       homebridgeDevice = new HmIPLightSensor(this, hmIPAccessory.accessory);
+    } else if (device.type === 'MOTION_DETECTOR_INDOOR'
+      || device.type === 'MOTION_DETECTOR_OUTDOOR'
+      || device.type === 'MOTION_DETECTOR_PUSH_BUTTON') {
+      homebridgeDevice = new HmIPMotionDetector(this, hmIPAccessory.accessory);
+    } else if (device.type === 'PRESENCE_DETECTOR_INDOOR') {
+      homebridgeDevice = new HmIPPresenceDetector(this, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;

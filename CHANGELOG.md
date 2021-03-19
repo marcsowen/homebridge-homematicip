@@ -1,3 +1,10 @@
+## 0.4.0 (2021-03-19)
+
+### New devices
+
+- **MotionDetector**: Added motion detector style devices: HmIP-SMI, HmIP-SMO-A, HmIP-SMI55
+- **PresenceDetector**: Added presence detector: HmIP-SPI
+
 ## 0.3.7 (2021-03-13)
 
 ### Bugfix
