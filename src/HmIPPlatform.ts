@@ -30,6 +30,7 @@ import {HmIPSecuritySystem} from './HmIPSecuritySystem';
 import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor';
 import {HmIPMotionDetector} from './devices/HmIPMotionDetector';
 import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector';
+import {HmIPDimmer} from './devices/HmIPDimmer';
 
 /**
  * HomematicIP platform
@@ -291,6 +292,11 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPMotionDetector(this, hmIPAccessory.accessory);
     } else if (device.type === 'PRESENCE_DETECTOR_INDOOR') {
       homebridgeDevice = new HmIPPresenceDetector(this, hmIPAccessory.accessory);
+    } else if (device.type === 'BRAND_DIMMER'
+      || device.type === 'FULL_FLUSH_DIMMER'
+      || device.type === 'PLUGGABLE_DIMMER'
+      || device.type === 'WIRED_DIMMER_3') { // Only first channel
+      homebridgeDevice = new HmIPDimmer(this, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;

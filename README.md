@@ -81,6 +81,10 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-SMO-A (Motion Detector with Brightness Sensor - outdoor)
 - HmIP-SMI55 (Motion Detector with Brightness Sensor and Remote Control - 2-button)
 - HmIP-SPI (Presence Sensor - indoor)
+- HmIP-PDT Pluggable Dimmer
+- HmIP-BDT Brand Dimmer
+- HmIP-FDT Dimming Actuator flush-mount
+- HmIPW-DRD3 (Homematic IP Wired Dimming Actuator – 3x channels) (*)
 
 (*) Currently, only first channel is supported.
 

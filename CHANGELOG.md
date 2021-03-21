@@ -1,3 +1,9 @@
+## 0.4.1 (2021-03-21)
+
+### New devices
+
+- **Dimmer**: Added dimmer devices: HmIP-PDT, HmIP-BDT, HmIP-FDT, HmIPW-DRD3
+
 ## 0.4.0 (2021-03-19)
 
 ### New devices
