@@ -1,3 +1,9 @@
+## 0.4.2 (2021-03-23)
+
+### Bugfix
+
+- **Dimmer**: Fixed "flashing" of dimmer while changing dim level.
+
 ## 0.4.1 (2021-03-21)
 
 ### New devices
