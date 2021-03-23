@@ -57,10 +57,12 @@ export class HmIPDimmer extends HmIPGenericDevice implements Updateable {
     }
 
     async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        if (value) {
-            callback(null);
-        } else {
+        if (value && this.brightness === 0) {
+            await this.handleBrightnessSet(100, callback);
+        } else if (!value) {
             await this.handleBrightnessSet(0, callback);
+        } else {
+            callback(null);
         }
     }
 

@@ -1,3 +1,9 @@
+## 0.4.3 (2021-03-23)
+
+### Bugfix
+
+- **Dimmer**: Fixed turning dimmer on with Siri.
+
 ## 0.4.2 (2021-03-23)
 
 ### Bugfix
