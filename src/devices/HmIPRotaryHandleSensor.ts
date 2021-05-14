@@ -32,13 +32,6 @@ export class HmIPRotaryHandleSensor extends HmIPGenericDevice implements Updatea
   ) {
     super(platform, accessory);
 
-    const contactService = this.accessory.getService(this.platform.Service.ContactSensor);
-
-    if (contactService != undefined) {
-      this.platform.log.info("Removing obsolete contact service from %s", accessory.context.device.label);
-      this.accessory.removeService(contactService);
-    }
-
     this.platform.log.debug(`Created HmIPRotaryHandleSensor ${accessory.context.device.label}`);
     this.service = this.accessory.getService(this.platform.Service.Window) || this.accessory.addService(this.platform.Service.Window);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);

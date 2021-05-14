@@ -55,6 +55,8 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-BWTH (Brand Wall Thermostat with Humidity Sensor)
 - HmIP-WTH-B (Wall Thermostat – basic)
 - ALPHA-IP-RBG (Alpha IP Wall Thermostat Display)
+- HmIP-STH (Temperature and Humidity Sensor without display - indoor)
+- HmIP-STHD (Temperature and Humidity Sensor with display - indoor)
 - HmIP-SWDO (Door / Window Contact - optical)
 - HmIP-SWDO-I (Door / Window Contact - optical, invisible)
 - HmIP-SWDO-PL (Door / Window Contact – optical, plus)
@@ -85,6 +87,7 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-BDT Brand Dimmer
 - HmIP-FDT Dimming Actuator flush-mount
 - HmIPW-DRD3 (Homematic IP Wired Dimming Actuator – 3x channels) (*)
+
 
 (*) Currently, only first channel is supported.
 

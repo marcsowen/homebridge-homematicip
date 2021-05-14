@@ -64,7 +64,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
     }
 
     async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        this.platform.log.info("Setting switch %s to %s", this.accessory.displayName, value ? "on" : "off");
+        this.platform.log.info("Setting switch %s to %s", this.accessory.displayName, value ? "ON" : "OFF");
         const body = {
             channelIndex: 1,
             deviceId: this.accessory.context.device.id,
@@ -92,19 +92,19 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
 
                 if (switchMeasuringChannel.on != this.on) {
                     this.on = switchMeasuringChannel.on;
-                    this.platform.log.info("Switch state of %s changed to %s", this.accessory.displayName, this.on ? "on" : "off");
+                    this.platform.log.info("Switch state of %s changed to %s", this.accessory.displayName, this.on ? "ON" : "OFF");
                     this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
                 }
 
                 if (switchMeasuringChannel.currentPowerConsumption != null && switchMeasuringChannel.currentPowerConsumption != this.currentPowerConsumption) {
                     this.currentPowerConsumption = switchMeasuringChannel.currentPowerConsumption;
-                    this.platform.log.info("Switch power consumption of %s changed to %s", this.accessory.displayName, this.currentPowerConsumption.toFixed(1));
+                    this.platform.log.info("Switch power consumption of %s changed to %s W", this.accessory.displayName, this.currentPowerConsumption.toFixed(1));
                     this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower, this.currentPowerConsumption);
                 }
 
                 if (switchMeasuringChannel.energyCounter != null && switchMeasuringChannel.energyCounter != this.energyCounter) {
                     this.energyCounter = switchMeasuringChannel.energyCounter;
-                    this.platform.log.info("Switch energy counter of %s changed to %s", this.accessory.displayName, this.energyCounter.toFixed(3));
+                    this.platform.log.info("Switch energy counter of %s changed to %s kWh", this.accessory.displayName, this.energyCounter.toFixed(3));
                     this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy, this.energyCounter);
                 }
             }

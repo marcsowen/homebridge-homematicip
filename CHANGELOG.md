@@ -1,3 +1,13 @@
+## 0.5.0 (2021-05-15)
+
+### Improvements
+
+- **HmIP-STH/STHD**: Device is now a thermostat instead of a simple climate sensor. The target temperature is usually
+  extracted from the device channel. In case of the HmIP-STH the target temperature is determined from the heating group
+  since the device channel doesn't provide this kind of information.
+- **General**: Log messages contain a unit symbol where applicable.
+- **General**: Removed now long-running Hclean-up code for obsolete services and characteristics
+
 ## 0.4.3 (2021-03-23)
 
 ### Bugfix

@@ -89,7 +89,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     async handleTargetDoorStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
         this.targetDoorState = <number>value;
         this.platform.log.info("Setting garage door %s to %s", this.accessory.displayName,
-            value === this.platform.Characteristic.TargetDoorState.OPEN ? "open" : "closed");
+            value === this.platform.Characteristic.TargetDoorState.OPEN ? "OPEN" : "CLOSED");
         const body = {
             channelIndex: 1,
             deviceId: this.accessory.context.device.id,

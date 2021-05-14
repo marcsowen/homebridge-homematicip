@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc.sowen@gmail.com>",
@@ -30,22 +30,22 @@
     "homebridge": ">=1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^15.0.0",
-    "@types/ws": "^7.2.4",
-    "@typescript-eslint/eslint-plugin": "^4.19.0",
-    "@typescript-eslint/parser": "^4.19.0",
+    "@types/node": "^15.3.0",
+    "@types/ws": "^7.4.4",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
     "abort-controller": "^3.0.0",
-    "eslint": ">=7.17.0",
+    "eslint": "^7.26.0",
     "homebridge": "^1.3.4",
-    "nodemon": "^2.0.4",
+    "nodemon": "^2.0.7",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",
-    "typescript": "^4.2.2"
+    "typescript": "^4.2.4"
   },
   "dependencies": {
     "bottleneck": "^2.19.5",
     "node-fetch": "^3.0.0-beta.9",
     "semver": "^7.3.4",
-    "ws": "^7.3.0"
+    "ws": "^7.4.5"
   }
 }

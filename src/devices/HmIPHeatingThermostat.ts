@@ -98,7 +98,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   }
 
   async handleTargetTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info(`Setting target temperature for ${this.accessory.displayName} to ${value}`);
+    this.platform.log.info('Setting target temperature for %s to %s °C', this.accessory.displayName, value);
     const body = {
       groupId: this.heatingGroupId,
       setPointTemperature: value,
@@ -126,13 +126,13 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
 
         if (heatingThermostatChannel.setPointTemperature !== this.setPointTemperature) {
           this.setPointTemperature = heatingThermostatChannel.setPointTemperature;
-          this.platform.log.info('Target temperature of %s changed to %s', this.accessory.displayName, this.setPointTemperature);
+          this.platform.log.info('Target temperature of %s changed to %s °C', this.accessory.displayName, this.setPointTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.setPointTemperature);
         }
 
         if (heatingThermostatChannel.valveActualTemperature !== this.valveActualTemperature) {
           this.valveActualTemperature = heatingThermostatChannel.valveActualTemperature;
-          this.platform.log.info('Current temperature of %s changed to %s', this.accessory.displayName, this.valveActualTemperature);
+          this.platform.log.info('Current temperature of %s changed to %s °C', this.accessory.displayName, this.valveActualTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.valveActualTemperature);
         }
 

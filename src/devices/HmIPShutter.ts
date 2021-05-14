@@ -65,7 +65,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   }
 
   async handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Setting target shutter position for %s to %s', this.accessory.displayName, value);
+    this.platform.log.info('Setting target shutter position for %s to %s %%', this.accessory.displayName, value);
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
@@ -105,7 +105,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
         const shutterLevelHomeKit = HmIPShutter.shutterHmIPToHomeKit(shutterChannel.shutterLevel);
         if (shutterLevelHomeKit != this.shutterLevel) {
           this.shutterLevel = shutterLevelHomeKit;
-          this.platform.log.info('Current shutter level of %s changed to %s', this.accessory.displayName, this.shutterLevel.toFixed(0));
+          this.platform.log.info('Current shutter level of %s changed to %s %%', this.accessory.displayName, this.shutterLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.shutterLevel);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.shutterLevel);
         }

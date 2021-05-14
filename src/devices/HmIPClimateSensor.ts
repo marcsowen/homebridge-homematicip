@@ -16,8 +16,6 @@ interface ClimateSensorChannel {
  *
  * HmIP-STHO
  * HmIP-STHO-A
- * HmIP-STH
- * HMIP-STHD
  *
  */
 export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
@@ -62,20 +60,18 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
     super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'CLIMATE_SENSOR_CHANNEL'
-          || channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_WITHOUT_DISPLAY_CHANNEL'
-          || channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_PRO_CHANNEL') {
+      if (channel.functionalChannelType === 'CLIMATE_SENSOR_CHANNEL') {
         const climateSensorChannel = <ClimateSensorChannel>channel;
 
         if (climateSensorChannel.actualTemperature !== this.actualTemperature) {
           this.actualTemperature = climateSensorChannel.actualTemperature;
-          this.platform.log.info(`Current temperature of ${this.accessory.displayName} changed to ${this.actualTemperature}`);
+          this.platform.log.info('Current temperature of %s changed to %s °C', this.accessory.displayName, this.actualTemperature);
           this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.actualTemperature);
         }
 
         if (climateSensorChannel.humidity !== this.humidity) {
           this.humidity = climateSensorChannel.humidity;
-          this.platform.log.info(`Current relative humidity of ${this.accessory.displayName} changed to ${this.humidity}`);
+          this.platform.log.info('Current relative humidity of %s changed to %s %%', this.accessory.displayName, this.humidity);
           this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.humidity);
         }
 

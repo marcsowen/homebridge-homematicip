@@ -71,7 +71,7 @@ export class HmIPDimmer extends HmIPGenericDevice implements Updateable {
     }
 
     async handleBrightnessSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        this.platform.log.info("Setting brightness of %s to %s", this.accessory.displayName, value);
+        this.platform.log.info("Setting brightness of %s to %s %%", this.accessory.displayName, value);
         const body = {
             channelIndex: 1,
             deviceId: this.accessory.context.device.id,
@@ -92,17 +92,17 @@ export class HmIPDimmer extends HmIPGenericDevice implements Updateable {
                 const brightness = dimmerChannel.dimLevel * 100.0;
                 if (brightness != null && brightness !== this.brightness) {
                     if (this.brightness === 0) {
-                        this.platform.log.info("Dimmer state %s changed to on", this.accessory.displayName);
+                        this.platform.log.info("Dimmer state %s changed to ON", this.accessory.displayName);
                         this.service.updateCharacteristic(this.platform.Characteristic.On, true);
                     }
 
                     if (brightness === 0) {
-                        this.platform.log.info("Dimmer state %s changed to off", this.accessory.displayName);
+                        this.platform.log.info("Dimmer state %s changed to OFF", this.accessory.displayName);
                         this.service.updateCharacteristic(this.platform.Characteristic.On, false);
                     }
 
                     this.brightness = brightness;
-                    this.platform.log.info("Brightness of %s changed to %s", this.accessory.displayName, this.brightness.toFixed(0));
+                    this.platform.log.info("Brightness of %s changed to %s %%", this.accessory.displayName, this.brightness.toFixed(0));
                     this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.brightness);
                 }
             }

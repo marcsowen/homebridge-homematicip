@@ -31,10 +31,13 @@ export interface HmIPGroup {
   type: string;
 }
 
-export interface HmIPHeatingGroup{
+export interface HmIPHeatingGroup {
   id: string;
   type: string;
   cooling: boolean;
+  setPointTemperature: number;
+  actualTemperature: number;
+  humidity: number;
 }
 
 export interface HmIPHome {

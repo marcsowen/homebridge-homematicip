@@ -47,7 +47,7 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
   }
 
   async handleTargetHorizontalTiltAngleSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Setting target horizontal slats position for %s to %s', this.accessory.displayName, value);
+    this.platform.log.info('Setting target horizontal slats position for %s to %s°', this.accessory.displayName, value);
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
@@ -68,7 +68,7 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
         const slatsLevelHomeKit = HmIPBlind.slatsHmIPToHomeKit(blindChannel.slatsLevel);
         if (slatsLevelHomeKit != this.slatsLevel) {
           this.slatsLevel = slatsLevelHomeKit;
-          this.platform.log.info('Current blind slats level of %s changed to %s', this.accessory.displayName, this.slatsLevel.toFixed(0));
+          this.platform.log.info('Current blind slats level of %s changed to %s°', this.accessory.displayName, this.slatsLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentHorizontalTiltAngle, this.slatsLevel);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetHorizontalTiltAngle, this.slatsLevel);
         }
