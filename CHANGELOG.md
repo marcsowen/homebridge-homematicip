@@ -1,3 +1,9 @@
+## 0.5.1 (2021-07-29)
+
+### Bugfix
+
+- **General**: Version bumps for dependencies. Solves an issue with node-fetch for newer installations.
+
 ## 0.5.0 (2021-05-15)
 
 ### Improvements
