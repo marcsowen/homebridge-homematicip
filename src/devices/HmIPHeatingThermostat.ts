@@ -70,7 +70,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
       .on('set', this.handleTargetTemperatureSet.bind(this))
       .setProps({
         minValue: 5,
-        maxValue: 24,
+        maxValue: 30,
         minStep: 0.5,
       });
 
