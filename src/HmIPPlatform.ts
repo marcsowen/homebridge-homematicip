@@ -249,7 +249,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     } else if (device.type === 'TEMPERATURE_HUMIDITY_SENSOR_OUTDOOR') {
       homebridgeDevice = new HmIPClimateSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'HEATING_THERMOSTAT'
-      || device.type === 'HEATING_THERMOSTAT_COMPACT') {
+      || device.type === 'HEATING_THERMOSTAT_COMPACT' || device.type === 'HEATING_THERMOSTAT_EVO') {
       homebridgeDevice = new HmIPHeatingThermostat(this, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_SHUTTER'
       || device.type === 'BRAND_SHUTTER') {
