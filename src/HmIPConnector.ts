@@ -107,7 +107,7 @@ export class HmIPConnector {
   }
 
   async apiCall<T>(path: string, _body?: Record<string, unknown>) {
-    return this._apiCall<T>(true, false, path, _body);
+    return this._apiCall<T>(true, true, path, _body);
   }
 
   async _apiCall<T>(addTokens: boolean, logError: boolean, path: string, _body?: Record<string, unknown>) {

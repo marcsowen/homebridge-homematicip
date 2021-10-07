@@ -46,6 +46,7 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-eTRV-2 (Radiator Thermostat)
 - HmIP-eTRV-B (Radiator Thermostat - basic)
 - HmIP-eTRV-C (Heating-thermostat - compact without display)
+- HmIP-eTRV-E (Radiator Thermostat - Evo)
 - HmIP-FROLL (Shutter Actuator - flush-mount)
 - HmIP-BROLL (Shutter Actuator - brand-mount)
 - HmIP-FBL (Blind Actuator - flush-mount)
@@ -87,7 +88,6 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-BDT Brand Dimmer
 - HmIP-FDT Dimming Actuator flush-mount
 - HmIPW-DRD3 (Homematic IP Wired Dimming Actuator – 3x channels) (*)
-
 
 (*) Currently, only first channel is supported.
 

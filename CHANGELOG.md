@@ -1,3 +1,19 @@
+## 0.5.2 (2021-10-07)
+
+### New devices
+
+- **HmIP-eTRV-E**: Added support for HmIP Thermostat "Evo" - thanks to Sven Liebert for adding support.
+
+### Improvements
+
+- **HmIPHeatingThermostat**: Extend min/max set temperature range to 5-30 degrees.
+
+### Bugfix
+
+- **General**: Version bumps for dependencies. I'm still using 3.0.0-beta9 of node-fetch since all projects need to
+switch from "commonJS" to "ESM" starting from node-fetch 3.0.0. This caused problems for some users.
+(https://github.com/marcsowen/homebridge-homematicip/issues/165) 
+
 ## 0.5.1 (2021-07-29)
 
 ### Bugfix
