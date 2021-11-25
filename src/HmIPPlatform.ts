@@ -31,6 +31,7 @@ import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor';
 import {HmIPMotionDetector} from './devices/HmIPMotionDetector';
 import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector';
 import {HmIPDimmer} from './devices/HmIPDimmer';
+import fakegato from 'fakegato-history';
 
 /**
  * HomematicIP platform
@@ -38,6 +39,7 @@ import {HmIPDimmer} from './devices/HmIPDimmer';
 export class HmIPPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public readonly FakeGatoHistoryService = fakegato(this.api);
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
