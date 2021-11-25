@@ -3,8 +3,9 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   PlatformAccessory,
-  Service
+  Service,
 } from 'homebridge';
+import moment from 'moment';
 
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, HmIPHeatingGroup, Updateable} from '../HmIPState';
@@ -38,12 +39,22 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private humidity = 0;
   private heatingGroupId = '';
   private cooling = false;
+  private readonly historyService;
 
   constructor(
     platform: HmIPPlatform,
     accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
+
+    this.historyService = new this.platform.FakeGatoHistoryService('weather', this.accessory, {
+      disableTimer: false,
+      log: this.platform.log,
+      storage: 'fs',
+      path: this.platform.api.user.storagePath() + '/accessories',
+      filename: 'history_' + this.accessory.context.device.id + '.json',
+      length: 1000,
+    });
 
     const temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor);
     if (temperatureService != undefined) {
@@ -156,6 +167,10 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
           this.platform.log.info('Current relative humidity of %s changed to %s %%', this.accessory.displayName, this.humidity);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.humidity);
         }
+
+        this.historyService.addEntry({time: moment().unix(), temp: this.actualTemperature, pressure: 0, humidity: this.humidity});
+        // this.historyService.addEntry({time: moment().unix(), currentTemp: this.actualTemperature, setTemp: this.setPointTemperature, valvePosition: 100});
+        this.platform.log.info('Added entry into fakegato');
 
         for (const groupId of wthChannel.groups) {
           if (groups[groupId].type === 'HEATING') {
