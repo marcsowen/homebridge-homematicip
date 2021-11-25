@@ -1,4 +1,4 @@
 node_modules
 dist
 .idea
-.vscode/tasks.json
+.vscode
