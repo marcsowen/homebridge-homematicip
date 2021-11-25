@@ -43,7 +43,7 @@
     "typescript": "^4.5.2"
   },
   "dependencies": {
-		"fakegato-history": "^0.6.2",
+    "fakegato-history": "^0.6.2",
     "moment": "2.29.0",
     "bottleneck": "^2.19.5",
     "node-fetch": "3.0.0-beta.9",
