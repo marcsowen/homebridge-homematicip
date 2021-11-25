@@ -3,7 +3,7 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   PlatformAccessory,
-  Service
+  Service,
 } from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
@@ -11,15 +11,15 @@ import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 enum ValveState {
-  STATE_NOT_AVAILABLE   = "STATE_NOT_AVAILABLE",
-  RUN_TO_START          = "RUN_TO_START",
-  WAIT_FOR_ADAPTION     = "WAIT_FOR_ADAPTION",
-  ADAPTION_IN_PROGRESS  = "ADAPTION_IN_PROGRESS",
-  ADAPTION_DONE         = "ADAPTION_DONE",
-  TOO_TIGHT             = "TOO_TIGHT",
-  ADJUSTMENT_TOO_BIG    = "ADJUSTMENT_TOO_BIG",
-  ADJUSTMENT_TOO_SMALL  = "ADJUSTMENT_TOO_SMALL",
-  ERROR_POSITION        = "ERROR_POSITION",
+  STATE_NOT_AVAILABLE = 'STATE_NOT_AVAILABLE',
+  RUN_TO_START = 'RUN_TO_START',
+  WAIT_FOR_ADAPTION = 'WAIT_FOR_ADAPTION',
+  ADAPTION_IN_PROGRESS = 'ADAPTION_IN_PROGRESS',
+  ADAPTION_DONE = 'ADAPTION_DONE',
+  TOO_TIGHT = 'TOO_TIGHT',
+  ADJUSTMENT_TOO_BIG = 'ADJUSTMENT_TOO_BIG',
+  ADJUSTMENT_TOO_SMALL = 'ADJUSTMENT_TOO_SMALL',
+  ERROR_POSITION = 'ERROR_POSITION',
 }
 
 interface HeatingThermostatChannel {
@@ -50,7 +50,8 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   ) {
     super(platform, accessory);
 
-    this.service = this.accessory.getService(this.platform.Service.Thermostat) || this.accessory.addService(this.platform.Service.Thermostat);
+    this.service = this.accessory.getService(this.platform.Service.Thermostat)
+      || this.accessory.addService(this.platform.Service.Thermostat);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.updateDevice(accessory.context.device, platform.groups);
@@ -118,7 +119,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
 
   handleTemperatureDisplayUnitsSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.platform.log.info('Ignoring setting display units for %s to %s', this.accessory.displayName,
-      value == 0 ? "CELSIUS" : "FAHRENHEIT");
+      value === 0 ? 'CELSIUS' : 'FAHRENHEIT');
     callback(null);
   }
 
@@ -163,15 +164,15 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   private getTargetHeatingCoolingStateName(heatingCoolingState: number): string {
     switch (heatingCoolingState) {
       case this.platform.Characteristic.TargetHeatingCoolingState.OFF:
-        return "OFF";
+        return 'OFF';
       case this.platform.Characteristic.TargetHeatingCoolingState.HEAT:
-        return "HEAT";
+        return 'HEAT';
       case this.platform.Characteristic.TargetHeatingCoolingState.COOL:
-        return "COOL";
+        return 'COOL';
       case this.platform.Characteristic.TargetHeatingCoolingState.AUTO:
-        return "AUTO";
+        return 'AUTO';
       default:
-        return "UNKNOWN";
+        return 'UNKNOWN';
     }
   }
 

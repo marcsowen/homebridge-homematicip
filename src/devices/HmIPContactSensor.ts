@@ -5,9 +5,9 @@ import {HmIPDevice, HmIPGroup, SabotageChannel, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 enum WindowState {
-  OPEN = "OPEN",
-  CLOSED = "CLOSED",
-  TILTED = "TILTED"
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  TILTED = 'TILTED'
 }
 
 interface ContactChannel {
@@ -40,7 +40,8 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
 
     this.platform.log.debug('Created HmIPContactSensor %s', accessory.context.device.label);
 
-    this.service = this.accessory.getService(this.platform.Service.ContactSensor) || this.accessory.addService(this.platform.Service.ContactSensor);
+    this.service = this.accessory.getService(this.platform.Service.ContactSensor) 
+      || this.accessory.addService(this.platform.Service.ContactSensor);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .on('get', this.handleContactSensorStateGet.bind(this));
@@ -87,7 +88,7 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
 
       if (channel.functionalChannelType === 'DEVICE_SABOTAGE') {
         const sabotageChannel = <SabotageChannel>channel;
-        if (sabotageChannel.sabotage != null && sabotageChannel.sabotage !== this.sabotage) {
+        if (sabotageChannel.sabotage !== null && sabotageChannel.sabotage !== this.sabotage) {
           this.sabotage = sabotageChannel.sabotage;
           this.platform.log.info('Sabotage state of %s changed to %s', this.accessory.displayName, this.sabotage);
           this.service.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage

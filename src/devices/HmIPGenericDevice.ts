@@ -81,7 +81,8 @@ export abstract class HmIPGenericDevice {
     }
 
     if (featureLowBat) {
-      this.batteryService = this.accessory.getService(this.platform.Service.Battery) || this.accessory.addService(this.platform.Service.Battery)!;
+      this.batteryService = this.accessory.getService(this.platform.Service.Battery)
+        || this.accessory.addService(this.platform.Service.Battery)!;
       this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
         .on('get', this.handleStatusLowBatteryGet.bind(this));
     }
@@ -100,7 +101,7 @@ export abstract class HmIPGenericDevice {
         || channel.functionalChannelType === 'DEVICE_SABOTAGE') {
         const baseChannel = <DeviceBaseChannel>channel;
 
-        if (baseChannel.unreach != null && baseChannel.unreach !== this.unreach) {
+        if (baseChannel.unreach !== null && baseChannel.unreach !== this.unreach) {
           this.unreach = baseChannel.unreach;
           this.platform.log.info('Unreach of %s changed to %s', this.accessory.displayName, this.unreach);
         }

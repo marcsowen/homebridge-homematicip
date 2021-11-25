@@ -5,9 +5,9 @@ import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
 
 enum WindowState {
-  OPEN = "OPEN",
-  CLOSED = "CLOSED",
-  TILTED = "TILTED"
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  TILTED = 'TILTED'
 }
 
 interface RotaryHandleChannel {

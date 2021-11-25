@@ -3,13 +3,12 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   PlatformAccessory,
-  Service
+  Service,
 } from 'homebridge';
 
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
 import {HmIPGenericDevice} from './HmIPGenericDevice';
-import {HmIPBlind} from './HmIPBlind';
 
 interface ShutterChannel {
   functionalChannelType: string;
@@ -37,7 +36,8 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
   ) {
     super(platform, accessory);
 
-    this.service = this.accessory.getService(this.platform.Service.WindowCovering) || this.accessory.addService(this.platform.Service.WindowCovering);
+    this.service = this.accessory.getService(this.platform.Service.WindowCovering)
+      || this.accessory.addService(this.platform.Service.WindowCovering);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.updateDevice(accessory.context.device, platform.groups);
@@ -88,7 +88,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     if (value === true) {
       const body = {
         channelIndex: 1,
-        deviceId: this.accessory.context.device.id
+        deviceId: this.accessory.context.device.id,
       };
       await this.platform.connector.apiCall('device/control/stop', body);
     }
@@ -103,14 +103,14 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
         const shutterChannel = <ShutterChannel>channel;
 
         const shutterLevelHomeKit = HmIPShutter.shutterHmIPToHomeKit(shutterChannel.shutterLevel);
-        if (shutterLevelHomeKit != this.shutterLevel) {
+        if (shutterLevelHomeKit !== this.shutterLevel) {
           this.shutterLevel = shutterLevelHomeKit;
           this.platform.log.info('Current shutter level of %s changed to %s %%', this.accessory.displayName, this.shutterLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.shutterLevel);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.shutterLevel);
         }
 
-        if (shutterChannel.processing != this.processing) {
+        if (shutterChannel.processing !== this.processing) {
           this.processing = shutterChannel.processing;
           this.platform.log.info('Processing state of shutter/blind %s changed to %s', this.accessory.displayName, this.processing);
           this.service.updateCharacteristic(this.platform.Characteristic.PositionState, this.processing ?

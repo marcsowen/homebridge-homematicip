@@ -22,8 +22,8 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
   private temperatureService: Service;
   private humidityService: Service;
 
-  private actualTemperature: number = 0;
-  private humidity: number = 0;
+  private actualTemperature = 0;
+  private humidity = 0;
 
   constructor(
     platform: HmIPPlatform,
@@ -31,20 +31,22 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
   ) {
     super(platform, accessory);
 
-    this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor) || this.accessory.addService(this.platform.Service.TemperatureSensor);
+    this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
+      || this.accessory.addService(this.platform.Service.TemperatureSensor);
     this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor) || this.accessory.addService(this.platform.Service.HumiditySensor);
+    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
+      || this.accessory.addService(this.platform.Service.HumiditySensor);
     this.humidityService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.updateDevice(accessory.context.device, platform.groups);
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
-        .setProps({minValue: -100})
-        .on('get', this.handleCurrentTemperatureGet.bind(this));
+      .setProps({minValue: -100})
+      .on('get', this.handleCurrentTemperatureGet.bind(this));
 
     this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-        .on('get', this.handleCurrentRelativeHumidityGet.bind(this));
+      .on('get', this.handleCurrentRelativeHumidityGet.bind(this));
   }
 
   handleCurrentTemperatureGet(callback: CharacteristicGetCallback) {
