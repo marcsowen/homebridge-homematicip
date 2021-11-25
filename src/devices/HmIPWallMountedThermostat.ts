@@ -7,9 +7,9 @@ import {
 } from 'homebridge';
 import moment from 'moment';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, HmIPHeatingGroup, Updateable} from '../HmIPState';
-import {HmIPGenericDevice} from './HmIPGenericDevice';
+import { HmIPPlatform } from '../HmIPPlatform';
+import { HmIPDevice, HmIPGroup, HmIPHeatingGroup, Updateable } from '../HmIPState';
+import { HmIPGenericDevice } from './HmIPGenericDevice';
 
 interface WallMountedThermostatChannel {
   functionalChannelType: string;
@@ -48,7 +48,6 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
     super(platform, accessory);
 
     this.historyService = new this.platform.FakeGatoHistoryService('weather', this.accessory, {
-      disableTimer: false,
       log: this.platform.log,
       storage: 'fs',
       path: this.platform.api.user.storagePath() + '/accessories',
@@ -57,18 +56,19 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
     });
 
     const temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor);
-    if (temperatureService != undefined) {
-      this.platform.log.info("Removing obsolete temperature service from %s", accessory.context.device.label);
+    if (temperatureService !== undefined) {
+      this.platform.log.info('Removing obsolete temperature service from %s', accessory.context.device.label);
       this.accessory.removeService(temperatureService);
     }
 
     const humidityService = this.accessory.getService(this.platform.Service.HumiditySensor);
-    if (humidityService != undefined) {
-      this.platform.log.info("Removing obsolete humidity service from %s", accessory.context.device.label);
+    if (humidityService !== undefined) {
+      this.platform.log.info('Removing obsolete humidity service from %s', accessory.context.device.label);
       this.accessory.removeService(humidityService);
     }
 
-    this.service = this.accessory.getService(this.platform.Service.Thermostat) || this.accessory.addService(this.platform.Service.Thermostat);
+    this.service = this.accessory.getService(this.platform.Service.Thermostat) ||
+      this.accessory.addService(this.platform.Service.Thermostat);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.updateDevice(accessory.context.device, platform.groups);
@@ -96,8 +96,15 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.cooling ?
-      this.platform.Characteristic.CurrentHeatingCoolingState.COOL : this.platform.Characteristic.CurrentHeatingCoolingState.HEAT);
+    callback(null, this.getHeatingCoolongState());
+  }
+
+  private getHeatingCoolongState() {
+    return this.cooling ?
+      this.platform.Characteristic.CurrentHeatingCoolingState.COOL :
+      this.setPointTemperature > this.actualTemperature ?
+        this.platform.Characteristic.CurrentHeatingCoolingState.HEAT :
+        this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
   }
 
   handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
@@ -134,7 +141,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
 
   handleTemperatureDisplayUnitsSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.platform.log.info('Ignoring setting display units for %s to %s', this.accessory.displayName,
-      value == 0 ? "CELSIUS" : "FAHRENHEIT");
+      value === 0 ? 'CELSIUS' : 'FAHRENHEIT');
     callback(null);
   }
 
@@ -152,7 +159,8 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
 
         if (wthChannel.setPointTemperature !== null && wthChannel.setPointTemperature !== this.setPointTemperature) {
           this.setPointTemperature = wthChannel.setPointTemperature;
-          this.platform.log.info('Target temperature of %s changed to %s °C (device channel)', this.accessory.displayName, this.setPointTemperature);
+          this.platform.log.info('Target temperature of %s changed to %s °C (device channel)',
+            this.accessory.displayName, this.setPointTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.setPointTemperature);
         }
 
@@ -168,28 +176,26 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.humidity);
         }
 
-        this.historyService.addEntry({time: moment().unix(), temp: this.actualTemperature, pressure: 0, humidity: this.humidity});
-        // this.historyService.addEntry({time: moment().unix(), currentTemp: this.actualTemperature, setTemp: this.setPointTemperature, valvePosition: 100});
-        this.platform.log.info('Added entry into fakegato');
+        this.historyService.addEntry({ time: moment().unix(), temp: this.actualTemperature, pressure: 0, humidity: this.humidity });
 
         for (const groupId of wthChannel.groups) {
           if (groups[groupId].type === 'HEATING') {
             this.heatingGroupId = groupId;
             const heatingGroup = <HmIPHeatingGroup>groups[groupId];
 
-            if (heatingGroup.cooling !== null && heatingGroup.cooling !== this.cooling) {
-              this.cooling = heatingGroup.cooling;
-              this.platform.log.info('Cooling mode of %s changed to %s', this.accessory.displayName, this.cooling);
-              this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.cooling ?
-                this.platform.Characteristic.CurrentHeatingCoolingState.COOL : this.platform.Characteristic.CurrentHeatingCoolingState.HEAT);
-            }
-
             if (wthChannel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_WITHOUT_DISPLAY_CHANNEL'
               && heatingGroup.setPointTemperature !== null
               && heatingGroup.setPointTemperature !== this.setPointTemperature) {
               this.setPointTemperature = heatingGroup.setPointTemperature;
-              this.platform.log.info('Target temperature of %s changed to %s °C (heating group)', this.accessory.displayName, this.setPointTemperature);
+              this.platform.log.info('Target temperature of %s changed to %s °C (heating group)',
+                this.accessory.displayName, this.setPointTemperature);
               this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.setPointTemperature);
+            }
+
+            if (heatingGroup.cooling !== null && heatingGroup.cooling !== this.cooling) {
+              this.cooling = heatingGroup.cooling;
+              this.platform.log.info('Cooling mode of %s changed to %s', this.accessory.displayName, this.cooling);
+              this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolongState());
             }
           }
         }
@@ -200,15 +206,15 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private getTargetHeatingCoolingStateName(heatingCoolingState: number): string {
     switch (heatingCoolingState) {
       case this.platform.Characteristic.TargetHeatingCoolingState.OFF:
-        return "OFF";
+        return 'OFF';
       case this.platform.Characteristic.TargetHeatingCoolingState.HEAT:
-        return "HEAT";
+        return 'HEAT';
       case this.platform.Characteristic.TargetHeatingCoolingState.COOL:
-        return "COOL";
+        return 'COOL';
       case this.platform.Characteristic.TargetHeatingCoolingState.AUTO:
-        return "AUTO";
+        return 'AUTO';
       default:
-        return "UNKNOWN";
+        return 'UNKNOWN';
     }
   }
 }
