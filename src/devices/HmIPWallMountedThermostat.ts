@@ -55,18 +55,6 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
       length: 1000,
     });
 
-    const temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor);
-    if (temperatureService !== undefined) {
-      this.platform.log.info('Removing obsolete temperature service from %s', accessory.context.device.label);
-      this.accessory.removeService(temperatureService);
-    }
-
-    const humidityService = this.accessory.getService(this.platform.Service.HumiditySensor);
-    if (humidityService !== undefined) {
-      this.platform.log.info('Removing obsolete humidity service from %s', accessory.context.device.label);
-      this.accessory.removeService(humidityService);
-    }
-
     this.service = this.accessory.getService(this.platform.Service.Thermostat) ||
       this.accessory.addService(this.platform.Service.Thermostat);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);

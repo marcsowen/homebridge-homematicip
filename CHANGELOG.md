@@ -1,3 +1,12 @@
+## 0.6.0 (2021-11-26)
+
+### Improvements
+
+- **Elgato EVE history service**: Support for graphical temperature/humidity plots when using EVE app. The history is 
+  stored on the filesystem of the server running this plugin (e.g. your Raspberry Pi). Many thanks to @dmalch for 
+  implementing this feature.
+- **General**: Clean-up and version bumps.
+
 ## 0.5.2 (2021-10-07)
 
 ### New devices

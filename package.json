@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc.sowen@gmail.com>",

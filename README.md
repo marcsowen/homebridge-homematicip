@@ -96,10 +96,11 @@ button and note the "auth_token" that is being generated, add it to your config.
 - Implement more devices
 - Implement META-Group (Homematic IP rooms) to HomeKit room-Mapping
 - Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App) 
-- Implement custom EVE logging (https://github.com/simont77/fakegato-history)
 
-## Many thanks to coreGreenberet
+## Many thanks to our contributors
 
-https://github.com/coreGreenberet/homematicip-rest-api
+- @coreGreenberet for reverse-engineering and implementation of the first HomematicIP-API client using Python
+  (https://github.com/coreGreenberet/homematicip-rest-api)
+- @dmalch for adding fakegato-history support (https://github.com/simont77/fakegato-history)
 
 ## Help needed!
