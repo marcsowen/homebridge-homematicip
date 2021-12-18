@@ -1,3 +1,13 @@
+## 0.7.0 (2021-12-18)
+
+### New devices
+
+- **HmIP-DLD**: Added support for HmIP door lock drive - thanks to @adrianoje for borrowing me his HmIP-DLD!
+
+### Improvements
+
+- **General**: Version bumps of dependencies.
+
 ## 0.6.0 (2021-11-26)
 
 ### Improvements

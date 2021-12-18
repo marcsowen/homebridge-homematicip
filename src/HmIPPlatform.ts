@@ -32,6 +32,7 @@ import {HmIPMotionDetector} from './devices/HmIPMotionDetector';
 import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector';
 import {HmIPDimmer} from './devices/HmIPDimmer';
 import fakegato from 'fakegato-history';
+import {HmIPDoorLockDrive} from './devices/HmIPDoorLockDrive';
 
 /**
  * HomematicIP platform
@@ -300,6 +301,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       || device.type === 'PLUGGABLE_DIMMER'
       || device.type === 'WIRED_DIMMER_3') { // Only first channel
       homebridgeDevice = new HmIPDimmer(this, hmIPAccessory.accessory);
+    } else if (device.type === 'DOOR_LOCK_DRIVE') {
+      homebridgeDevice = new HmIPDoorLockDrive(this, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;

@@ -68,11 +68,11 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-PS (Pluggable Switch)
 - HmIP-PCBS (Switch Circuit Board - 1 channel)
 - HmIP-PCBS-BAT (Printed Circuit Board Switch Battery)
-- HmIP-PCBS2 (Switch Circuit Board - 2x channels) (*)
-- HmIP-MOD-OC8 ( Open Collector Module ) (*)
-- HmIP-WHS2 (Switch Actuator for heating systems – 2x channels) (*)
-- HmIP-DRS8 (Homematic IP Wired Switch Actuator – 8x channels) (*)
-- HmIP-DRSI4 (Homematic IP Switch Actuator for DIN rail mount – 4x channels) (*)
+- HmIP-PCBS2 (Switch Circuit Board - 2x channels) [1]
+- HmIP-MOD-OC8 ( Open Collector Module ) [1]
+- HmIP-WHS2 (Switch Actuator for heating systems – 2x channels) [1]
+- HmIP-DRS8 (Homematic IP Wired Switch Actuator – 8x channels) [1]
+- HmIP-DRSI4 (Homematic IP Switch Actuator for DIN rail mount – 4x channels) [1]
 - HmIP-PSM (Pluggable Switch and Meter)
 - HmIP-BSM (Brand Switch and Meter)
 - HmIP-FSM, HmIP-FSM16 (Full flush Switch and Meter)
@@ -87,9 +87,12 @@ button and note the "auth_token" that is being generated, add it to your config.
 - HmIP-PDT Pluggable Dimmer
 - HmIP-BDT Brand Dimmer
 - HmIP-FDT Dimming Actuator flush-mount
-- HmIPW-DRD3 (Homematic IP Wired Dimming Actuator – 3x channels) (*)
+- HmIPW-DRD3 (Homematic IP Wired Dimming Actuator – 3x channels) [1]
+- HmIP-DLD Door lock drive [2]
 
-(*) Currently, only first channel is supported.
+[1] Currently, only first channel is supported.<br>
+[2] Optional device PIN is currently not supported. Please make sure homebridge-homematicip is added to the list of
+access control clients in HmIP app settings.
 
 ## TODOs
 
