@@ -96,8 +96,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-DLD Door lock drive [2]
 
 [1] Currently, only first channel is supported.<br>
-[2] Optional device PIN is currently not supported. Please make sure homebridge-homematicip is added to the list of
-access control clients in HmIP app settings.
+[2] Please make sure homebridge-homematicip is added to the list of access control clients in HmIP app settings.
 
 ## TODOs
 
