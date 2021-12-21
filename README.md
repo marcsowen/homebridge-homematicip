@@ -39,6 +39,11 @@ If you do not have an auth_token or don't know it, leave it empty. Be sure to ad
 After startup, watch the logs and wait for "Press blue, glowing link button of HmIP Access Point now!". Then press the
 button and note the "auth_token" that is being generated, add it to your config.json, remove the pin and restart.
 
+### Additional config
+
+See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details.
+
+
 ## Currently supported devices
 
 - HmIP-HAP (Access Point)
