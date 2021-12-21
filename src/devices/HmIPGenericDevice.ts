@@ -43,6 +43,7 @@ interface DeviceBaseChannel {
  */
 export abstract class HmIPGenericDevice {
 
+  public hidden = false;
   protected unreach = false;
   protected lowBat = false;
   protected rssiDeviceValue = 0;
@@ -50,12 +51,17 @@ export abstract class HmIPGenericDevice {
   protected dutyCycle = false;
   protected configPending = false;
   protected featureSabotage = false;
+  protected accessoryConfig;
   private readonly batteryService: Service | undefined;
 
   protected constructor(
     protected readonly platform: HmIPPlatform,
     public readonly accessory: PlatformAccessory,
   ) {
+
+    this.accessoryConfig = platform.config['devices']?.[accessory.context.device.id];
+    this.hidden = this.accessoryConfig?.['hide'] === true;
+
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, accessory.context.device.oem)
       .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)

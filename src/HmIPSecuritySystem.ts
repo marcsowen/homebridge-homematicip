@@ -39,6 +39,7 @@ class SecuritySystemTarget {
 export class HmIPSecuritySystem {
   private service: Service;
 
+  public hidden = false;
   private activationInProgress = false;
   private intrusionAlarmActive = false;
   private safetyAlarmActive = false;
@@ -50,6 +51,8 @@ export class HmIPSecuritySystem {
     protected platform: HmIPPlatform,
     protected accessory: PlatformAccessory,
   ) {
+    this.hidden = platform.config['devices']?.['HOME_SECURITY_SYSTEM']?.['hide'] === true;
+
     this.platform.log.debug('Created security system');
     const home = <HmIPHome>accessory.context.device;
 

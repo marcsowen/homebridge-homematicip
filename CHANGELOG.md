@@ -1,3 +1,16 @@
+## 0.7.1 (2021-12-21)
+
+### Improvements
+
+- **General**: Added per-device config. All devices can be hidden by setting config.json option "hidden": true. See
+  [GitHub Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details.
+- **HmIP-DLD**: New option "openLatch". When set to true, opening the lock will open the door completely by pulling
+  the door latch.
+
+### Bugfix
+
+- **HmIP-DLD**: Lock target state was not always updated correctly displaying an opening/closing animation in Home app.
+
 ## 0.7.0 (2021-12-18)
 
 ### New devices

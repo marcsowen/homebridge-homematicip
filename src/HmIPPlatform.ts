@@ -154,8 +154,21 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       this.updateAccessory(id, device);
     }
 
+    this.securitySystem = this.createSecuritySystem(hmIPState.home);
+
     // find cached but now removed accessories and unregister them
     const accessoriesToBeRemoved: PlatformAccessory[] = [];
+
+    if (this.securitySystem.hidden) {
+      const id = hmIPState.home.id + '_security';
+      const uuid = this.api.hap.uuid.generate(id);
+      const cachedAccessory = this.getAccessory(uuid);
+      if (cachedAccessory !== undefined) {
+        this.log.info('Removing home security system');
+        accessoriesToBeRemoved.push(cachedAccessory);
+      }
+    }
+
     for (const id in hmIPState.devices) {
       if (!this.deviceMap.has(id)) {
         const uuid = this.api.hap.uuid.generate(id);
@@ -171,8 +184,6 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     if (accessoriesToBeRemoved.length > 0) {
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, accessoriesToBeRemoved);
     }
-
-    this.securitySystem = this.createSecuritySystem(hmIPState.home);
 
     // Start websocket immediately and register handlers
     await this.connector.connectWs(data => {
@@ -307,8 +318,11 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;
     }
-    this.deviceMap.set(id, homebridgeDevice);
-    hmIPAccessory.register();
+
+    if (!homebridgeDevice.hidden) {
+      this.deviceMap.set(id, homebridgeDevice);
+      hmIPAccessory.register();
+    }
   }
 
   private createAccessory(uuid: string, displayName: string, deviceContext: unknown): HmIPAccessory {
@@ -333,10 +347,15 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   }
 
   private createSecuritySystem(home: HmIPHome): HmIPSecuritySystem {
-    const uuid = this.api.hap.uuid.generate(home.id + '_security');
+    const id = home.id + '_security';
+    const uuid = this.api.hap.uuid.generate(id);
     const hmIPAccessory = this.createAccessory(uuid, 'Home Security System', home);
     const securitySystem = new HmIPSecuritySystem(this, hmIPAccessory.accessory);
-    hmIPAccessory.register();
+
+    if (!securitySystem.hidden) {
+      this.deviceMap.set(id, securitySystem);
+      hmIPAccessory.register();
+    }
 
     return securitySystem;
   }

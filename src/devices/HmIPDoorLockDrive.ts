@@ -48,12 +48,17 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
   private lockState: LockState = LockState.UNLOCKED;
   private motorState: MotorState = MotorState.STOPPED;
   private targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
+  private openLatch = false;
+  private pin;
 
   constructor(
     platform: HmIPPlatform,
     accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
+
+    this.openLatch = this.accessoryConfig?.['openLatch'] === true;
+    this.pin = this.accessoryConfig?.['pin'];
 
     this.platform.log.debug(`Created door lock drive ${accessory.context.device.label}`);
     this.service = this.accessory.getService(this.platform.Service.LockMechanism)
@@ -80,11 +85,11 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
 
   async handleLockTargetStateSet(value: CharacteristicValue) {
     this.targetLockState = <number>value;
-    this.platform.log.info('Setting door lock drive %s to %s', this.accessory.displayName, this.getLockTargetState(value));
+    this.platform.log.info('Setting door lock drive %s to %s', this.accessory.displayName, this.getLockTargetStateString(value));
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
-      authorizationPin: '',
+      authorizationPin: this.pin !== undefined ? this.pin : '',
       targetLockState: this.getHmIPTargetLockState(value),
     };
     await this.platform.connector.apiCall('device/control/setLockState', body);
@@ -101,20 +106,22 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
         if (doorLockChannel.lockState !== null && doorLockChannel.lockState !== this.lockState) {
           this.lockState = doorLockChannel.lockState;
           this.platform.log.info('Door lock drive lock state of %s changed to %s', this.accessory.displayName, this.lockState);
+          this.updateHmKitLockTargetState();
           this.service.updateCharacteristic(this.platform.Characteristic.LockCurrentState, this.getHmKitLockCurrentState(this.lockState));
-          this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.getHmKitLockTargetState());
+          this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.targetLockState);
         }
 
         if (doorLockChannel.motorState !== null && doorLockChannel.motorState !== this.motorState) {
           this.motorState = doorLockChannel.motorState;
           this.platform.log.info('Door lock drive motor state of %s changed to %s', this.accessory.displayName, this.motorState);
-          this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.getHmKitLockTargetState());
+          this.updateHmKitLockTargetState();
+          this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.targetLockState);
         }
       }
     }
   }
 
-  private getLockTargetState(lockTargetState: CharacteristicValue): string {
+  private getLockTargetStateString(lockTargetState: CharacteristicValue): string {
     switch (lockTargetState) {
       case this.platform.Characteristic.LockTargetState.UNSECURED:
         return 'UNSECURED';
@@ -128,7 +135,11 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
   private getHmIPTargetLockState(lockTargetState: CharacteristicValue): string {
     switch (lockTargetState) {
       case this.platform.Characteristic.LockTargetState.UNSECURED:
-        return LockState.UNLOCKED;
+        if (this.openLatch) {
+          return LockState.OPEN;
+        } else {
+          return LockState.UNLOCKED;
+        }
       case this.platform.Characteristic.LockTargetState.SECURED:
         return LockState.LOCKED;
       default:
@@ -149,22 +160,25 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
     }
   }
 
-  private getHmKitLockTargetState(): number {
+  private updateHmKitLockTargetState() {
     switch (this.lockState) {
       case LockState.LOCKED:
         if (this.motorState === MotorState.STOPPED) {
-          return this.platform.Characteristic.LockTargetState.SECURED;
+          this.targetLockState = this.platform.Characteristic.LockTargetState.SECURED;
+        } else {
+          this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
         }
-
-        return this.platform.Characteristic.LockTargetState.UNSECURED;
+        break;
       case LockState.UNLOCKED:
         if (this.motorState === MotorState.CLOSING) {
-          return this.platform.Characteristic.LockTargetState.SECURED;
+          this.targetLockState = this.platform.Characteristic.LockTargetState.SECURED;
+        } else {
+          this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
         }
-
-        return this.platform.Characteristic.LockTargetState.UNSECURED;
+        break;
       case LockState.OPEN:
-        return this.platform.Characteristic.LockTargetState.UNSECURED;
+        this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
+        break;
     }
   }
 }
