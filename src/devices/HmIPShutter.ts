@@ -105,14 +105,14 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
         const shutterLevelHomeKit = HmIPShutter.shutterHmIPToHomeKit(shutterChannel.shutterLevel);
         if (shutterLevelHomeKit !== this.shutterLevel) {
           this.shutterLevel = shutterLevelHomeKit;
-          this.platform.log.info('Current shutter level of %s changed to %s %%', this.accessory.displayName, this.shutterLevel.toFixed(0));
+          this.platform.log.debug('Current shutter level of %s changed to %s %%', this.accessory.displayName, this.shutterLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.shutterLevel);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.shutterLevel);
         }
 
         if (shutterChannel.processing !== this.processing) {
           this.processing = shutterChannel.processing;
-          this.platform.log.info('Processing state of shutter/blind %s changed to %s', this.accessory.displayName, this.processing);
+          this.platform.log.debug('Processing state of shutter/blind %s changed to %s', this.accessory.displayName, this.processing);
           this.service.updateCharacteristic(this.platform.Characteristic.PositionState, this.processing ?
             this.platform.Characteristic.PositionState.DECREASING : this.platform.Characteristic.PositionState.STOPPED);
         }

@@ -2,7 +2,7 @@ import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValu
 
 import {HmIPPlatform} from '../HmIPPlatform';
 import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
-import {HmIPShutter} from "./HmIPShutter";
+import {HmIPShutter} from './HmIPShutter';
 
 interface BlindChannel {
   functionalChannelType: string;
@@ -66,9 +66,9 @@ export class HmIPBlind extends HmIPShutter implements Updateable {
         const blindChannel = <BlindChannel>channel;
 
         const slatsLevelHomeKit = HmIPBlind.slatsHmIPToHomeKit(blindChannel.slatsLevel);
-        if (slatsLevelHomeKit != this.slatsLevel) {
+        if (slatsLevelHomeKit !== this.slatsLevel) {
           this.slatsLevel = slatsLevelHomeKit;
-          this.platform.log.info('Current blind slats level of %s changed to %s°', this.accessory.displayName, this.slatsLevel.toFixed(0));
+          this.platform.log.debug('Current blind slats level of %s changed to %s°', this.accessory.displayName, this.slatsLevel.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentHorizontalTiltAngle, this.slatsLevel);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetHorizontalTiltAngle, this.slatsLevel);
         }

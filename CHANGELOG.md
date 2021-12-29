@@ -3,6 +3,7 @@
 ### Improvements
 
 - **HmIP-MOD**: Added "lightSwitch" config option to disable light switch if not available.
+- **General**: Reduced verbosity of log messages. Some frequent log messages have log level debug now.
 
 ### Bugfix
 

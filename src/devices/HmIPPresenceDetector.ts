@@ -70,7 +70,7 @@ export class HmIPPresenceDetector extends HmIPGenericDevice implements Updateabl
 
         if (presenceDetectionChannel.presenceDetected !== null && presenceDetectionChannel.presenceDetected !== this.presenceDetected) {
           this.presenceDetected = presenceDetectionChannel.presenceDetected;
-          this.platform.log.info('Presence detector state of %s changed to %s', this.accessory.displayName, this.presenceDetected);
+          this.platform.log.debug('Presence detector state of %s changed to %s', this.accessory.displayName, this.presenceDetected);
           this.service.updateCharacteristic(this.platform.Characteristic.OccupancyDetected, this.presenceDetected
             ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
             : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);

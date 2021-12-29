@@ -102,7 +102,7 @@ export class HmIPDimmer extends HmIPGenericDevice implements Updateable {
           }
 
           this.brightness = brightness;
-          this.platform.log.info('Brightness of %s changed to %s %%', this.accessory.displayName, this.brightness.toFixed(0));
+          this.platform.log.debug('Brightness of %s changed to %s %%', this.accessory.displayName, this.brightness.toFixed(0));
           this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.brightness);
         }
       }

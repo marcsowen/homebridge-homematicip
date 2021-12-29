@@ -113,7 +113,7 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
 
         if (doorLockChannel.motorState !== null && doorLockChannel.motorState !== this.motorState) {
           this.motorState = doorLockChannel.motorState;
-          this.platform.log.info('Door lock drive motor state of %s changed to %s', this.accessory.displayName, this.motorState);
+          this.platform.log.debug('Door lock drive motor state of %s changed to %s', this.accessory.displayName, this.motorState);
           this.updateHmKitLockTargetState();
           this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.targetLockState);
         }

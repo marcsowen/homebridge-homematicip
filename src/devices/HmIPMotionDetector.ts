@@ -70,7 +70,7 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
 
         if (motionDetectionChannel.motionDetected !== null && motionDetectionChannel.motionDetected !== this.motionDetected) {
           this.motionDetected = motionDetectionChannel.motionDetected;
-          this.platform.log.info('Motion detector state of %s changed to %s', this.accessory.displayName, this.motionDetected);
+          this.platform.log.debug('Motion detector state of %s changed to %s', this.accessory.displayName, this.motionDetected);
           this.service.updateCharacteristic(this.platform.Characteristic.MotionDetected, this.motionDetected);
         }
       }

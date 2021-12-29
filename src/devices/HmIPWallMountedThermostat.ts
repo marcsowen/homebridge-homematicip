@@ -154,13 +154,13 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
 
         if (wthChannel.actualTemperature !== null && wthChannel.actualTemperature !== this.actualTemperature) {
           this.actualTemperature = wthChannel.actualTemperature;
-          this.platform.log.info('Current temperature of %s changed to %s °C', this.accessory.displayName, this.actualTemperature);
+          this.platform.log.debug('Current temperature of %s changed to %s °C', this.accessory.displayName, this.actualTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.actualTemperature);
         }
 
         if (wthChannel.humidity !== null && wthChannel.humidity !== this.humidity) {
           this.humidity = wthChannel.humidity;
-          this.platform.log.info('Current relative humidity of %s changed to %s %%', this.accessory.displayName, this.humidity);
+          this.platform.log.debug('Current relative humidity of %s changed to %s %%', this.accessory.displayName, this.humidity);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.humidity);
         }
 

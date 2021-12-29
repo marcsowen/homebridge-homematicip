@@ -99,14 +99,14 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
         if (switchMeasuringChannel.currentPowerConsumption !== null
           && switchMeasuringChannel.currentPowerConsumption !== this.currentPowerConsumption) {
           this.currentPowerConsumption = switchMeasuringChannel.currentPowerConsumption;
-          this.platform.log.info('Switch power consumption of %s changed to %s W',
+          this.platform.log.debug('Switch power consumption of %s changed to %s W',
             this.accessory.displayName, this.currentPowerConsumption.toFixed(1));
           this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower, this.currentPowerConsumption);
         }
 
         if (switchMeasuringChannel.energyCounter !== null && switchMeasuringChannel.energyCounter !== this.energyCounter) {
           this.energyCounter = switchMeasuringChannel.energyCounter;
-          this.platform.log.info('Switch energy counter of %s changed to %s kWh',
+          this.platform.log.debug('Switch energy counter of %s changed to %s kWh',
             this.accessory.displayName, this.energyCounter.toFixed(3));
           this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy, this.energyCounter);
         }

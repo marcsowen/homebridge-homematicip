@@ -132,19 +132,19 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
 
         if (heatingThermostatChannel.setPointTemperature !== this.setPointTemperature) {
           this.setPointTemperature = heatingThermostatChannel.setPointTemperature;
-          this.platform.log.info('Target temperature of %s changed to %s °C', this.accessory.displayName, this.setPointTemperature);
+          this.platform.log.debug('Target temperature of %s changed to %s °C', this.accessory.displayName, this.setPointTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.setPointTemperature);
         }
 
         if (heatingThermostatChannel.valveActualTemperature !== this.valveActualTemperature) {
           this.valveActualTemperature = heatingThermostatChannel.valveActualTemperature;
-          this.platform.log.info('Current temperature of %s changed to %s °C', this.accessory.displayName, this.valveActualTemperature);
+          this.platform.log.debug('Current temperature of %s changed to %s °C', this.accessory.displayName, this.valveActualTemperature);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.valveActualTemperature);
         }
 
         if (heatingThermostatChannel.valvePosition !== this.valvePosition) {
           this.valvePosition = heatingThermostatChannel.valvePosition;
-          this.platform.log.info('Current valve position of %s changed to %s', this.accessory.displayName, this.valvePosition);
+          this.platform.log.debug('Current valve position of %s changed to %s', this.accessory.displayName, this.valvePosition);
         }
 
         if (heatingThermostatChannel.valveState !== this.valveState) {

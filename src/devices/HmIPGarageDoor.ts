@@ -43,7 +43,6 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
   private service: Service;
   private switchService: Service | undefined;
 
-  private withLightSwitch = true;
   private currentDoorState: DoorState = DoorState.CLOSED;
   private previousDoorState: DoorState = DoorState.CLOSED;
   private processing = false;
@@ -55,8 +54,6 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-
-    this.withLightSwitch = this.accessoryConfig?.['lightSwitch'] === true;
 
     this.platform.log.debug(`Created garage door ${accessory.context.device.label}`);
     this.service = this.accessory.getService(this.platform.Service.GarageDoorOpener)
@@ -73,7 +70,9 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     this.service.getCharacteristic(this.platform.Characteristic.ObstructionDetected)
       .on('get', this.handleObstructionDetectedGet.bind(this));
 
-    if (this.withLightSwitch) {
+    const withLightSwitch = this.accessoryConfig?.['lightSwitch'] === true;
+
+    if (withLightSwitch) {
       this.switchService = this.accessory.getService(this.platform.Service.Switch)
         || this.accessory.addService(this.platform.Service.Switch);
 
@@ -149,7 +148,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
 
         if (doorChannel.processing !== null && doorChannel.processing !== this.processing) {
           this.processing = doorChannel.processing;
-          this.platform.log.info('Garage door processing state of %s changed to %s', this.accessory.displayName, this.processing);
+          this.platform.log.debug('Garage door processing state of %s changed to %s', this.accessory.displayName, this.processing);
           if (!this.processing && this.currentDoorState !== DoorState.OPEN && this.currentDoorState !== DoorState.CLOSED){
             this.service.updateCharacteristic(this.platform.Characteristic.CurrentDoorState,
               this.platform.Characteristic.CurrentDoorState.STOPPED);

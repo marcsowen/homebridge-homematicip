@@ -53,7 +53,7 @@ export class HmIPLightSensor extends HmIPGenericDevice implements Updateable {
 
         if (lightSensorChannel.averageIllumination !== null && lightSensorChannel.averageIllumination !== this.averageIllumination) {
           this.averageIllumination = lightSensorChannel.averageIllumination;
-          this.platform.log.info('Average light level of %s changed to %s lx', this.accessory.displayName, this.averageIllumination);
+          this.platform.log.debug('Average light level of %s changed to %s lx', this.accessory.displayName, this.averageIllumination);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, this.averageIllumination);
         }
       }
