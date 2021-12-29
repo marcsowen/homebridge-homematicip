@@ -154,30 +154,24 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       this.updateAccessory(id, device);
     }
 
-    this.securitySystem = this.createSecuritySystem(hmIPState.home);
-
     // find cached but now removed accessories and unregister them
     const accessoriesToBeRemoved: PlatformAccessory[] = [];
 
+    this.securitySystem = this.createSecuritySystem(hmIPState.home);
+    const homeSecuritySystemUuid = this.api.hap.uuid.generate(hmIPState.home.id + '_security');
+
     if (this.securitySystem.hidden) {
-      const id = hmIPState.home.id + '_security';
-      const uuid = this.api.hap.uuid.generate(id);
-      const cachedAccessory = this.getAccessory(uuid);
+      const cachedAccessory = this.getAccessory(homeSecuritySystemUuid);
       if (cachedAccessory !== undefined) {
         this.log.info('Removing home security system');
         accessoriesToBeRemoved.push(cachedAccessory);
       }
     }
 
-    for (const id in hmIPState.devices) {
-      if (!this.deviceMap.has(id)) {
-        const uuid = this.api.hap.uuid.generate(id);
-        const cachedAccessory = this.getAccessory(uuid);
-        if (cachedAccessory !== undefined) {
-          const device = hmIPState.devices[id];
-          this.log.info('Removing accessory %s', device.label);
-          accessoriesToBeRemoved.push(cachedAccessory);
-        }
+    for (const cachedAccessory of this.accessories) {
+      if (cachedAccessory.UUID !== homeSecuritySystemUuid && !this.deviceMap.has(cachedAccessory.context.device.id)) {
+        this.log.info('Removing accessory %s', cachedAccessory.context.device.label);
+        accessoriesToBeRemoved.push(cachedAccessory);
       }
     }
 

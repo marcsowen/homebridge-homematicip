@@ -35,14 +35,15 @@ interface DoorChannel {
 /**
  * HomematicIP garage door
  *
- * HMIP-MOD-TM (Garage Door Module Tormatic)
- * HMIP-MOD-HO (Garage Door Module for Hörmann)
+ * HmIP-MOD-TM (Garage Door Module Tormatic)
+ * HmIP-MOD-HO (Garage Door Module for Hörmann)
  *
  */
 export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
   private service: Service;
-  private switchService: Service;
+  private switchService: Service | undefined;
 
+  private withLightSwitch = true;
   private currentDoorState: DoorState = DoorState.CLOSED;
   private previousDoorState: DoorState = DoorState.CLOSED;
   private processing = false;
@@ -54,6 +55,8 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
+
+    this.withLightSwitch = this.accessoryConfig?.['lightSwitch'] === true;
 
     this.platform.log.debug(`Created garage door ${accessory.context.device.label}`);
     this.service = this.accessory.getService(this.platform.Service.GarageDoorOpener)
@@ -70,11 +73,20 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
     this.service.getCharacteristic(this.platform.Characteristic.ObstructionDetected)
       .on('get', this.handleObstructionDetectedGet.bind(this));
 
-    this.switchService = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
+    if (this.withLightSwitch) {
+      this.switchService = this.accessory.getService(this.platform.Service.Switch)
+        || this.accessory.addService(this.platform.Service.Switch);
 
-    this.switchService.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleOnGet.bind(this))
-      .on('set', this.handleOnSet.bind(this));
+      this.switchService.getCharacteristic(this.platform.Characteristic.On)
+        .on('get', this.handleOnGet.bind(this))
+        .on('set', this.handleOnSet.bind(this));
+    } else {
+      const switchService = this.accessory.getService(this.platform.Service.Switch);
+      if (switchService !== undefined) {
+        this.platform.log.info('Removing light service from %s', accessory.context.device.label);
+        this.accessory.removeService(switchService);
+      }
+    }
 
     this.updateDevice(accessory.context.device, platform.groups);
   }
@@ -149,7 +161,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice implements Updateable {
         if (doorChannel.on !== null && doorChannel.on !== this.on) {
           this.on = doorChannel.on;
           this.platform.log.info('Garage door light of %s changed to %s', this.accessory.displayName, this.on ? 'ON' : 'OFF');
-          this.switchService.updateCharacteristic(this.platform.Characteristic.On, this.on);
+          this.switchService?.updateCharacteristic(this.platform.Characteristic.On, this.on);
         }
       }
     }

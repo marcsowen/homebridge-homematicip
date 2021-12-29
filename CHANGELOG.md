@@ -1,3 +1,13 @@
+## 0.7.2 (2021-12-29)
+
+### Improvements
+
+- **HmIP-MOD**: Added "lightSwitch" config option to disable light switch if not available.
+
+### Bugfix
+
+- **General**: Fixed removal of cached accessories which were removed from HmIP cloud.
+
 ## 0.7.1 (2021-12-21)
 
 ### Improvements
