@@ -1,3 +1,10 @@
+## Next
+
+### Improvements
+
+- **HmIP-DLS**: Added suuport for HmIP-DLS door lock sensor (Many thanks to @smhex)
+- **General**: Version bumps of dependencies.
+
 ## 0.7.2 (2021-12-29)
 
 ### Improvements
