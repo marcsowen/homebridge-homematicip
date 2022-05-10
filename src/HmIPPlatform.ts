@@ -183,6 +183,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     // Start websocket immediately and register handlers
     await this.connector.connectWs(data => {
       const stateChange = <HmIPStateChange>JSON.parse(data.toString());
+      let securityZoneChanged = false;
       for (const id in stateChange.events) {
         const event = stateChange.events[id];
         switch (event.pushEventType) {
@@ -193,7 +194,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
               hmIPState.groups[event.group.id] = event.group;
               this.groups[event.group.id] = event.group;
               if (event.group.type === 'SECURITY_ZONE') {
-                this.securitySystem?.updateGroup(event.group);
+                securityZoneChanged = true;
               }
             }
             break;
@@ -240,6 +241,10 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
           default:
             this.log.debug(`Unhandled event type: ${event.pushEventType} group=${event.group} device=${event.device}`);
         }
+      }
+
+      if (securityZoneChanged) {
+        this.securitySystem?.updateGroups(this.groups);
       }
     });
   }

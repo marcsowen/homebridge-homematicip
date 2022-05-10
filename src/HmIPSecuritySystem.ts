@@ -112,8 +112,8 @@ export class HmIPSecuritySystem {
         if (securitySolution.intrusionAlarmActive !== this.intrusionAlarmActive) {
           this.intrusionAlarmActive = securitySolution.intrusionAlarmActive;
           this.platform.log.info('Security system intrusion alarm changed to %s', this.intrusionAlarmActive);
-          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
           this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
+          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
         }
 
         if (securitySolution.safetyAlarmActive !== this.safetyAlarmActive) {
@@ -129,25 +129,33 @@ export class HmIPSecuritySystem {
     }
   }
 
-  public updateGroup(group: HmIPGroup) {
-    if (group.type === 'SECURITY_ZONE') {
-      const securityGroup = <SecurityZoneGroup>group;
+  public updateGroups(groups: {[key: string]: HmIPGroup}) {
+    let stateChanged = false;
 
-      if (securityGroup.label === 'INTERNAL') {
-        if (securityGroup.active !== this.internalZoneActive) {
-          this.internalZoneActive = securityGroup.active;
-          this.platform.log.info('Security system activation status for internal zone changed to %s', this.internalZoneActive);
-          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
-          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
-        }
-      } else if (securityGroup.label === 'EXTERNAL') {
-        if (securityGroup.active !== this.externalZoneActive) {
-          this.externalZoneActive = securityGroup.active;
-          this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
-          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
-          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
+    for (const groupKey in groups) {
+      const group = groups[groupKey];
+      if (group.type === 'SECURITY_ZONE') {
+        const securityGroup = <SecurityZoneGroup>group;
+
+        if (securityGroup.label === 'INTERNAL') {
+          if (securityGroup.active !== this.internalZoneActive) {
+            this.internalZoneActive = securityGroup.active;
+            this.platform.log.info('Security system activation status for internal zone changed to %s', this.internalZoneActive);
+            stateChanged = true;
+          }
+        } else if (securityGroup.label === 'EXTERNAL') {
+          if (securityGroup.active !== this.externalZoneActive) {
+            this.externalZoneActive = securityGroup.active;
+            this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
+            stateChanged = true;
+          }
         }
       }
+    }
+
+    if (stateChanged) {
+      this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
+      this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
     }
   }
 

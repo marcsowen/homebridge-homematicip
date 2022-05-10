@@ -1,9 +1,13 @@
-## Next
+## 0.8.0-beta
 
 ### Improvements
 
-- **HmIP-DLS**: Added suuport for HmIP-DLS door lock sensor (Many thanks to @smhex)
+- **HmIP-DLS**: Added support for HmIP-DLS door lock sensor (Many thanks to @smhex)
 - **General**: Version bumps of dependencies.
+
+### Bugfix
+
+- **SecuritySystem**: Fixed erroneous state change within the home app.
 
 ## 0.7.2 (2021-12-29)
 
