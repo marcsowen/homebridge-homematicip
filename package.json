@@ -46,7 +46,7 @@
     "bottleneck": "^2.19.5",
     "fakegato-history": "^0.6.3",
     "moment": "^2.29.3",
-    "node-fetch": "3.0.0-beta.9",
+    "node-fetch": "3.2.4",
     "semver": "^7.3.7",
     "ws": "^8.6.0"
   }
