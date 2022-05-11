@@ -1,9 +1,13 @@
-## 0.8.0-beta
+## 0.8.0 (2022-05-11)
+
+### New devices
+
+- **HmIP-DLS**: Added support for HmIP-DLS door lock sensor (Many thanks to @smhex)
 
 ### Improvements
 
-- **HmIP-DLS**: Added support for HmIP-DLS door lock sensor (Many thanks to @smhex)
 - **General**: Version bumps of dependencies.
+- **General**: Switched to pnpm instead of npm.
 
 ### Bugfix
 
