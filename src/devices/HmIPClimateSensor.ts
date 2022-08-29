@@ -62,7 +62,9 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
     super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'CLIMATE_SENSOR_CHANNEL') {
+      if (channel.functionalChannelType === 'CLIMATE_SENSOR_CHANNEL' 
+          || channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_WITHOUT_DISPLAY_CHANNEL'
+          || channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_PRO_CHANNEL') {
         const climateSensorChannel = <ClimateSensorChannel>channel;
 
         if (climateSensorChannel.actualTemperature !== this.actualTemperature) {
