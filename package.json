@@ -35,6 +35,7 @@
     "@typescript-eslint/eslint-plugin": "^5.36.0",
     "@typescript-eslint/parser": "^5.36.0",
     "abort-controller": "^3.0.0",
+    "eslint": "^8.23.0",
     "homebridge": "^1.5.0",
     "nodemon": "^2.0.19",
     "rimraf": "^3.0.2",
