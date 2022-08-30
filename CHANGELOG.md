@@ -1,3 +1,15 @@
+## 1.0.0-beta (2022-0?-??)
+
+### New devices
+
+- **HmIP-BLS**: Added support for HmIP-BLS door lock sensor (Many thanks to @smhex)
+
+### Improvements
+
+- **ClimateSensor**: Added switch to force a thermostat device to act as a climate sensor (Many thanks to @ohueter)
+- **General**: It's time for version 1.0.0!
+- **General**: Version bumps of dependencies.
+
 ## 0.8.0 (2022-05-11)
 
 ### New devices

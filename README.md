@@ -95,6 +95,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIPW-DRD3 (Homematic IP Wired Dimming Actuator – 3x channels) [1]
 - HmIP-DLD Door lock drive [2]
 - HmIP-DLS Door lock sensor
+- HmIP-BSL Notification light switch
 
 [1] Currently, only first channel is supported.<br>
 [2] Please make sure homebridge-homematicip is added to the list of access control clients in HmIP app settings.
