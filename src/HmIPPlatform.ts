@@ -34,6 +34,7 @@ import {HmIPDimmer} from './devices/HmIPDimmer';
 import fakegato from 'fakegato-history';
 import {HmIPDoorLockDrive} from './devices/HmIPDoorLockDrive';
 import {HmIPDoorLockSensor} from './devices/HmIPDoorLockSensor';
+import {HmIPSwitchNotificationLight} from './devices/HmIPSwitchNotificationLight';
 
 /**
  * HomematicIP platform
@@ -322,6 +323,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPDoorLockDrive(this, hmIPAccessory.accessory);
     } else if (device.type === 'DOOR_LOCK_SENSOR') {
       homebridgeDevice = new HmIPDoorLockSensor(this, hmIPAccessory.accessory);
+    } else if (device.type === 'BRAND_SWITCH_NOTIFICATION_LIGHT') {
+      homebridgeDevice = new HmIPSwitchNotificationLight(this, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;
