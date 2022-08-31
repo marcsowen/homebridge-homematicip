@@ -111,6 +111,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - @coreGreenberet for reverse-engineering and implementation of the first HomematicIP-API client using Python
   (https://github.com/coreGreenberet/homematicip-rest-api)
 - @dmalch for adding fakegato-history support (https://github.com/simont77/fakegato-history)
-- @smhex for HmIP-DLS support
+- @smhex for HmIP-DLS and HmIP-BSL support
+- @ohueter for thermostat/climate sensor config option
 
 ## Help needed!
