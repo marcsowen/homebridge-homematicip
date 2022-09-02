@@ -90,7 +90,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
         const switchMeasuringChannel = <SwitchMeasuringChannel>channel;
         this.platform.log.debug('Switch (measuring) update: %s', JSON.stringify(channel));
 
-        if (switchMeasuringChannel.on !== this.on) {
+        if (switchMeasuringChannel.on != null && switchMeasuringChannel.on !== this.on) {
           this.on = switchMeasuringChannel.on;
           this.platform.log.info('Switch state of %s changed to %s', this.accessory.displayName, this.on ? 'ON' : 'OFF');
           this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);

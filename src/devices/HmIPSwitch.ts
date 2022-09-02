@@ -77,7 +77,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
         const switchChannel = <SwitchChannel>channel;
         this.platform.log.debug(`Switch update: ${JSON.stringify(channel)}`);
 
-        if (switchChannel.on !== this.on) {
+        if (switchChannel.on !== null && switchChannel.on !== this.on) {
           this.on = switchChannel.on;
           this.platform.log.info('Switch state of %s changed to %s', this.accessory.displayName, this.on ? 'ON' : 'OFF');
           this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
