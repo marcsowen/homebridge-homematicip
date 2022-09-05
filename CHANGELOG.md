@@ -1,3 +1,9 @@
+## 1.0.1 (2022-09-05)
+
+### Bugfix
+
+- **Switches**: Fixed "characteristic was supplied illegal value: null"
+
 ## 1.0.0 (2022-08-31)
 
 ### New devices
