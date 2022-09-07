@@ -165,12 +165,11 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       this.platform.log.info('Removing light services from %s (config=%s)', accessory.context.device.label, this.simpleSwitch);
     }
 
-
     this.updateDevice(accessory.context.device, platform.groups);   
   }
 
   handleOnGet(callback: CharacteristicGetCallback) {
-    this.platform.log.info('Current switch state of %s is %s', this.accessory.displayName, this.on ? 'ON' : 'OFF');
+    this.platform.log.debug('Current switch state of %s is %s', this.accessory.displayName, this.on ? 'ON' : 'OFF');
     callback(null, this.on);
   }
 
