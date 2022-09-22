@@ -66,7 +66,10 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .on('get', this.handleTargetHeatingCoolingStateGet.bind(this))
-      .on('set', this.handleTargetHeatingCoolingStateSet.bind(this));
+      .on('set', this.handleTargetHeatingCoolingStateSet.bind(this))
+      .setProps({
+        validValues: [this.platform.Characteristic.TargetHeatingCoolingState.HEAT]
+      });
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .on('get', this.handleCurrentTemperatureGet.bind(this));
@@ -101,7 +104,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
+    callback(null, this.platform.Characteristic.TargetHeatingCoolingState.HEAT);
   }
 
   handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
