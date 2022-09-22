@@ -92,10 +92,10 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.getHeatingCoolongState());
+    callback(null, this.getHeatingCoolingState());
   }
 
-  private getHeatingCoolongState() {
+  private getHeatingCoolingState() {
     return this.cooling ?
       this.platform.Characteristic.CurrentHeatingCoolingState.COOL :
       this.setPointTemperature > this.actualTemperature ?
@@ -191,7 +191,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
             if (heatingGroup.cooling !== null && heatingGroup.cooling !== this.cooling) {
               this.cooling = heatingGroup.cooling;
               this.platform.log.info('Cooling mode of %s changed to %s', this.accessory.displayName, this.cooling);
-              this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolongState());
+              this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolingState());
             }
           }
         }
