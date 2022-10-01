@@ -4,6 +4,7 @@ import {
   CharacteristicValue,
   PlatformAccessory,
   Service,
+  ServiceEventTypes,
 } from 'homebridge';
 import moment from 'moment';
 
@@ -45,6 +46,8 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private heatingGroupId = '';
   private cooling = false;
   private valvePosition: number | null = null;
+  private minTemperature = 5;
+  private maxTemperature = 30;
   private readonly historyService;
 
   constructor(
@@ -87,8 +90,8 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
       .on('get', this.handleTargetTemperatureGet.bind(this))
       .on('set', this.handleTargetTemperatureSet.bind(this))
       .setProps({
-        minValue: 5,
-        maxValue: 30,
+        minValue: this.minTemperature,
+        maxValue: this.maxTemperature,
         minStep: 0.5,
       });
 
@@ -215,6 +218,34 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
               this.cooling = heatingGroup.cooling;
               this.platform.log.info('Cooling mode of %s changed to %s', this.accessory.displayName, this.cooling);
               this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolingState());
+            }
+
+            let emitServiceConfigurationChange = false;
+
+            if (heatingGroup.minTemperature !== null && heatingGroup.minTemperature !== this.minTemperature) {
+              this.minTemperature = heatingGroup.minTemperature;
+              this.platform.log.info('Min temperature of %s changed to %s', this.accessory.displayName, this.minTemperature);
+              this.service.getCharacteristic(this.platform.Characteristic.TargetTemperature)
+                .setProps({
+                  minValue: this.minTemperature,
+                });
+              emitServiceConfigurationChange = true;
+            }
+
+            if (heatingGroup.maxTemperature !== null && heatingGroup.maxTemperature !== this.maxTemperature) {
+              this.maxTemperature = heatingGroup.maxTemperature;
+              this.platform.log.info('Max temperature of %s changed to %s', this.accessory.displayName, this.maxTemperature);
+              this.service.getCharacteristic(this.platform.Characteristic.TargetTemperature)
+                .setProps({
+                  maxValue: this.maxTemperature,
+                });
+              emitServiceConfigurationChange = true;
+            }
+
+            if (emitServiceConfigurationChange === true) {
+              // `setProps` does not yet increase the configuration number so
+              // we emit a service change here. Maybe there is a better way...
+              this.service.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
             }
           }
         }
