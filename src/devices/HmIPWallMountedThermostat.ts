@@ -19,6 +19,11 @@ interface WallMountedThermostatChannel {
   groups: string[];
 }
 
+interface WallMountedThermostatInternalSwitchChannel {
+  functionalChannelType: string;
+  valvePosition: number;
+}
+
 /**
  * HomematicIP Thermostat
  *
@@ -39,6 +44,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private humidity = 0;
   private heatingGroupId = '';
   private cooling = false;
+  private valvePosition: number | null = null;
   private readonly historyService;
 
   constructor(
@@ -96,9 +102,12 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   private getHeatingCoolingState() {
+    const heating = this.valvePosition !== null ?
+      this.valvePosition > 0 :
+      this.setPointTemperature > this.actualTemperature
     return this.cooling ?
       this.platform.Characteristic.CurrentHeatingCoolingState.COOL :
-      this.setPointTemperature > this.actualTemperature ?
+      heating ?
         this.platform.Characteristic.CurrentHeatingCoolingState.HEAT :
         this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
   }
@@ -194,6 +203,15 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
               this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolingState());
             }
           }
+        }
+      }
+      else if (channel.functionalChannelType === 'INTERNAL_SWITCH_CHANNEL') {
+        const wthisChannel = <WallMountedThermostatInternalSwitchChannel>channel;
+
+        if (wthisChannel.valvePosition !== null && wthisChannel.valvePosition !== this.valvePosition) {
+          this.valvePosition = wthisChannel.valvePosition;
+          this.platform.log.info('Valve position of %s changed to %s', this.accessory.displayName, this.valvePosition);
+          this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolingState());
         }
       }
     }
