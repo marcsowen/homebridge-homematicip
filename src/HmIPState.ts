@@ -40,6 +40,7 @@ export interface HmIPHeatingGroup {
   humidity: number;
   minTemperature: number;
   maxTemperature: number;
+  controlMode: string;
 }
 
 export interface HmIPHome {
