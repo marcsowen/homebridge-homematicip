@@ -23,7 +23,6 @@ interface WallMountedThermostatChannel {
 interface WallMountedThermostatInternalSwitchChannel {
   functionalChannelType: string;
   valvePosition: number;
-  frostProtectionTemperature: number;
 }
 
 /**
@@ -49,7 +48,6 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private valvePosition: number | null = null;
   private minTemperature = 5;
   private maxTemperature = 30;
-  private frostProtectionTemperature: number = this.minTemperature;
   private readonly historyService;
 
   constructor(
@@ -144,8 +142,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
       };
       await this.platform.connector.apiCall('group/heating/setControlMode', body);
       if (stateName === 'OFF') {
-        this.service.setCharacteristic(this.platform.Characteristic.TargetTemperature,
-          Math.max(this.frostProtectionTemperature, this.minTemperature));
+        this.service.setCharacteristic(this.platform.Characteristic.TargetTemperature, this.minTemperature);
       }
     }
     callback(null);
@@ -270,12 +267,6 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
           this.valvePosition = wthsChannel.valvePosition;
           this.platform.log.info('Valve position of %s changed to %s', this.accessory.displayName, this.valvePosition);
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolingState());
-        }
-
-        if (wthsChannel.frostProtectionTemperature !== null && wthsChannel.frostProtectionTemperature !== this.frostProtectionTemperature) {
-          this.frostProtectionTemperature = wthsChannel.frostProtectionTemperature;
-          this.platform.log.info('Frost protection temperature of %s changed to %s', this.accessory.displayName,
-            this.frostProtectionTemperature);
         }
       }
     }
