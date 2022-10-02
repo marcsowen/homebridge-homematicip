@@ -61,10 +61,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .on('get', this.handleTargetHeatingCoolingStateGet.bind(this))
-      .on('set', this.handleTargetHeatingCoolingStateSet.bind(this))
-      .setProps({
-        validValues: [this.platform.Characteristic.TargetHeatingCoolingState.HEAT]
-      });
+      .on('set', this.handleTargetHeatingCoolingStateSet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .on('get', this.handleCurrentTemperatureGet.bind(this));
@@ -89,7 +86,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   }
 
   handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.platform.Characteristic.TargetHeatingCoolingState.HEAT);
+    callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
   }
 
   handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
