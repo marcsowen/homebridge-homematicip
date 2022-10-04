@@ -127,7 +127,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private getTargetHeatingCoolingState(): number {
     // 'ECO' and other modes also result in `AUTO`
     // `OFF` is not a real state and is not inferred
-    // `COOL` is not yet a valid state so it results in `AUTO` for now
+    // `COOL` is not yet a valid state, so it results in `AUTO` for now
     return this.controlMode !== 'MANUAL' ?
       this.platform.Characteristic.TargetHeatingCoolingState.AUTO :
       this.cooling ?
@@ -158,7 +158,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
       if (stateName === 'OFF') {
         this.service.setCharacteristic(this.platform.Characteristic.TargetTemperature,
           this.cooling ? this.maxTemperature : this.minTemperature);
-        // TODO ensure UI is updated inmmediatly to reflect `OFF` is not a real state
+        // TODO ensure UI is updated immediately to reflect `OFF` is not a real state
       }
     }
     callback(null);
@@ -288,7 +288,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
               this.service.setCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.getTargetHeatingCoolingState());
             }
 
-            if (emitServiceConfigurationChange === true) {
+            if (emitServiceConfigurationChange) {
               // `setProps` does not yet increase the configuration number so
               // we emit a service change here. Maybe there is a better way...
               this.service.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
@@ -296,8 +296,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
             }
           }
         }
-      }
-      else if (channel.functionalChannelType === 'INTERNAL_SWITCH_CHANNEL') {
+      } else if (channel.functionalChannelType === 'INTERNAL_SWITCH_CHANNEL') {
         const wthsChannel = <WallMountedThermostatInternalSwitchChannel>channel;
 
         if (wthsChannel.valvePosition !== null && wthsChannel.valvePosition !== this.valvePosition) {
