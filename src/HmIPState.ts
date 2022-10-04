@@ -38,6 +38,9 @@ export interface HmIPHeatingGroup {
   setPointTemperature: number;
   actualTemperature: number;
   humidity: number;
+  minTemperature: number;
+  maxTemperature: number;
+  controlMode: string;
 }
 
 export interface HmIPHome {

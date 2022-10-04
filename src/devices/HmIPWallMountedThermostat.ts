@@ -4,6 +4,7 @@ import {
   CharacteristicValue,
   PlatformAccessory,
   Service,
+  ServiceEventTypes,
 } from 'homebridge';
 import moment from 'moment';
 
@@ -17,6 +18,11 @@ interface WallMountedThermostatChannel {
   setPointTemperature: number;
   humidity: number;
   groups: string[];
+}
+
+interface WallMountedThermostatInternalSwitchChannel {
+  functionalChannelType: string;
+  valvePosition: number;
 }
 
 /**
@@ -39,6 +45,10 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   private humidity = 0;
   private heatingGroupId = '';
   private cooling = false;
+  private valvePosition: number | null = null;
+  private minTemperature = 5;
+  private maxTemperature = 30;
+  private controlMode = 'UNKNOWN';
   private readonly historyService;
 
   constructor(
@@ -66,7 +76,14 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .on('get', this.handleTargetHeatingCoolingStateGet.bind(this))
-      .on('set', this.handleTargetHeatingCoolingStateSet.bind(this));
+      .on('set', this.handleTargetHeatingCoolingStateSet.bind(this))
+      .setProps({
+        validValues: [
+          this.platform.Characteristic.TargetHeatingCoolingState.OFF,
+          this.platform.Characteristic.TargetHeatingCoolingState.HEAT,
+          this.platform.Characteristic.TargetHeatingCoolingState.AUTO,
+        ],
+      });
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .on('get', this.handleCurrentTemperatureGet.bind(this));
@@ -75,8 +92,8 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
       .on('get', this.handleTargetTemperatureGet.bind(this))
       .on('set', this.handleTargetTemperatureSet.bind(this))
       .setProps({
-        minValue: 5,
-        maxValue: 30,
+        minValue: this.minTemperature,
+        maxValue: this.maxTemperature,
         minStep: 0.5,
       });
 
@@ -89,25 +106,75 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.getHeatingCoolongState());
+    callback(null, this.getCurrentHeatingCoolingState());
   }
 
-  private getHeatingCoolongState() {
+  private getCurrentHeatingCoolingState() {
+    const heating = this.valvePosition !== null ?
+      this.valvePosition > 0 :
+      this.setPointTemperature > this.actualTemperature;
     return this.cooling ?
       this.platform.Characteristic.CurrentHeatingCoolingState.COOL :
-      this.setPointTemperature > this.actualTemperature ?
+      heating ?
         this.platform.Characteristic.CurrentHeatingCoolingState.HEAT :
         this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
   }
 
   handleTargetHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
+    callback(null, this.getTargetHeatingCoolingState());
   }
 
-  handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Ignoring setting heating/cooling state for %s to %s', this.accessory.displayName,
-      this.getTargetHeatingCoolingStateName(<number>value));
+  private getTargetHeatingCoolingState(): number {
+    // 'ECO' and other modes also result in `AUTO`
+    // `OFF` is not a real state and is not inferred
+    // `COOL` is not yet a valid state so it results in `AUTO` for now
+    return this.controlMode !== 'MANUAL' ?
+      this.platform.Characteristic.TargetHeatingCoolingState.AUTO :
+      this.cooling ?
+        this.platform.Characteristic.TargetHeatingCoolingState.AUTO :
+        this.platform.Characteristic.TargetHeatingCoolingState.HEAT;
+  }
+
+  async handleTargetHeatingCoolingStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    const stateName = this.getTargetHeatingCoolingStateName(<number>value);
+    const controlMode = this.getControlModeFromTargetHeatingCoolingState(
+      stateName === 'OFF' ?
+        this.cooling ?
+          this.platform.Characteristic.TargetHeatingCoolingState.COOL :  // results in 'UNKNOWN' for now
+          this.platform.Characteristic.TargetHeatingCoolingState.HEAT :
+        <number>value,
+    );
+    if (controlMode === 'UNKNOWN') {
+      this.platform.log.info('Ignoring setting target heating/cooling state for %s to %s', this.accessory.displayName,
+        stateName);
+    } else {
+      this.platform.log.info('Setting target heating/cooling state for %s to %s (control mode: %s)', this.accessory.displayName,
+        stateName, controlMode);
+      const body = {
+        groupId: this.heatingGroupId,
+        controlMode: controlMode,
+      };
+      await this.platform.connector.apiCall('group/heating/setControlMode', body);
+      if (stateName === 'OFF') {
+        this.service.setCharacteristic(this.platform.Characteristic.TargetTemperature,
+          this.cooling ? this.maxTemperature : this.minTemperature);
+        // TODO ensure UI is updated inmmediatly to reflect `OFF` is not a real state
+      }
+    }
     callback(null);
+  }
+
+  private getControlModeFromTargetHeatingCoolingState(heatingCoolingState: number): string {
+    switch (heatingCoolingState) {
+      case this.platform.Characteristic.TargetHeatingCoolingState.HEAT:
+        return 'MANUAL';
+      // case this.platform.Characteristic.TargetHeatingCoolingState.COOL:
+      //   return 'MANUAL';
+      case this.platform.Characteristic.TargetHeatingCoolingState.AUTO:
+        return 'AUTOMATIC';
+      default:
+        return 'UNKNOWN';
+    }
   }
 
   handleCurrentTemperatureGet(callback: CharacteristicGetCallback) {
@@ -188,9 +255,55 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
             if (heatingGroup.cooling !== null && heatingGroup.cooling !== this.cooling) {
               this.cooling = heatingGroup.cooling;
               this.platform.log.info('Cooling mode of %s changed to %s', this.accessory.displayName, this.cooling);
-              this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getHeatingCoolongState());
+              this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState,
+                this.getCurrentHeatingCoolingState());
+            }
+
+            let emitServiceConfigurationChange = false;
+
+            if (heatingGroup.minTemperature !== null && heatingGroup.minTemperature !== this.minTemperature) {
+              this.minTemperature = heatingGroup.minTemperature;
+              this.platform.log.info('Min temperature of %s changed to %s', this.accessory.displayName, this.minTemperature);
+              this.service.getCharacteristic(this.platform.Characteristic.TargetTemperature)
+                .setProps({
+                  minValue: this.minTemperature,
+                });
+              emitServiceConfigurationChange = true;
+            }
+
+            if (heatingGroup.maxTemperature !== null && heatingGroup.maxTemperature !== this.maxTemperature) {
+              this.maxTemperature = heatingGroup.maxTemperature;
+              this.platform.log.info('Max temperature of %s changed to %s', this.accessory.displayName, this.maxTemperature);
+              this.service.getCharacteristic(this.platform.Characteristic.TargetTemperature)
+                .setProps({
+                  maxValue: this.maxTemperature,
+                });
+              emitServiceConfigurationChange = true;
+            }
+
+            // Inferring target heating/cooling state depends on current state (e.g. cooling), so process it last
+            if (heatingGroup.controlMode !== null && heatingGroup.controlMode !== this.controlMode) {
+              this.controlMode = heatingGroup.controlMode;
+              this.platform.log.info('Control mode of %s changed to %s', this.accessory.displayName, this.controlMode);
+              this.service.setCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.getTargetHeatingCoolingState());
+            }
+
+            if (emitServiceConfigurationChange === true) {
+              // `setProps` does not yet increase the configuration number so
+              // we emit a service change here. Maybe there is a better way...
+              this.service.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+              this.platform.log.info('Emitted service configuration change of %s', this.accessory.displayName);
             }
           }
+        }
+      }
+      else if (channel.functionalChannelType === 'INTERNAL_SWITCH_CHANNEL') {
+        const wthsChannel = <WallMountedThermostatInternalSwitchChannel>channel;
+
+        if (wthsChannel.valvePosition !== null && wthsChannel.valvePosition !== this.valvePosition) {
+          this.valvePosition = wthsChannel.valvePosition;
+          this.platform.log.info('Valve position of %s changed to %s', this.accessory.displayName, this.valvePosition);
+          this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getCurrentHeatingCoolingState());
         }
       }
     }
