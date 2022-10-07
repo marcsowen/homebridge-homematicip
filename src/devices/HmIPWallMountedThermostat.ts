@@ -148,7 +148,9 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
       this.platform.log.info('Ignoring setting target heating/cooling state for %s to %s', this.accessory.displayName,
         stateName);
     } else {
-      this.platform.log.info('Setting target heating/cooling state for %s to %s', this.accessory.displayName, stateName);
+      if (value !== this.service.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState).value) {
+        this.platform.log.info('Setting target heating/cooling state for %s to %s', this.accessory.displayName, stateName);
+      }
       if (controlMode !== this.controlMode) {
         this.platform.log.info('Setting control mode for %s to %s', this.accessory.displayName, controlMode);
         const body = {
