@@ -39,6 +39,7 @@ export class HmIPConnector {
   private wsReconnectIntervalMillis = 10000;
   private ws: WebSocket | null = null;
   private limiter: Bottleneck;
+  private limiterDepleted = false;
 
   constructor(log: Logger, accessPoint: string, authToken: string, pin: string) {
     this.log = log;
@@ -66,10 +67,31 @@ export class HmIPConnector {
       .update(this.accessPoint + 'jiLpVitHvWnIGD1yo7MA')
       .digest('hex')
       .toUpperCase();
-
+    
     this.limiter = new Bottleneck({
       maxConcurrent: 1,
-      minTime: 500,
+      minTime: 100,
+      reservoir: 10,
+      reservoirIncreaseInterval: 1000,
+      reservoirIncreaseAmount: 1,
+      reservoirIncreaseMaximum: 10,
+      highWater: 120, // = 2 * 60s / (interval / 1000ms / amount)
+      strategy: Bottleneck.strategy.LEAK,
+    });
+    this.limiter.on('dropped', () => {
+      this.log.warn('High water mark reached, dropping oldest job with lowest priority');
+    });
+    this.limiter.on('depleted', (empty: boolean) => {
+      if (!this.limiterDepleted && !empty) {
+        this.limiterDepleted = true;
+        this.log.info('Limiter depleted, throttling requests');
+      }
+    });
+    this.limiter.on('empty', () => {
+      if (this.limiterDepleted) {
+        this.log.info('Limiter empty again, requests are no longer throttled');
+        this.limiterDepleted = false;
+      }
     });
   }
 
@@ -106,11 +128,11 @@ export class HmIPConnector {
     return true;
   }
 
-  async apiCall<T>(path: string, _body?: Record<string, unknown>) {
-    return this._apiCall<T>(true, true, path, _body);
+  async apiCall<T>(path: string, _body?: Record<string, unknown>, priority = 5) {
+    return this._apiCall<T>(true, true, path, _body, priority);
   }
 
-  async _apiCall<T>(addTokens: boolean, logError: boolean, path: string, _body?: Record<string, unknown>) {
+  async _apiCall<T>(addTokens: boolean, logError: boolean, path: string, _body?: Record<string, unknown>, priority = 5) {
     const url = `${this.urlREST}/hmip/${path}`;
     const headers = {
       'content-type': 'application/json',
@@ -124,18 +146,19 @@ export class HmIPConnector {
     if (addTokens) {
       headers.AUTHTOKEN = this.authToken;
     }
-
     const body = _body ? JSON.stringify(_body) : null;
     this.log.debug('Requesting ' + url + ': ' + JSON.stringify(body) + ', headers=' + JSON.stringify(headers));
-    const response = await this.limiter.schedule(() => fetch(url, {
-      method: 'POST',
-      headers: headers,
-      body: body,
-    }));
+    const response = await this.limiter.schedule(
+      {priority: priority},
+      () => fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: body,
+      }));
     if (response.status >= 400) {
       if (logError) {
         this.log.error('Cannot request: url=' + url + ', request=' + JSON.stringify(body) + ', headers=' + JSON.stringify(headers)
-          + ', code=' + response.status + ', message=' + response.statusText);
+          + ', code=' + response.status + ', message=' + response.statusText + ', response.headers=' + JSON.stringify(response.headers));
       }
       return false;
     }
@@ -240,21 +263,21 @@ export class HmIPConnector {
       'deviceName': PLUGIN_NAME,
       'sgtin': this.accessPoint,
     };
-    return this._apiCall(false, true, 'auth/connectionRequest', request);
+    return this._apiCall(false, true, 'auth/connectionRequest', request, 0);
   }
 
   authRequestAcknowledged(deviceId: string): Promise<boolean> {
     const request = {
       'deviceId': deviceId,
     };
-    return this._apiCall(false, false, 'auth/isRequestAcknowledged', request);
+    return this._apiCall(false, false, 'auth/isRequestAcknowledged', request, 0);
   }
 
   authRequestToken(deviceId: string): Promise<AuthTokenResult> {
     const request = {
       'deviceId': deviceId,
     };
-    return <Promise<AuthTokenResult>>this._apiCall(false, true, 'auth/requestAuthToken', request);
+    return <Promise<AuthTokenResult>>this._apiCall(false, true, 'auth/requestAuthToken', request, 0);
   }
 
   authConfirmToken(deviceId: string, authToken: string): Promise<ConfirmResult> {
@@ -262,7 +285,7 @@ export class HmIPConnector {
       'deviceId': deviceId,
       'authToken': authToken,
     };
-    return <Promise<ConfirmResult>>this._apiCall(false, true, 'auth/confirmAuthToken', request);
+    return <Promise<ConfirmResult>>this._apiCall(false, true, 'auth/confirmAuthToken', request, 0);
   }
 
 }

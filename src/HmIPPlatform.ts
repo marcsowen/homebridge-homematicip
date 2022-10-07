@@ -141,7 +141,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    const hmIPState = <HmIPState>await this.connector.apiCall('home/getCurrentState', this.connector.clientCharacteristics);
+    const hmIPState = <HmIPState>await this.connector.apiCall('home/getCurrentState', this.connector.clientCharacteristics, 1);
     if (!hmIPState || !hmIPState.devices) {
       this.log.info(`HomematicIP response is incomplete or could not be parsed: ${hmIPState}`);
       return;

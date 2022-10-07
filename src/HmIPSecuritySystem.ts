@@ -93,7 +93,7 @@ export class HmIPSecuritySystem {
         EXTERNAL: target?.external,
       },
     };
-    await this.platform.connector.apiCall('home/security/setZonesActivation', body);
+    await this.platform.connector.apiCall('home/security/setZonesActivation', body, 2);
     callback(null);
   }
 
