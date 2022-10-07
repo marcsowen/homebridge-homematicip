@@ -148,17 +148,21 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
       this.platform.log.info('Ignoring setting target heating/cooling state for %s to %s', this.accessory.displayName,
         stateName);
     } else {
-      this.platform.log.info('Setting target heating/cooling state for %s to %s (control mode: %s)', this.accessory.displayName,
-        stateName, controlMode);
-      const body = {
-        groupId: this.heatingGroupId,
-        controlMode: controlMode,
-      };
-      await this.platform.connector.apiCall('group/heating/setControlMode', body);
+      this.platform.log.info('Setting target heating/cooling state for %s to %s', this.accessory.displayName, stateName);
+      if (controlMode !== this.controlMode) {
+        this.platform.log.info('Setting control mode for %s to %s', this.accessory.displayName, controlMode);
+        const body = {
+          groupId: this.heatingGroupId,
+          controlMode: controlMode,
+        };
+        await this.platform.connector.apiCall('group/heating/setControlMode', body);
+      }
       if (stateName === 'OFF') {
-        this.service.setCharacteristic(this.platform.Characteristic.TargetTemperature,
-          this.cooling ? this.maxTemperature : this.minTemperature);
-        // TODO ensure UI is updated immediately to reflect `OFF` is not a real state
+        const targetTemperature = this.cooling ? this.maxTemperature : this.minTemperature;
+        if (targetTemperature !== this.setPointTemperature) {
+          this.service.setCharacteristic(this.platform.Characteristic.TargetTemperature, targetTemperature);
+        }
+        // TODO ensure UI is updated inmmediatly to reflect `OFF` is not a real state
       }
     }
     callback(null);
@@ -186,12 +190,14 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
   }
 
   async handleTargetTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Setting target temperature for %s to %s °C', this.accessory.displayName, value);
-    const body = {
-      groupId: this.heatingGroupId,
-      setPointTemperature: value,
-    };
-    await this.platform.connector.apiCall('group/heating/setSetPointTemperature', body);
+    if (value !== this.setPointTemperature) {
+      this.platform.log.info('Setting target temperature for %s to %s °C', this.accessory.displayName, value);
+      const body = {
+        groupId: this.heatingGroupId,
+        setPointTemperature: value,
+      };
+      await this.platform.connector.apiCall('group/heating/setSetPointTemperature', body);
+    }
     callback(null);
   }
 
@@ -285,7 +291,8 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
             if (heatingGroup.controlMode !== null && heatingGroup.controlMode !== this.controlMode) {
               this.controlMode = heatingGroup.controlMode;
               this.platform.log.info('Control mode of %s changed to %s', this.accessory.displayName, this.controlMode);
-              this.service.setCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.getTargetHeatingCoolingState());
+              this.service.updateCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState,
+                this.getTargetHeatingCoolingState());
             }
 
             if (emitServiceConfigurationChange) {
