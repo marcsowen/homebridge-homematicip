@@ -1,8 +1,10 @@
-## 1.1.0-beta.1 (2022-10-xx)
+## 1.1.0-beta.2 (2022-10-xx)
 
 ### Improvements
 
-- **WallMountedThermostat**: Improved handling of heating/cooling state (Many thanks to @aceg1k)
+- **WallMountedThermostat**: Improved handling of heating/cooling state (@aceg1k)
+- **WallMountedThermostat**: Guard against unnecessary API calls (@aceg1k)
+- **API call limited**: Added reservoir and ability to prioritize API calls (@aceg1k)
 - **General**: Version bumps of dependencies
 
 ## 1.0.1 (2022-09-05)

@@ -164,7 +164,7 @@ export class HmIPWallMountedThermostat extends HmIPGenericDevice implements Upda
         if (targetTemperature !== this.setPointTemperature) {
           this.service.setCharacteristic(this.platform.Characteristic.TargetTemperature, targetTemperature);
         }
-        // TODO ensure UI is updated inmmediatly to reflect `OFF` is not a real state
+        // TODO ensure UI is updated immediately to reflect `OFF` is not a real state
       }
     }
     callback(null);
