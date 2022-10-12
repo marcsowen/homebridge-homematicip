@@ -113,6 +113,6 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - @dmalch for adding fakegato-history support (https://github.com/simont77/fakegato-history)
 - @smhex for HmIP-DLS and HmIP-BSL support
 - @ohueter for thermostat/climate sensor config option
-- @aceg1k for improvements in thermostat heating/cooling state handling
+- @aceg1k for improvements in thermostat heating/cooling state handling and API call handling
 
 ## Help needed!
