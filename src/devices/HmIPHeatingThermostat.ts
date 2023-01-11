@@ -52,6 +52,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
 
     this.service = this.accessory.getService(this.platform.Service.Thermostat)
       || this.accessory.addService(this.platform.Service.Thermostat);
+    this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition)
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.updateDevice(accessory.context.device, platform.groups);
@@ -78,6 +79,9 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     this.service.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
       .on('get', this.handleTemperatureDisplayUnitsGet.bind(this))
       .on('set', this.handleTemperatureDisplayUnitsSet.bind(this));
+
+    this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition)
+      .on('get', this.handleValvePositionGet.bind(this))
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
@@ -103,6 +107,14 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     callback(null, this.setPointTemperature);
   }
 
+  handleValvePositionGet(callback: CharacteristicGetCallback) {
+    callback(null, this.currentValvePositionInt8());
+  }
+
+  private currentValvePositionInt8() {
+    return Math.round(this.valvePosition * 100);
+  }
+
   async handleTargetTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.platform.log.info('Setting target temperature for %s to %s °C', this.accessory.displayName, value);
     const body = {
@@ -125,6 +137,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
 
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
+
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
       if (channel.functionalChannelType === 'HEATING_THERMOSTAT_CHANNEL') {
@@ -145,6 +158,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
         if (heatingThermostatChannel.valvePosition !== this.valvePosition) {
           this.valvePosition = heatingThermostatChannel.valvePosition;
           this.platform.log.debug('Current valve position of %s changed to %s', this.accessory.displayName, this.valvePosition);
+          this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition, this.currentValvePositionInt8());
         }
 
         if (heatingThermostatChannel.valveState !== this.valveState) {
