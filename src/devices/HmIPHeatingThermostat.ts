@@ -47,6 +47,15 @@ interface WallMountedThermostatInternalSwitchChannel {
   valvePosition: number;
 }
 
+interface HistoryEvent {
+  time: number;
+  temp?: number;
+  currentTemp?: number;
+  humidity?: number;
+  setTemp: number;
+  valvePosition: number;
+}
+
 /**
  * HomematicIP Thermostat
  *
@@ -60,8 +69,10 @@ interface WallMountedThermostatInternalSwitchChannel {
  *
  */
 export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateable {
-  private service: Service;
 
+  // every 5 minutes
+  private readonly historyEventUpdateFrequencyMs: number = 5 * 60 * 1000;
+  private service: Service;
   private actualTemperature = 0;
   private setPointTemperature = 0;
   private humidity = 0;
@@ -71,9 +82,11 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   private minTemperature = 5;
   private maxTemperature = 30;
   private controlMode = 'UNKNOWN';
+  private isWallThermostat = false;
 
   private valveState: ValveState = ValveState.ERROR_POSITION;
   private readonly historyService;
+  private eventEmitterTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     platform: HmIPPlatform,
@@ -81,7 +94,10 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   ) {
     super(platform, accessory);
 
-    this.historyService = new this.platform.FakeGatoHistoryService('weather', this.accessory, {
+    this.initFeatures(accessory.context.device);
+
+    const historyType = this.isWallThermostat ? 'custom' : 'thermo';
+    this.historyService = new this.platform.FakeGatoHistoryService(historyType, this.accessory, {
       log: this.platform.log,
       storage: 'fs',
       path: this.platform.api.user.storagePath() + '/accessories',
@@ -122,17 +138,23 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
         minStep: 0.5,
       });
 
+    this.service.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
+      .on('get', this.handleTemperatureDisplayUnitsGet.bind(this))
+      .on('set', this.handleTemperatureDisplayUnitsSet.bind(this));
+
     // this is not relevant for pure heating thermostats
-    if (!HmIPHeatingThermostat.isHeatingThermostat(accessory.context.device.type)) {
-      this.service.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
-        .on('get', this.handleTemperatureDisplayUnitsGet.bind(this))
-        .on('set', this.handleTemperatureDisplayUnitsSet.bind(this));
+    if (this.isWallThermostat) {
       this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
         .on('get', this.handleCurrentRelativeHumidityGet.bind(this));
     }
 
     this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition)
       .on('get', this.handleValvePositionGet.bind(this));
+
+  }
+
+  initFeatures(device: HmIPDevice) {
+    this.isWallThermostat = !HmIPHeatingThermostat.isHeatingThermostat(device.type);
   }
 
   handleCurrentHeatingCoolingStateGet(callback: CharacteristicGetCallback) {
@@ -251,11 +273,14 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     super.updateDevice(hmIPDevice, groups);
 
     // attempt to read valve position first
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'INTERNAL_SWITCH_CHANNEL') {
-        const wthsChannel = <WallMountedThermostatInternalSwitchChannel>channel;
-        this.updateValvePosition(wthsChannel.valvePosition);
+    if (this.isWallThermostat) {
+      for (const id in hmIPDevice.functionalChannels) {
+        const channel = hmIPDevice.functionalChannels[id];
+        if (channel.functionalChannelType === 'INTERNAL_SWITCH_CHANNEL') {
+          // this.platform.log.debug('internalSwitchChannel', JSON.stringify(channel));
+          const wthsChannel = <WallMountedThermostatInternalSwitchChannel>channel;
+          this.updateValvePosition(wthsChannel.valvePosition, 'internalSwitchChannel');
+        }
       }
     }
 
@@ -322,40 +347,64 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
               this.service.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
               this.platform.log.info('Emitted service configuration change of %s', this.accessory.displayName);
             }
+
+            // fallback if without internal switch channel: calculate average valve position by iterating heating group
+            if (this.isWallThermostat) {
+              this.updateValvePosition(heatingGroup.valvePosition, 'group');
+            }
           }
         }
       }
 
       if (channel.functionalChannelType === 'HEATING_THERMOSTAT_CHANNEL') {
         const hthChannel = <HeatingThermostatChannel>channel;
-
         this.updateSetPointTemperature(hthChannel.setPointTemperature, 'device channel');
         this.updateActualTemperature(hthChannel.valveActualTemperature);
-        this.updateValvePosition(hthChannel.valvePosition);
+        this.updateValvePosition(hthChannel.valvePosition, 'device channel');
         this.updateValveState(hthChannel.valveState);
-        this.historyService.addEntry(this.createHistoryEntry());
-
       } else if (channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_PRO_CHANNEL'
         || channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_WITHOUT_DISPLAY_CHANNEL') {
         const wthChannel = <WallMountedThermostatChannel>channel;
-
         this.updateSetPointTemperature(wthChannel.setPointTemperature, 'device channel');
         this.updateActualTemperature(wthChannel.actualTemperature);
         this.updateHumidity(wthChannel.humidity);
-        this.historyService.addEntry(this.createHistoryEntry());
-
       }
+    }
+
+    // start once after first device update
+    if (this.eventEmitterTimeout === null) {
+      this.startHistoryEventEmitter();
     }
   }
 
-  private createHistoryEntry() {
-    return {
+  private startHistoryEventEmitter() {
+    this.emitHistoryEvent();
+    // cancel scheduled event before recreating
+    if (this.eventEmitterTimeout !== null) {
+      clearTimeout(this.eventEmitterTimeout);
+    }
+    this.eventEmitterTimeout = setTimeout(() => this.startHistoryEventEmitter(), this.historyEventUpdateFrequencyMs);
+  }
+
+  private emitHistoryEvent() {
+    const event = this.createHistoryEntry();
+    this.platform.log.debug('Emitting history event', this.accessory.displayName, event);
+    this.historyService.addEntry(event);
+  }
+
+  private createHistoryEntry(): HistoryEvent {
+    const event: HistoryEvent = {
       time: moment().unix(),
-      temp: this.actualTemperature,
-      pressure: 0,
-      humidity: this.humidity,
+      setTemp: this.setPointTemperature,
       valvePosition: this.getCurrentValvePositionAsInt(),
     };
+    if (this.isWallThermostat) {
+      event.humidity = this.humidity;
+      event.temp = this.actualTemperature;
+    } else {
+      event.currentTemp = this.actualTemperature;
+    }
+    return event;
   }
 
   private updateValveState(updateValveState: ValveState) {
@@ -382,11 +431,11 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
     }
   }
 
-  private updateValvePosition(updateValvePosition: number) {
+  private updateValvePosition(updateValvePosition: number, source: string) {
     if (updateValvePosition !== null && updateValvePosition !== this.valvePosition) {
       this.valvePosition = updateValvePosition;
-      this.platform.log.info('Valve position of %s changed to %s',
-        this.accessory.displayName, this.valvePosition);
+      this.platform.log.info('Valve position of %s changed to %s (%s)',
+        this.accessory.displayName, this.valvePosition, source);
       this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState,
         this.getCurrentHeatingCoolingState());
       this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition,
@@ -432,13 +481,13 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
       || deviceType === 'TEMPERATURE_HUMIDITY_SENSOR'
       || deviceType === 'TEMPERATURE_HUMIDITY_SENSOR_DISPLAY'
       || deviceType === 'WALL_MOUNTED_THERMOSTAT_BASIC_HUMIDITY'
-      || this.isHeatingThermostat(deviceType)
+      || this.isHeatingThermostat(deviceType);
   }
 
   public static isHeatingThermostat(deviceType: string): boolean {
     return deviceType === 'HEATING_THERMOSTAT'
       || deviceType === 'HEATING_THERMOSTAT_COMPACT'
-      || deviceType === 'HEATING_THERMOSTAT_EVO'
+      || deviceType === 'HEATING_THERMOSTAT_EVO';
   }
 
 }

@@ -41,6 +41,7 @@ export interface HmIPHeatingGroup {
   minTemperature: number;
   maxTemperature: number;
   controlMode: string;
+  valvePosition: number;
 }
 
 export interface HmIPHome {
