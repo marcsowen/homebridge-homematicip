@@ -29,7 +29,7 @@ interface WallMountedThermostatInternalSwitchChannel {
  * HmIP-STHD
  * ALPHA-IP-RBG
  */
-export class HmIPWallMountedHeatingThermostat extends HmIPHeatingThermostat implements Updateable {
+export class HmIPWallMountedThermostat extends HmIPHeatingThermostat implements Updateable {
   private humidity = 0;
 
   constructor(

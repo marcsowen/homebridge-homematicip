@@ -15,7 +15,7 @@ import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
 import {HmIPContactSensor} from './devices/HmIPContactSensor';
 import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
 import {HmIPAccessory} from './HmIPAccessory';
-import {HmIPWallMountedHeatingThermostat} from './devices/HmIPWallMountedHeatingThermostat';
+import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import * as os from 'os';
 import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
 import {HmIPSwitch} from './devices/HmIPSwitch';
@@ -262,7 +262,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       if (asClimateSensor) {
         homebridgeDevice = new HmIPClimateSensor(this, hmIPAccessory.accessory);
       } else {
-        homebridgeDevice = new HmIPWallMountedHeatingThermostat(this, hmIPAccessory.accessory);
+        homebridgeDevice = new HmIPWallMountedThermostat(this, hmIPAccessory.accessory);
       }
     } else if (device.type === 'TEMPERATURE_HUMIDITY_SENSOR_OUTDOOR') {
       homebridgeDevice = new HmIPClimateSensor(this, hmIPAccessory.accessory);
