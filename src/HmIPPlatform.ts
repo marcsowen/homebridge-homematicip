@@ -11,11 +11,11 @@ import {HmIPConnector} from './HmIPConnector';
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings';
 import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState';
 import {HmIPShutter} from './devices/HmIPShutter';
-import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
+import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
 import {HmIPContactSensor} from './devices/HmIPContactSensor';
 import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
 import {HmIPAccessory} from './HmIPAccessory';
-import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
+import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
 import * as os from 'os';
 import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
 import {HmIPSwitch} from './devices/HmIPSwitch';
@@ -254,12 +254,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     const uuid = this.api.hap.uuid.generate(id);
     const hmIPAccessory = this.createAccessory(uuid, device.label, device);
     let homebridgeDevice: HmIPGenericDevice | null = null;
-    if (device.type === 'WALL_MOUNTED_THERMOSTAT_PRO'
-      || device.type === 'BRAND_WALL_MOUNTED_THERMOSTAT'
-      || device.type === 'ROOM_CONTROL_DEVICE'
-      || device.type === 'TEMPERATURE_HUMIDITY_SENSOR'
-      || device.type === 'TEMPERATURE_HUMIDITY_SENSOR_DISPLAY'
-      || device.type === 'WALL_MOUNTED_THERMOSTAT_BASIC_HUMIDITY') {
+    if (HmIPHeatingThermostat.isHeatingThermostat(device.type)) {
+      homebridgeDevice = new HmIPHeatingThermostat(this, hmIPAccessory.accessory);
+    } else if (HmIPHeatingThermostat.isThermostat(device.type)) {
       const accessoryConfig = this.config['devices']?.[device.id];
       const asClimateSensor = accessoryConfig?.['asClimateSensor'] === true;
       if (asClimateSensor) {
@@ -269,10 +266,6 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       }
     } else if (device.type === 'TEMPERATURE_HUMIDITY_SENSOR_OUTDOOR') {
       homebridgeDevice = new HmIPClimateSensor(this, hmIPAccessory.accessory);
-    } else if (device.type === 'HEATING_THERMOSTAT'
-      || device.type === 'HEATING_THERMOSTAT_COMPACT'
-      || device.type === 'HEATING_THERMOSTAT_EVO') {
-      homebridgeDevice = new HmIPHeatingThermostat(this, hmIPAccessory.accessory);
     } else if (device.type === 'FULL_FLUSH_SHUTTER'
       || device.type === 'BRAND_SHUTTER') {
       homebridgeDevice = new HmIPShutter(this, hmIPAccessory.accessory);
