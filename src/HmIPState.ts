@@ -1,3 +1,7 @@
+export interface IdentifiableDevice {
+  id: string;
+}
+
 export interface HmIPStateChangeEvent {
   pushEventType: string;
   device: HmIPDevice | null;
@@ -13,8 +17,7 @@ export interface HmIPFunctionalChannel {
   functionalChannelType: string;
 }
 
-export interface HmIPDevice {
-  id: string;
+export interface HmIPDevice extends IdentifiableDevice {
   label: string;
   type: string;
   oem: string;
@@ -26,13 +29,11 @@ export interface HmIPDevice {
   homeId: string;
 }
 
-export interface HmIPGroup {
-  id: string;
+export interface HmIPGroup extends IdentifiableDevice {
   type: string;
 }
 
-export interface HmIPHeatingGroup {
-  id: string;
+export interface HmIPHeatingGroup extends IdentifiableDevice {
   type: string;
   cooling: boolean;
   setPointTemperature: number;
@@ -44,11 +45,10 @@ export interface HmIPHeatingGroup {
   valvePosition: number;
 }
 
-export interface HmIPHome {
+export interface HmIPHome extends IdentifiableDevice {
   oem: string;
   modelType: string;
   firmwareVersion: string;
-  id: string;
   carrierSense: string;
   weather: HmIPWeather;
   location: HmIPLocation;
