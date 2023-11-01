@@ -1,4 +1,8 @@
-## 1.2.0-beta.1 (2023-11-01)
+## 1.2.0-beta.2 (2023-11-01)
+
+### New devices
+
+- **HmIP-SWO**: Added weather sensors: HmIP-SWO-B, HmIP-SWO-PL, HmIP-SWO-PR
 
 ### Improvements
 
