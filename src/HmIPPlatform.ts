@@ -35,6 +35,9 @@ import fakegato from 'fakegato-history';
 import {HmIPDoorLockDrive} from './devices/HmIPDoorLockDrive.js';
 import {HmIPDoorLockSensor} from './devices/HmIPDoorLockSensor.js';
 import {HmIPSwitchNotificationLight} from './devices/HmIPSwitchNotificationLight.js';
+import {HmIPWeatherSensor} from './devices/HmIPWeatherSensor.js';
+import {HmIPWeatherSensorPlus} from './devices/HmIPWeatherSensorPlus.js';
+import {HmIPWeatherSensorPro} from './devices/HmIPWeatherSensorPro.js';
 
 /**
  * HomematicIP platform
@@ -260,8 +263,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     if (HmIPHeatingThermostat.isHeatingThermostat(device.type)) {
       homebridgeDevice = new HmIPHeatingThermostat(this, hmIPAccessory.accessory);
     } else if (HmIPHeatingThermostat.isThermostat(device.type)) {
-      const accessoryConfig = this.config['devices']?.[device.id];
-      const asClimateSensor = accessoryConfig?.['asClimateSensor'] === true;
+      const asClimateSensor = hmIPAccessory.accessory.context.config?.['asClimateSensor'] === true;
       if (asClimateSensor) {
         homebridgeDevice = new HmIPClimateSensor(this, hmIPAccessory.accessory);
       } else {
@@ -321,6 +323,12 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPDoorLockSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'BRAND_SWITCH_NOTIFICATION_LIGHT') {
       homebridgeDevice = new HmIPSwitchNotificationLight(this, hmIPAccessory.accessory);
+    } else if (device.type === 'WEATHER_SENSOR') {
+      homebridgeDevice = new HmIPWeatherSensor(this, hmIPAccessory.accessory);
+    } else if (device.type === 'WEATHER_SENSOR_PLUS') {
+      homebridgeDevice = new HmIPWeatherSensorPlus(this, hmIPAccessory.accessory);
+    } else if (device.type === 'WEATHER_SENSOR_PRO') {
+      homebridgeDevice = new HmIPWeatherSensorPro(this, hmIPAccessory.accessory);
     } else {
       this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       return;
@@ -332,7 +340,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private createAccessory(uuid: string, displayName: string, deviceContext: unknown): HmIPAccessory {
+  private createAccessory(uuid: string, displayName: string, deviceContext: IdentifiableDevice): HmIPAccessory {
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above
     const existingAccessory = this.getAccessory(uuid);
@@ -346,6 +354,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     }
     const accessory = existingAccessory ? existingAccessory : new this.api.platformAccessory(displayName, uuid);
     accessory.context.device = deviceContext;
+    // this.log.info('Checking: ' + JSON.stringify(this.config['devices']) + ' for ID ' + deviceContext.id)
+    accessory.context.config = this.config['devices']?.[deviceContext.id];
     return new HmIPAccessory(this.api, this.log, accessory, isFromCache);
   }
 
