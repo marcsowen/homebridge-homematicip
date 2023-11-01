@@ -1,7 +1,7 @@
 import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
 
-import {HmIPPlatform} from './HmIPPlatform';
-import {HmIPGroup, HmIPHome} from './HmIPState';
+import {HmIPPlatform} from './HmIPPlatform.js';
+import {HmIPGroup, HmIPHome} from './HmIPState.js';
 
 interface SecurityAndAlarmSolution {
   solution: string;

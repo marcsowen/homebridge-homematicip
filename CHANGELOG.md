@@ -1,3 +1,23 @@
+## 1.2.0-beta.1 (2023-11-01)
+
+### Improvements
+
+- **Thermostats**: Added eve compatible valve position as custom characteristic
+- **General**: Unified HmIPHeatingThermostat, HmIPWallMountedThermostat
+- **General**: Fixed missing fakegato statistics
+- **General**: Limited fakegato updates
+- **General**: Version bumps of dependencies
+
+### Bugfix
+
+- **General**: Works with Node.js >= 20
+
+## 1.0.1 (2022-09-05)
+
+### Bugfix
+
+- **Switches**: Fixed "characteristic was supplied illegal value: null"
+
 ## 1.1.0 (2022-10-12)
 
 ### Improvements

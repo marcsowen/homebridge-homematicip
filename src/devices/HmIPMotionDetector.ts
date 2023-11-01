@@ -1,8 +1,8 @@
 import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel, Updateable} from '../HmIPState';
-import {HmIPGenericDevice} from './HmIPGenericDevice';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel, Updateable} from '../HmIPState.js';
+import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface MotionDetectionChannel {
     functionalChannelType: string;

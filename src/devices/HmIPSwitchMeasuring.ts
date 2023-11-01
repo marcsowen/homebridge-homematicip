@@ -6,9 +6,9 @@ import {
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
-import {HmIPGenericDevice} from './HmIPGenericDevice';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface SwitchMeasuringChannel {
     functionalChannelType: string;

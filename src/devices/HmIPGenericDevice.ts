@@ -1,7 +1,7 @@
 import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup} from '../HmIPState';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPGroup} from '../HmIPState.js';
 
 interface SupportedOptionalFeatures {
   IFeatureDeviceParticulateMatterSensorCommunicationError: boolean;

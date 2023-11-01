@@ -7,45 +7,45 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
-import {HmIPConnector} from './HmIPConnector';
-import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings';
-import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, IdentifiableDevice, Updateable} from './HmIPState';
-import {HmIPShutter} from './devices/HmIPShutter';
-import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat';
-import {HmIPContactSensor} from './devices/HmIPContactSensor';
-import {HmIPGenericDevice} from './devices/HmIPGenericDevice';
-import {HmIPAccessory} from './HmIPAccessory';
-import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat';
+import {HmIPConnector} from './HmIPConnector.js';
+import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
+import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState.js';
+import {HmIPShutter} from './devices/HmIPShutter.js';
+import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat.js';
+import {HmIPContactSensor} from './devices/HmIPContactSensor.js';
+import {HmIPGenericDevice} from './devices/HmIPGenericDevice.js';
+import {HmIPAccessory} from './HmIPAccessory.js';
+import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat.js';
 import * as os from 'os';
-import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector';
-import {HmIPSwitch} from './devices/HmIPSwitch';
-import {HmIPGarageDoor} from './devices/HmIPGarageDoor';
-import {HmIPClimateSensor} from './devices/HmIPClimateSensor';
-import {HmIPWaterSensor} from './devices/HmIPWaterSensor';
-import {HmIPBlind} from './devices/HmIPBlind';
-import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring';
-import {CustomCharacteristic} from './CustomCharacteristic';
-import {HmIPLightSensor} from './devices/HmIPLightSensor';
-import {HmIPSecuritySystem} from './HmIPSecuritySystem';
-import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor';
-import {HmIPMotionDetector} from './devices/HmIPMotionDetector';
-import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector';
-import {HmIPDimmer} from './devices/HmIPDimmer';
+import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector.js';
+import {HmIPSwitch} from './devices/HmIPSwitch.js';
+import {HmIPGarageDoor} from './devices/HmIPGarageDoor.js';
+import {HmIPClimateSensor} from './devices/HmIPClimateSensor.js';
+import {HmIPWaterSensor} from './devices/HmIPWaterSensor.js';
+import {HmIPBlind} from './devices/HmIPBlind.js';
+import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring.js';
+import {CustomCharacteristic} from './CustomCharacteristic.js';
+import {HmIPLightSensor} from './devices/HmIPLightSensor.js';
+import {HmIPSecuritySystem} from './HmIPSecuritySystem.js';
+import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor.js';
+import {HmIPMotionDetector} from './devices/HmIPMotionDetector.js';
+import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector.js';
+import {HmIPDimmer} from './devices/HmIPDimmer.js';
 import fakegato from 'fakegato-history';
-import {HmIPDoorLockDrive} from './devices/HmIPDoorLockDrive';
-import {HmIPDoorLockSensor} from './devices/HmIPDoorLockSensor';
-import {HmIPSwitchNotificationLight} from './devices/HmIPSwitchNotificationLight';
-import {HmIPWeatherSensor} from './devices/HmIPWeatherSensor';
-import {HmIPWeatherSensorPlus} from './devices/HmIPWeatherSensorPlus';
-import {HmIPWeatherSensorPro} from './devices/HmIPWeatherSensorPro';
+import {HmIPDoorLockDrive} from './devices/HmIPDoorLockDrive.js';
+import {HmIPDoorLockSensor} from './devices/HmIPDoorLockSensor.js';
+import {HmIPSwitchNotificationLight} from './devices/HmIPSwitchNotificationLight.js';
+import {HmIPWeatherSensor} from './devices/HmIPWeatherSensor.js';
+import {HmIPWeatherSensorPlus} from './devices/HmIPWeatherSensorPlus.js';
+import {HmIPWeatherSensorPro} from './devices/HmIPWeatherSensorPro.js';
 
 /**
  * HomematicIP platform
  */
 export class HmIPPlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
-  public readonly FakeGatoHistoryService = fakegato(this.api);
+  public readonly Service: typeof Service;
+  public readonly Characteristic: typeof Characteristic;
+  public readonly FakeGatoHistoryService: typeof fakegato;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -64,6 +64,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   ) {
     this.log.info('%s v%s', PLUGIN_NAME, PLUGIN_VERSION);
 
+    this.Service = this.api.hap.Service;
+    this.Characteristic = this.api.hap.Characteristic;
+    this.FakeGatoHistoryService = fakegato(this.api);
     this.customCharacteristic = new CustomCharacteristic(api);
 
     this.connector = new HmIPConnector(
@@ -94,7 +97,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
-   * It should be used to setup event handlers for characteristics and update respective values.
+   * It should be used to set up event handlers for characteristics and update respective values.
    */
   configureAccessory(accessory: PlatformAccessory) {
     if (this.connector.isReadyForUse() && !this.getAccessory(accessory.UUID)) {

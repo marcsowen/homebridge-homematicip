@@ -3,10 +3,10 @@ import {
   PlatformAccessory,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPFunctionalChannel, HmIPGroup, HmIPHeatingGroup, Updateable} from '../HmIPState';
-import {HistoryEvent, HmIPHeatingThermostat, ThermostatChannel} from './HmIPHeatingThermostat';
-import moment from 'moment/moment';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPFunctionalChannel, HmIPGroup, HmIPHeatingGroup, Updateable} from '../HmIPState.js';
+import {HistoryEvent, HmIPHeatingThermostat, ThermostatChannel} from './HmIPHeatingThermostat.js';
+import moment from 'moment';
 
 interface WallMountedThermostatChannel extends ThermostatChannel {
   actualTemperature: number;
