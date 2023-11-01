@@ -1,8 +1,8 @@
 import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
-import {HmIPShutter} from './HmIPShutter';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import {HmIPShutter} from './HmIPShutter.js';
 
 interface BlindChannel {
   functionalChannelType: string;

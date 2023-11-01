@@ -1,14 +1,10 @@
 {
+  "extends": "@tsconfig/node20/tsconfig.json",
+
   "compilerOptions": {
-    "lib": ["ES2018"],
-    "module": "commonjs",
-    "target": "ES2018",
     "sourceMap": true,
     "rootDir": "src",
     "outDir": "dist",
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "src"

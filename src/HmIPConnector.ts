@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
 import {Logger} from 'homebridge';
-import {PLUGIN_NAME, PLUGIN_VERSION} from './settings';
+import {PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
 import Timeout = NodeJS.Timeout;
 import Bottleneck from 'bottleneck';
 

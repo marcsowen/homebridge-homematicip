@@ -8,9 +8,9 @@ import {
 } from 'homebridge';
 import moment from 'moment';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPFunctionalChannel, HmIPGroup, HmIPHeatingGroup, Updateable} from '../HmIPState';
-import {HmIPGenericDevice} from './HmIPGenericDevice';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPFunctionalChannel, HmIPGroup, HmIPHeatingGroup, Updateable} from '../HmIPState.js';
+import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 enum ValveState {
   STATE_NOT_AVAILABLE = 'STATE_NOT_AVAILABLE',

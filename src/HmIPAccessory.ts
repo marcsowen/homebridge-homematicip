@@ -1,5 +1,5 @@
 import {API, Logger, PlatformAccessory} from 'homebridge';
-import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
+import {PLATFORM_NAME, PLUGIN_NAME} from './settings.js';
 
 /**
  * Accessory wrapper

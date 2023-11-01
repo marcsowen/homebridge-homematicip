@@ -6,9 +6,9 @@ import {
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
-import {HmIPGenericDevice} from './HmIPGenericDevice';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface SwitchChannel {
     functionalChannelType: string;
@@ -48,14 +48,14 @@ class NotificationLight {
 
 /* HmIP color palette based on HSL values */
 const HmIPColorPaletteHSL = new Map<string, number[]>([
-  ['BLACK',     [  0,   0,   0]], 
-  ['BLUE',      [240, 100,  50]], 
-  ['GREEN',     [120, 100,  50]], 
-  ['TURQUOISE', [180, 100,  50]], 
-  ['RED',       [  0, 100,  50]],
-  ['PURPLE',    [300, 100,  50]], 
-  ['YELLOW',    [ 60, 100,  50]],
-  ['WHITE',     [  0,   0, 100]] 
+  ['BLACK', [ 0, 0, 0]], 
+  ['BLUE', [240, 100, 50]], 
+  ['GREEN', [120, 100, 50]], 
+  ['TURQUOISE', [180, 100, 50]], 
+  ['RED', [ 0, 100, 50]],
+  ['PURPLE', [300, 100, 50]], 
+  ['YELLOW', [ 60, 100, 50]],
+  ['WHITE', [ 0, 0, 100]], 
 ]);
 
 const HmIPTopLightChannelIndex = 2;
@@ -91,8 +91,8 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
-    .on('get', this.handleOnGet.bind(this))
-    .on('set', this.handleOnSet.bind(this));
+      .on('get', this.handleOnGet.bind(this))
+      .on('set', this.handleOnSet.bind(this));
 
     this.simpleSwitch = this.accessoryConfig?.['simpleSwitch'] === true;
 
@@ -118,8 +118,8 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       } 
 
       this.button1Led.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleButton1LedOnGet.bind(this))
-      .on('set', this.handleButton1LedOnSet.bind(this));   
+        .on('get', this.handleButton1LedOnGet.bind(this))
+        .on('set', this.handleButton1LedOnSet.bind(this));
       
       this.button1Led.getCharacteristic(this.platform.Characteristic.Brightness)
         .on('get', this.handleButton1LedBrightnessGet.bind(this))
@@ -152,15 +152,14 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       this.topLight = new NotificationLight('Button 1', HmIPTopLightChannelIndex, this.button1Led);
       this.bottomLight = new NotificationLight('Button 2', HmIPBottomLightChannelIndex, this.button2Led);
     
-    }
-    else{
+    } else{
       const topLightService = <Service>this.accessory.getServiceById(this.platform.Service.Lightbulb, 'Button1');
       if (topLightService !== undefined){
-        this.accessory.removeService(topLightService)
+        this.accessory.removeService(topLightService);
       }
       const bottomLightService = <Service>this.accessory.getServiceById(this.platform.Service.Lightbulb, 'Button2');
       if (bottomLightService !== undefined){
-        this.accessory.removeService(bottomLightService)
+        this.accessory.removeService(bottomLightService);
       }      
       this.platform.log.info('Removing light services from %s (config=%s)', accessory.context.device.label, this.simpleSwitch);
     }
@@ -185,23 +184,26 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   }
 
   handleButton1LedOnGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Get light state of %s:%s (%s)', this.accessory.displayName, this.topLight.label, (this.topLight.on == true) ? 'ON' : 'OFF');
+    this.platform.log.debug('Get light state of %s:%s (%s)', this.accessory.displayName, this.topLight.label,
+      this.topLight.on ? 'ON' : 'OFF');
     callback(null, this.topLight?.on);
   }
 
   async handleButton1LedOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Set light state of %s:%s to %s', this.accessory.displayName, this.topLight.label, (value > 0) ? 'ON' : 'OFF');
+    this.platform.log.info('Set light state of %s:%s to %s', this.accessory.displayName, this.topLight.label,
+      <number>value > 0 ? 'ON' : 'OFF');
     if (value && this.topLight.brightness === 0) {
-        await this.handleButton1LedBrightnessSet(100, callback);
+      await this.handleButton1LedBrightnessSet(100, callback);
     } else if (!value) {
-        await this.handleButton1LedBrightnessSet(0, callback);
+      await this.handleButton1LedBrightnessSet(0, callback);
     } else {
       callback(null, value);
     }
   }
 
   handleButton1LedBrightnessGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Get light brightness of %s:%s (%s %%)', this.accessory.displayName, this.topLight.label, this.topLight.brightness);
+    this.platform.log.debug('Get light brightness of %s:%s (%s %%)', this.accessory.displayName, this.topLight.label,
+      this.topLight.brightness);
     callback(null, this.topLight.brightness);
   }
 
@@ -229,14 +231,15 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       channelIndex: HmIPTopLightChannelIndex,
       deviceId: this.accessory.context.device.id,
       dimLevel: this.topLight.brightness / 100.0,
-      simpleRGBColorState : color
+      simpleRGBColorState : color,
     };
     await this.platform.connector.apiCall('device/control/setSimpleRGBColorDimLevel', body);
     callback(null, value);
   }
 
   handleButton1LedSaturationGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Get light saturation of %s:%s (%s %%)', this.accessory.displayName, this.topLight.label, this.topLight.saturation);
+    this.platform.log.debug('Get light saturation of %s:%s (%s %%)', this.accessory.displayName, this.topLight.label,
+      this.topLight.saturation);
     callback(null, this.topLight.saturation);
   }
 
@@ -247,23 +250,26 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   }
 
   handleButton2LedOnGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Get light state of %s:%s (%s)', this.accessory.displayName, this.bottomLight.label, (this.bottomLight.on==true) ? 'ON' : 'OFF');
+    this.platform.log.debug('Get light state of %s:%s (%s)', this.accessory.displayName, this.bottomLight.label,
+      this.bottomLight.on ? 'ON' : 'OFF');
     callback(null, this.bottomLight.on);
   }
 
   async handleButton2LedOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Set light state of %s:%s to %s', this.accessory.displayName, this.bottomLight.label, (value > 0) ? 'ON' : 'OFF');
+    this.platform.log.info('Set light state of %s:%s to %s', this.accessory.displayName, this.bottomLight.label,
+      <number>value > 0 ? 'ON' : 'OFF');
     if (value && this.bottomLight.brightness === 0) {
-        await this.handleButton2LedBrightnessSet(100, callback);
+      await this.handleButton2LedBrightnessSet(100, callback);
     } else if (!value) {
-        await this.handleButton2LedBrightnessSet(0, callback);
+      await this.handleButton2LedBrightnessSet(0, callback);
     } else {
       callback(null, value);
     }
   }
   
   handleButton2LedBrightnessGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Get light brightness of %s:%s (%s %%)', this.accessory.displayName, this.bottomLight.label, this.bottomLight.brightness);
+    this.platform.log.debug('Get light brightness of %s:%s (%s %%)', this.accessory.displayName, this.bottomLight.label,
+      this.bottomLight.brightness);
     callback(null, this.bottomLight.brightness);
   }
 
@@ -286,19 +292,21 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   async handleButton2LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.bottomLight.hue = <number>value;
     const color = this.getNearestHmIPColorFromHSL(this.bottomLight.hue, this.bottomLight.saturation, this.bottomLight.lightness);
-    this.platform.log.debug('Set light hue of %s:%s to %s (%s)', this.accessory.displayName, this.bottomLight.label, this.bottomLight.hue, color);
+    this.platform.log.debug('Set light hue of %s:%s to %s (%s)', this.accessory.displayName, this.bottomLight.label, this.bottomLight.hue,
+      color);
     const body = {
       channelIndex: HmIPBottomLightChannelIndex,
       deviceId: this.accessory.context.device.id,
       dimLevel: this.bottomLight.brightness / 100.0,
-      simpleRGBColorState : color
+      simpleRGBColorState : color,
     };
     await this.platform.connector.apiCall('device/control/setSimpleRGBColorDimLevel', body);
     callback(null, value);
   }
 
   handleButton2LedSaturationGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Get light saturation of %s:%s (%s %%)', this.accessory.displayName, this.bottomLight.label, this.bottomLight.saturation);
+    this.platform.log.debug('Get light saturation of %s:%s (%s %%)', this.accessory.displayName, this.bottomLight.label,
+      this.bottomLight.saturation);
     callback(null, this.bottomLight.saturation);
   }
 
@@ -327,7 +335,8 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       const brightness = channel.dimLevel * 100.0;
       if (brightness !== null && brightness !== light.brightness) {
         light.brightness = brightness;
-        this.platform.log.debug('Update light brightness of %s:%s to %s %%', this.accessory.displayName, light.label, light.brightness.toFixed(0));
+        this.platform.log.debug('Update light brightness of %s:%s to %s %%', this.accessory.displayName, light.label,
+          light.brightness.toFixed(0));
         light.service.updateCharacteristic(this.platform.Characteristic.Brightness, light.brightness);
       }
 
@@ -343,9 +352,8 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
             light.lightness = hsl[2];
             light.service.updateCharacteristic(this.platform.Characteristic.Hue, light.hue);
             light.service.updateCharacteristic(this.platform.Characteristic.Saturation, light.saturation);              
-           }
-        }
-        else{
+          }
+        } else{
           this.platform.log.error('Light color not supported for %s:%s', this.accessory.displayName, light.label);
         }
       }
@@ -371,8 +379,8 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
 
       if (channel.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL' && !this.simpleSwitch) {
         const notificationLightChannel = <NotificationLightChannel>channel;
-          this.updateLightState(this.topLight, notificationLightChannel)
-          this.updateLightState(this.bottomLight, notificationLightChannel)
+        this.updateLightState(this.topLight, notificationLightChannel);
+        this.updateLightState(this.bottomLight, notificationLightChannel);
       }
     }
   }
@@ -392,7 +400,8 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         nearestHmIPColor = key;
       }
     }
-    this.platform.log.debug('Function:getNearestHmIPColorFromHSL() for h:%s s:%s l:%s is %s with distance %s', h, s, l, nearestHmIPColor, minDistance);
+    this.platform.log.debug('Function:getNearestHmIPColorFromHSL() for h:%s s:%s l:%s is %s with distance %s', h, s, l, nearestHmIPColor,
+      minDistance);
     return nearestHmIPColor;
   }
 }
