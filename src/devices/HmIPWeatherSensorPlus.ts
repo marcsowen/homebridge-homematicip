@@ -1,7 +1,7 @@
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
-import {HmIPPlatform} from '../HmIPPlatform';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import {HmIPPlatform} from '../HmIPPlatform.js';
 import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
-import {HmIPWeatherSensor, WeatherSensorChannel} from './HmIPWeatherSensor';
+import {HmIPWeatherSensor, WeatherSensorChannel} from './HmIPWeatherSensor.js';
 
 export interface WeatherSensorPlusChannel extends WeatherSensorChannel {
   raining: boolean;

@@ -1,7 +1,7 @@
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
-import {HmIPPlatform} from '../HmIPPlatform';
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
-import {HmIPWeatherSensorPlus, WeatherSensorPlusChannel} from './HmIPWeatherSensorPlus';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {CharacteristicGetCallback, PlatformAccessory} from 'homebridge';
+import {HmIPWeatherSensorPlus, WeatherSensorPlusChannel} from './HmIPWeatherSensorPlus.js';
 
 export interface WeatherSensorProChannel extends WeatherSensorPlusChannel {
   weathervaneAlignmentNeeded: boolean;

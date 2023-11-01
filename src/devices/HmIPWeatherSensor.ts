@@ -1,8 +1,9 @@
 import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
-import {HmIPPlatform} from '../HmIPPlatform';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState';
-import {HmIPGenericDevice} from './HmIPGenericDevice';
-import moment from 'moment/moment';
+import {HmIPPlatform} from '../HmIPPlatform.js';
+import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import {HmIPGenericDevice} from './HmIPGenericDevice.js';
+import moment from 'moment';
+import fakegato from 'fakegato-history';
 
 enum WindValueType {
   CURRENT_VALUE = 'CURRENT_VALUE',
@@ -32,7 +33,7 @@ export interface WeatherSensorChannel {
  * HMIP-SWO-B
  *
  * This device creates both regular HomeKit services that can be used in the
- * Home App, but also emulates a Eve Weather Station.
+ * Home App, but also emulates an Eve Weather Station.
  *
  * Supported Services:
  *
@@ -94,11 +95,11 @@ export class HmIPWeatherSensor extends HmIPGenericDevice implements Updateable {
   protected stormOccupancyService?: Service;
   protected sunshineOccupancyService?: Service;
   protected windSpeedOccupancyService?: Service;
-  private withStormSensor = false;
-  private withSunshineSensor = false;
-  private withWindSpeedSensor = false;
+  private readonly withStormSensor = false;
+  private readonly withSunshineSensor = false;
+  private readonly withWindSpeedSensor = false;
   protected weatherService?: Service;
-  private historyService: any;
+  private historyService: typeof fakegato;
   private eventEmitterTimeout?: NodeJS.Timeout;
 
   constructor(platform: HmIPPlatform, accessory: PlatformAccessory) {

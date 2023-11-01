@@ -9,7 +9,7 @@ import {
 } from 'homebridge';
 import {HmIPConnector} from './HmIPConnector.js';
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
-import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, Updateable} from './HmIPState.js';
+import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, IdentifiableDevice, Updateable} from './HmIPState.js';
 import {HmIPShutter} from './devices/HmIPShutter.js';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat.js';
 import {HmIPContactSensor} from './devices/HmIPContactSensor.js';
