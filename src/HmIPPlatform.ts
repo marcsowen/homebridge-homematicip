@@ -94,7 +94,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
-   * It should be used to setup event handlers for characteristics and update respective values.
+   * It should be used to set up event handlers for characteristics and update respective values.
    */
   configureAccessory(accessory: PlatformAccessory) {
     if (this.connector.isReadyForUse() && !this.getAccessory(accessory.UUID)) {
