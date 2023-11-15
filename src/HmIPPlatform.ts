@@ -288,6 +288,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     } else if (device.type === 'SMOKE_DETECTOR') {
       homebridgeDevice = new HmIPSmokeDetector(this, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH'
+      || device.type === 'FULL_FLUSH_INPUT_SWITCH'
       || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_BATTERY'
       || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_2' // Only first channel
       || device.type === 'OPEN_COLLECTOR_8_MODULE' // Only first channel
