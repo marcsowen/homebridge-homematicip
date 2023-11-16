@@ -23,6 +23,7 @@ interface SwitchChannel {
  * Switches
  *
  * HMIP-PS (Pluggable Switch)
+ * HMIP-FSI16 (Full Flush Input Switch)
  * HMIP-PCBS (Switch Circuit Board - 1 channel)
  * HMIP-PCBS-BAT (Printed Circuit Board Switch Battery)
  * HMIP-PCBS2 (Switch Circuit Board - 2x channels)
