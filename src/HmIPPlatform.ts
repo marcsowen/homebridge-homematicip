@@ -31,6 +31,7 @@ import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor.js';
 import {HmIPMotionDetector} from './devices/HmIPMotionDetector.js';
 import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector.js';
 import {HmIPDimmer} from './devices/HmIPDimmer.js';
+import {HmIPDimmerMultiChannel} from './devices/HmIPDimmerMultiChannel.js';
 import fakegato from 'fakegato-history';
 import {HmIPDoorLockDrive} from './devices/HmIPDoorLockDrive.js';
 import {HmIPDoorLockSensor} from './devices/HmIPDoorLockSensor.js';
@@ -318,6 +319,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       || device.type === 'PLUGGABLE_DIMMER'
       || device.type === 'WIRED_DIMMER_3') { // Only first channel
       homebridgeDevice = new HmIPDimmer(this, hmIPAccessory.accessory);
+    } else if (device.type === 'DIN_RAIL_DIMMER_3') { // all channels
+      homebridgeDevice = new HmIPDimmerMultiChannel(this, hmIPAccessory.accessory);  
     } else if (device.type === 'DOOR_LOCK_DRIVE') {
       homebridgeDevice = new HmIPDoorLockDrive(this, hmIPAccessory.accessory);
     } else if (device.type === 'DOOR_LOCK_SENSOR') {
