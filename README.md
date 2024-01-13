@@ -81,6 +81,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-PSM Pluggable switch and meter
 - HmIP-BSM Brand switch and meter
 - HmIP-FSM, HmIP-FSM16 Full flush switch and meter
+- HmIP-FSI16 full flush switch (16A)
 - HmIP-MOD-TM Garage door module - Tormatic
 - HmIP-MOD-HO Garage door module - Hörmann
 - HmIP-SWD Water sensor
@@ -93,6 +94,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-BDT Brand dimmer
 - HmIP-FDT Dimming actuator flush-mount
 - HmIPW-DRD3 Wired dimming actuator – 3x channels [1]
+- HmIP-DRDI3 DIN rail dimming actuator (multichannel)
 - HmIP-DLD Door lock drive [2]
 - HmIP-DLS Door lock sensor
 - HmIP-BSL Notification light switch
@@ -114,8 +116,9 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - @coreGreenberet for reverse-engineering and implementation of the first HomematicIP-API client using Python
   (https://github.com/coreGreenberet/homematicip-rest-api)
 - @dmalch for adding fakegato-history support (https://github.com/simont77/fakegato-history)
-- @smhex for HmIP-DLS and HmIP-BSL support
+- @smhex for HmIP-DLS, HmIP-BSL and HmIP-DRDI3 support
 - @ohueter for thermostat/climate sensor config option
 - @aceg1k for improvements in thermostat heating/cooling state handling and API call handling
+- @gkminix for HmIP-FSI16 support
 
 ## Help needed!

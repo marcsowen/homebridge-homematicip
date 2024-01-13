@@ -1,3 +1,14 @@
+## 1.3.0 (2024-01-13)
+
+### New devices
+
+- **HmIP-DRDI3**: Added multichannel dimmer (@smhex)
+- **HmIP-FSI16**: Added switch actor for 16A (@gkminix)
+
+### Improvements
+
+- **General**: Version bumps of dependencies
+
 ## 1.2.0 (2023-11-01)
 
 ### New devices

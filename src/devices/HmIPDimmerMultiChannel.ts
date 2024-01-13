@@ -1,5 +1,4 @@
 import {
-  Characteristic,
   CharacteristicGetCallback,
   CharacteristicSetCallback,
   CharacteristicValue,
