@@ -8,6 +8,11 @@ export class CustomCharacteristic {
   constructor(api: API) {
     this.api = api;
 
+    this.createCharacteristics('OpticalSignal', 'a11c14a7-bb9b-4085-8597-68cf63964bf8', {
+      format: Formats.STRING,
+      perms: [Perms.NOTIFY, Perms.PAIRED_WRITE, Perms.PAIRED_READ],
+    });
+
     this.createCharacteristics('ElectricPower', 'E863F10D-079E-48FF-8F27-9C2605A29F52', {
       format: Formats.FLOAT,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
