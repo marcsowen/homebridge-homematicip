@@ -48,7 +48,7 @@ devDependencies:
     version: 8.56.0
   homebridge:
     specifier: ^1.7.0
-    version: 1.7.0
+    version: 1.8.2
   nodemon:
     specifier: ^3.0.2
     version: 3.0.3
@@ -113,9 +113,9 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@homebridge/ciao@1.1.8:
-    resolution: {integrity: sha512-Atn8+vwYtfI/J6nYCOVm4uVBAmiQO4rPi0umVbh766cf/OsVxQ+Qedbo9lxIf15iDsMbBlDV7T1wATdHqI5lXw==}
-    engines: {node: '>=14'}
+  /@homebridge/ciao@1.2.0:
+    resolution: {integrity: sha512-2Qa8MVC7Q5DKH6iXh6cRvqz9VJYVpVZ+whHKrnr8YdPkXxc67kiQ9IOxMb0ydokDTETBVyXgr1m+HrheBtqDoQ==}
+    engines: {node: ^18 || ^20}
     hasBin: true
     dependencies:
       debug: 4.3.4(supports-color@5.5.0)
@@ -126,17 +126,17 @@ packages:
       - supports-color
     dev: true
 
-  /@homebridge/dbus-native@0.5.1:
-    resolution: {integrity: sha512-7xXz3R1W/kcbfQOGp32y4K7etqtowICR1vpx8j85KwPYXbNQrgiZ3zcwDYgDGBWq3FD9xzsW7h4YWJ4vTR2seQ==}
+  /@homebridge/dbus-native@0.6.0:
+    resolution: {integrity: sha512-xObqQeYHTXmt6wsfj10+krTo4xbzR9BgUfX2aQ+edDC9nc4ojfzLScfXCh3zluAm6UCowKw+AFfXn6WLWUOPkg==}
     hasBin: true
     dependencies:
       '@homebridge/long': 5.2.1
       '@homebridge/put': 0.0.8
       event-stream: 4.0.1
-      hexy: 0.2.11
+      hexy: 0.3.5
       minimist: 1.2.8
       safe-buffer: 5.2.1
-      xml2js: 0.5.0
+      xml2js: 0.6.2
     dev: true
 
   /@homebridge/long@5.2.1:
@@ -379,7 +379,7 @@ packages:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
-      semver: 7.5.4
+      semver: 7.6.2
       ts-api-utils: 1.0.3(typescript@5.3.3)
       typescript: 5.3.3
     transitivePeerDependencies:
@@ -401,7 +401,7 @@ packages:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
-      semver: 7.5.4
+      semver: 7.6.2
       ts-api-utils: 1.0.3(typescript@5.3.3)
       typescript: 5.3.3
     transitivePeerDependencies:
@@ -421,7 +421,7 @@ packages:
       '@typescript-eslint/types': 7.0.0
       '@typescript-eslint/typescript-estree': 7.0.0(typescript@5.3.3)
       eslint: 8.56.0
-      semver: 7.5.4
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -571,12 +571,11 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /bonjour-hap@3.6.4:
-    resolution: {integrity: sha512-a76r95/qTAP5hOEZZhRoiosyFSVPPRSVev09Jh8yDf3JDKyrzELLf0vpQCuEXFueb9DcV9UJf2Jv3dktyuPBng==}
+  /bonjour-hap@3.7.2:
+    resolution: {integrity: sha512-BzOdOSIpXqjE1hejVNhj1T7E5YazPNG7cMOph5jQfzf1nF2yO18FSxuIg2zDMa4tFxhNC5d+U+0hT2bQkC5nTw==}
     dependencies:
       array-flatten: 2.1.2
       deep-equal: 2.2.3
-      ip: 1.1.9
       multicast-dns: 7.2.5
       multicast-dns-service-types: 1.1.0
     dev: true
@@ -659,9 +658,9 @@ packages:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
     dev: true
 
-  /commander@7.2.0:
-    resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
-    engines: {node: '>= 10'}
+  /commander@12.0.0:
+    resolution: {integrity: sha512-MwVNWlYjDTtOjX5PiD7o5pK0UrFU/OYgcJfjjK4RaHZETNtjJqrZa9Y9ds88+A+f+d5lv+561eZ+yCKoS3gbAA==}
+    engines: {node: '>=18'}
     dev: true
 
   /concat-map@0.0.1:
@@ -1048,9 +1047,9 @@ packages:
     resolution: {integrity: sha512-twe20eF1OxVxp/ML/kq2p1uc6KvFK/+vs8WjEbeKmV2He22MKm7YF2ANIt+EOqhJ5L3K/SuuPhk0hWQDjOM23g==}
     dev: true
 
-  /fs-extra@10.1.0:
-    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
-    engines: {node: '>=12'}
+  /fs-extra@11.2.0:
+    resolution: {integrity: sha512-PmDi3uwK5nFuXh7XDTlVnS17xJS7vW36is2+w3xcv8SVxiB4NyATf4ctkVY5bkSjX0Y4nbvZCq1/EjtEyr9ktw==}
+    engines: {node: '>=14.14'}
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.1.0
@@ -1076,8 +1075,8 @@ packages:
     resolution: {integrity: sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==}
     dev: true
 
-  /futoin-hkdf@1.4.3:
-    resolution: {integrity: sha512-K4MIe2xSVRMYxsA4w0ap5fp1C2hA9StA2Ad1JZHX57VMCdHIRB5BSrd1FhuadTQG9MkjggaTCrw7v5XXFyY3/w==}
+  /futoin-hkdf@1.5.3:
+    resolution: {integrity: sha512-SewY5KdMpaoCeh7jachEWFsh1nNlaDjNHZXWqL5IGwtpEYHTgkr2+AMCgNwKWkcc0wpSYrZfR7he4WdmHFtDxQ==}
     engines: {node: '>=8'}
     dev: true
 
@@ -1234,16 +1233,16 @@ packages:
       - supports-color
     dev: false
 
-  /hap-nodejs@0.11.1:
-    resolution: {integrity: sha512-hJuGyjng2jlzhZsviWCldaokT7l7BE3iGmWdlE6DNmQFDTmiBN3deNksAZ2nt7qp5jYEv7ZUvW7WBZqJsLh3ww==}
-    engines: {node: '>=10.17.0'}
+  /hap-nodejs@0.12.1:
+    resolution: {integrity: sha512-iUUMaK6ucDKLMjT4m5Oz6CoLKkGg+omI6GR96weyL8fPGR1HYoCMtoJoUNW2NSIp4b2A6hx4zjNOEtLEaTA2MQ==}
+    engines: {node: ^18 || ^20}
     dependencies:
-      '@homebridge/ciao': 1.1.8
-      '@homebridge/dbus-native': 0.5.1
-      bonjour-hap: 3.6.4
+      '@homebridge/ciao': 1.2.0
+      '@homebridge/dbus-native': 0.6.0
+      bonjour-hap: 3.7.2
       debug: 4.3.4(supports-color@5.5.0)
       fast-srp-hap: 2.0.4
-      futoin-hkdf: 1.4.3
+      futoin-hkdf: 1.5.3
       node-persist: 0.0.11
       source-map-support: 0.5.21
       tslib: 2.6.2
@@ -1291,22 +1290,23 @@ packages:
     dependencies:
       function-bind: 1.1.2
 
-  /hexy@0.2.11:
-    resolution: {integrity: sha512-ciq6hFsSG/Bpt2DmrZJtv+56zpPdnq+NQ4ijEFrveKN0ZG1mhl/LdT1NQZ9se6ty1fACcI4d4vYqC9v8EYpH2A==}
+  /hexy@0.3.5:
+    resolution: {integrity: sha512-UCP7TIZPXz5kxYJnNOym+9xaenxCLor/JyhKieo8y8/bJWunGh9xbhy3YrgYJUQ87WwfXGm05X330DszOfINZw==}
+    engines: {node: '>=10.4'}
     hasBin: true
     dev: true
 
-  /homebridge@1.7.0:
-    resolution: {integrity: sha512-2QikXnmpnFe2s33Q8TeYE5+sXyKHUZ+9l5WfDmpuupHdct6H/G6b6z3HCj+2rlMRKKY5ElLv5XtLoxOcafnL0g==}
+  /homebridge@1.8.2:
+    resolution: {integrity: sha512-K0P9/qk3RdAKGLhGrmtF4skUjcygNlnBu0S/ssKIdp4p0kMzW2wjw2Q+z7TCxgZVy84/kaR09UD1n6uJAunTOQ==}
     engines: {node: ^18.15.0 || ^20.7.0}
     hasBin: true
     dependencies:
       chalk: 4.1.2
-      commander: 7.2.0
-      fs-extra: 10.1.0
-      hap-nodejs: 0.11.1
+      commander: 12.0.0
+      fs-extra: 11.2.0
+      hap-nodejs: 0.12.1
       qrcode-terminal: 0.12.0
-      semver: 7.5.4
+      semver: 7.6.2
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
@@ -1362,10 +1362,6 @@ packages:
       get-intrinsic: 1.2.2
       hasown: 2.0.0
       side-channel: 1.0.4
-    dev: true
-
-  /ip@1.1.9:
-    resolution: {integrity: sha512-cyRxvOEpNHNtchU3Ln9KC/auJgup87llfQpQ+t5ghoC/UhL16SWzbueiCsdTnWmqAWl7LadfuwhlqmtOaqMHdQ==}
     dev: true
 
   /is-arguments@1.1.1:
@@ -1616,7 +1612,7 @@ packages:
     dev: true
 
   /map-stream@0.0.7:
-    resolution: {integrity: sha1-ih8HiW2CsQkmvTdEokIACfiJdKg=}
+    resolution: {integrity: sha512-C0X0KQmGm3N2ftbTGBhSyuydQ+vV1LC3f3zPvT3RXHXNZrvfPZcoXp/N5DOa8vedX/rTMm2CjTtivFg2STJMRQ==}
     dev: true
 
   /merge2@1.4.1:
@@ -1950,6 +1946,12 @@ packages:
     dependencies:
       lru-cache: 6.0.0
 
+  /semver@7.6.2:
+    resolution: {integrity: sha512-FNAIBWCx9qcRhoHcgcJ0gvU7SN1lYU2ZXuSfl04bSC5OpvDHFyJCjdNHomPXxjQlCBU67YW64PzY7/VIEH7F2w==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dev: true
+
   /set-function-length@1.1.1:
     resolution: {integrity: sha512-VoaqjbBJKiWtg4yRcKBQ7g7wnGnLV3M8oLvVWwOk2PdYY6PEFegR1vezXR0tw6fZGF9csVakIRjrJiy2veSBFQ==}
     engines: {node: '>= 0.4'}
@@ -1996,7 +1998,7 @@ packages:
     resolution: {integrity: sha512-a2B9Y0KlNXl9u/vsW6sTIu9vGEpfKu2wRV6l1H3XEas/0gUIzGzBoP/IouTcUQbm9JWZLH3COxyn03TYlFax6w==}
     engines: {node: '>=10'}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.2
     dev: true
 
   /slash@3.0.0:
@@ -2303,8 +2305,8 @@ packages:
         optional: true
     dev: false
 
-  /xml2js@0.5.0:
-    resolution: {integrity: sha512-drPFnkQJik/O+uPKpqSgr22mpuFHqKdbS835iAQrUC73L2F5WkboIRd63ai/2Yg6I1jzifPFKH2NTK+cfglkIA==}
+  /xml2js@0.6.2:
+    resolution: {integrity: sha512-T4rieHaC1EXcES0Kxxj4JWgaUQHDk+qwHcYOCFHfiwKz7tOVPLq7Hjq9dM1WCMhylqMEfP7hMcOIChvotiZegA==}
     engines: {node: '>=4.0.0'}
     dependencies:
       sax: 1.3.0
