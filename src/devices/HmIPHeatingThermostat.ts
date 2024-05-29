@@ -53,6 +53,7 @@ export interface HistoryEvent {
  * HmIP-eTRV-B-2
  * HmIP-eTRV-2
  * HmIP-eTRV-C-2
+ * HmIP-eTRV-CL
  */
 export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateable {
 
@@ -425,6 +426,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice implements Updateab
   public static isHeatingThermostat(deviceType: string): boolean {
     return deviceType === 'HEATING_THERMOSTAT'
       || deviceType === 'HEATING_THERMOSTAT_COMPACT'
+      || deviceType === 'HEATING_THERMOSTAT_COMPACT_PLUS'
       || deviceType === 'HEATING_THERMOSTAT_EVO';
   }
 
