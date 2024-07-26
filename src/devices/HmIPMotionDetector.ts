@@ -15,6 +15,11 @@ interface MotionDetectionChannel {
 }
 
 /**
+ * Correction factor to compute Lux from HmIP brightness sensor
+ */
+const BRIGHTNESS_CORRECTION = 0.2;
+
+/**
  * HomematicIP motion detector
  *
  * HmIP-SMI (Motion Detector with Brightness Sensor - indoor)
@@ -23,10 +28,14 @@ interface MotionDetectionChannel {
  *
  */
 export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable {
-  private service: Service;
+  private motionSensorService: Service;
+  private lightSensorService: Service | undefined;
 
   private motionDetected = false;
   private sabotage = false;
+  private lightLevel = 0;
+
+  private addLightSensor : boolean = false;
 
   constructor(
     platform: HmIPPlatform,
@@ -35,16 +44,39 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
     super(platform, accessory);
 
     this.platform.log.debug('Created MotionDetector %s', accessory.context.device.label);
-    this.service = this.accessory.getService(this.platform.Service.MotionSensor)
+    this.motionSensorService = this.accessory.getService(this.platform.Service.MotionSensor)
       || this.accessory.addService(this.platform.Service.MotionSensor);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.motionSensorService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
-    this.service.getCharacteristic(this.platform.Characteristic.MotionDetected)
+    this.motionSensorService.getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
     if (this.featureSabotage) {
-      this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
+      this.motionSensorService.getCharacteristic(this.platform.Characteristic.StatusTampered)
         .on('get', this.handleStatusTamperedGet.bind(this));
+    }
+
+    this.addLightSensor = this.accessoryConfig?.['lightSensor'] === true;
+
+    if (this.addLightSensor) {
+      this.lightSensorService = <Service>this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
+      if (!this.lightSensorService) {
+        this.lightSensorService = new this.platform.Service.LightSensor(accessory.context.device.label, 'LightSensor');
+	if (this.lightSensorService) {
+          this.lightSensorService = this.accessory.addService(this.lightSensorService);
+        } else {
+          this.platform.log.error('Error adding service to %s for light sensor', accessory.context.device.label);
+        }
+      }
+
+      this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
+        .on('get', this.handleAmbientLightLevelGet.bind(this));
+
+    } else {
+      const lightSensorService = <Service>this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
+      if (lightSensorService !== undefined) {
+        this.accessory.removeService(lightSensorService);
+      }
     }
 
     this.updateDevice(accessory.context.device, platform.groups);
@@ -60,6 +92,10 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
       : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
   }
 
+  handleAmbientLightLevelGet(callback: CharacteristicGetCallback) {
+    callback(null, this.lightLevel);
+  }
+
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
@@ -71,7 +107,15 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
         if (motionDetectionChannel.motionDetected !== null && motionDetectionChannel.motionDetected !== this.motionDetected) {
           this.motionDetected = motionDetectionChannel.motionDetected;
           this.platform.log.debug('Motion detector state of %s changed to %s', this.accessory.displayName, this.motionDetected);
-          this.service.updateCharacteristic(this.platform.Characteristic.MotionDetected, this.motionDetected);
+          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.MotionDetected, this.motionDetected);
+        }
+        if (motionDetectionChannel.illumination !== null) {
+            const level = motionDetectionChannel.illumination * BRIGHTNESS_CORRECTION;
+            if (level !== this.lightLevel) {
+              this.lightLevel = level;
+              this.platform.log.debug('Illumination detector state of %s changed to %s', this.accessory.displayName, level);
+              this.motionSensorService.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, level);
+            }
         }
       }
 
@@ -80,7 +124,7 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
         if (sabotageChannel.sabotage !== null && sabotageChannel.sabotage !== this.sabotage) {
           this.sabotage = sabotageChannel.sabotage;
           this.platform.log.info('Sabotage state of %s changed to %s', this.accessory.displayName, this.sabotage);
-          this.service.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage
+          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage
             ? this.platform.Characteristic.StatusTampered.TAMPERED
             : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
         }
