@@ -15,11 +15,6 @@ interface MotionDetectionChannel {
 }
 
 /**
- * Correction factor to compute Lux from HmIP brightness sensor
- */
-const BRIGHTNESS_CORRECTION = 0.2;
-
-/**
  * HomematicIP motion detector
  *
  * HmIP-SMI (Motion Detector with Brightness Sensor - indoor)
@@ -109,13 +104,10 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
           this.platform.log.debug('Motion detector state of %s changed to %s', this.accessory.displayName, this.motionDetected);
           this.motionSensorService.updateCharacteristic(this.platform.Characteristic.MotionDetected, this.motionDetected);
         }
-        if (motionDetectionChannel.illumination !== null) {
-            const level = motionDetectionChannel.illumination * BRIGHTNESS_CORRECTION;
-            if (level !== this.lightLevel) {
-              this.lightLevel = level;
-              this.platform.log.debug('Illumination detector state of %s changed to %s', this.accessory.displayName, level);
-              this.motionSensorService.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, level);
-            }
+        if (motionDetectionChannel.illumination !== null && motionDetectionChannel.illumination !== this.lightLevel) {
+          this.lightLevel = motionDetectionChannel.illumination;
+          this.platform.log.debug('Illumination detector state of %s changed to %s', this.accessory.displayName, this.lightLevel);
+          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, this.lightLevel);
         }
       }
 
