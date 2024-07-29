@@ -290,12 +290,14 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPSmokeDetector(this, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH'
       || device.type === 'FULL_FLUSH_INPUT_SWITCH'
+      || device.type === 'BRAND_SWITCH_2'
       || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_BATTERY'
-      || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_2' // Only first channel
-      || device.type === 'OPEN_COLLECTOR_8_MODULE' // Only first channel
-      || device.type === 'HEATING_SWITCH_2' // Only first channel
-      || device.type === 'WIRED_SWITCH_8' // Only first channel
-      || device.type === 'DIN_RAIL_SWITCH_4') { // Only first channel
+      || device.type === 'PRINTED_CIRCUIT_BOARD_SWITCH_2'
+      || device.type === 'OPEN_COLLECTOR_8_MODULE'
+      || device.type === 'HEATING_SWITCH_2'
+      || device.type === 'WIRED_SWITCH_8'
+      || device.type === 'WIRED_SWITCH_4'
+      || device.type === 'DIN_RAIL_SWITCH_4') {
       homebridgeDevice = new HmIPSwitch(this, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH_MEASURING'
       || device.type === 'BRAND_SWITCH_MEASURING'

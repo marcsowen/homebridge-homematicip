@@ -120,7 +120,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       this.button1Led = <Service>this.accessory.getServiceById(this.platform.Service.Lightbulb, 'Button1');
       if (channel.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
         if (!this.button1Led) {
-          this.button1Led = new this.platform.Service.Lightbulb(accessory.context.device.label, 'Button1');
+          this.button1Led = new this.platform.Service.Lightbulb(channel.label, 'Button1');
           if (this.button1Led) {
             this.button1Led = this.accessory.addService(this.button1Led);
           } else {
@@ -140,7 +140,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       this.button2Led = <Service>this.accessory.getServiceById(this.platform.Service.Lightbulb, 'Button2');
       if (channel.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
         if (!this.button2Led) {
-          this.button2Led = new this.platform.Service.Lightbulb(accessory.context.device.label, 'Button2');
+          this.button2Led = new this.platform.Service.Lightbulb(channel.label, 'Button2');
           if (this.button2Led) {
             this.button2Led = this.accessory.addService(this.button2Led);
           } else {
@@ -230,7 +230,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   }
 
   async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Setting switch %s to %s', this.accessory.displayName, value ? 'ON' : 'OFF');
+    this.platform.log.debug('Setting switch %s to %s', this.accessory.displayName, value ? 'ON' : 'OFF');
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
@@ -499,34 +499,32 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
    * Update state of lights
    */
   updateLightState(light : NotificationLight, channel : NotificationLightChannel){
-    if (light.index === channel.index && light.service !== undefined) {
+    if (light.service !== undefined) {
       
-      if (light.label !== channel.label) {
+      if (channel.label !== '' && light.label !== channel.label) {
         light.label = channel.label;
-        this.platform.log.debug('Update light label of %s to %s', this.accessory.displayName, light.label);
         light.service.displayName = light.label;
         light.service.updateCharacteristic(this.platform.Characteristic.Name, light.label);
+        this.platform.log.debug('Update light label of %s to %s', this.accessory.displayName, light.label);
       }
 
       if (light.on !== channel.on){
         light.on = channel.on;
-        this.platform.log.debug('Update light state of %s:%s to %s', this.accessory.displayName,
-          light.label, light.on ? 'ON' : 'OFF');
         light.service.updateCharacteristic(this.platform.Characteristic.On, light.on);
+        this.platform.log.debug('Update light state of %s:%s to %s', this.accessory.displayName,
+				light.label, light.on ? 'ON' : 'OFF');
       }
 
       const brightness = channel.dimLevel * 100.0;
       if (brightness !== null && brightness !== light.brightness) {
         light.brightness = brightness;
-        this.platform.log.debug('Update light brightness of %s:%s to %s %%', this.accessory.displayName,
-          light.label, light.brightness.toFixed(0));
         light.service.updateCharacteristic(this.platform.Characteristic.Brightness, light.brightness);
+        this.platform.log.debug('Update light brightness of %s:%s to %s %%', this.accessory.displayName,
+				light.label, light.brightness.toFixed(0));
       }
 
       if (light.simpleColor !== channel.simpleRGBColorState) {
         const newColor = channel.simpleRGBColorState;
-        this.platform.log.debug('Update light color of %s:%s to %s', this.accessory.displayName,
-          light.label, newColor);
         const hsl = HmIPColorPaletteHSL.get(newColor);            
         if (hsl !== undefined) {
           light.simpleColor = newColor;              
@@ -537,9 +535,11 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
             light.service.updateCharacteristic(this.platform.Characteristic.Hue, light.hue);
             light.service.updateCharacteristic(this.platform.Characteristic.Saturation, light.saturation);              
           }
+          this.platform.log.debug('Update light color of %s:%s to %s', this.accessory.displayName,
+				  light.label, newColor);
         } else {
           this.platform.log.error('Light color not supported for %s:%s', this.accessory.displayName,
-            light.label);
+				  light.label);
         }
       }
 
@@ -547,14 +547,20 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         const opticalSignal = channel.opticalSignalBehaviour;
         if (opticalSignal !== null && opticalSignal !== light.opticalSignal) {
           light.opticalSignal = opticalSignal;
+          light.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal,
+					     light.opticalSignal);
           this.platform.log.debug('Update optical signal of %s:%s to %s', this.accessory.displayName,
-            light.label, light.opticalSignal);
-          light.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal, light.opticalSignal);
+				  light.label, light.opticalSignal);
         }
       }
     }
   }
   
+
+  /*
+   * Update device state - note that there is only one functional channel with
+   * type SWITCH_CHANNEL on this device!
+   */
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
@@ -563,20 +569,23 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
 
       if (channel.functionalChannelType === 'SWITCH_CHANNEL') {
         const switchChannel = <SwitchChannel>channel;
-        this.platform.log.debug(`Switch update: ${JSON.stringify(channel)}`);
+        //this.platform.log.debug(`Switch update: ${JSON.stringify(channel)}`);
 
         if (switchChannel.on !== null && switchChannel.on !== this.on) {
           this.on = switchChannel.on;
-          this.platform.log.info('Switch state of %s changed to %s', this.accessory.displayName,
-            this.on ? 'ON' : 'OFF');
           this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
+          this.platform.log.info('Switch state of %s changed to %s', this.accessory.displayName,
+				 this.on ? 'ON' : 'OFF');
         }
       }
 
       if (channel.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL' && !this.simpleSwitch) {
         const notificationLightChannel = <NotificationLightChannel>channel;
-        this.updateLightState(this.topLight, notificationLightChannel);
-        this.updateLightState(this.bottomLight, notificationLightChannel);
+	if (notificationLightChannel.index == this.topLight.index) {
+          this.updateLightState(this.topLight, notificationLightChannel);
+        } else if (notificationLightChannel.index == this.bottomLight.index) {
+          this.updateLightState(this.bottomLight, notificationLightChannel);
+        }
       }
     }
   }

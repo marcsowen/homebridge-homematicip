@@ -28,7 +28,7 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
 
   private motionDetected = false;
   private sabotage = false;
-  private lightLevel = 0;
+  private lightLevel = 1;
 
   private addLightSensor : boolean = false;
 
@@ -88,7 +88,7 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
   }
 
   handleAmbientLightLevelGet(callback: CharacteristicGetCallback) {
-    callback(null, this.lightLevel);
+    callback(null, this.lightLevel < 1 ? 1 : this.lightLevel);
   }
 
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -101,13 +101,17 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
 
         if (motionDetectionChannel.motionDetected !== null && motionDetectionChannel.motionDetected !== this.motionDetected) {
           this.motionDetected = motionDetectionChannel.motionDetected;
-          this.platform.log.debug('Motion detector state of %s changed to %s', this.accessory.displayName, this.motionDetected);
-          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.MotionDetected, this.motionDetected);
+          this.platform.log.debug('Motion detector state of %s changed to %s', this.accessory.displayName,
+				  this.motionDetected);
+          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.MotionDetected,
+							this.motionDetected);
         }
         if (motionDetectionChannel.illumination !== null && motionDetectionChannel.illumination !== this.lightLevel) {
           this.lightLevel = motionDetectionChannel.illumination;
-          this.platform.log.debug('Illumination detector state of %s changed to %s', this.accessory.displayName, this.lightLevel);
-          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, this.lightLevel);
+          this.platform.log.debug('Illumination detector state of %s changed to %s', this.accessory.displayName,
+				  this.lightLevel);
+          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel,
+							this.lightLevel < 1 ? 1 : this.lightLevel);
         }
       }
 

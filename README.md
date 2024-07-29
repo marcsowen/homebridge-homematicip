@@ -73,11 +73,13 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-PS Pluggable switch
 - HmIP-PCBS Switch circuit board - 1 channel
 - HmIP-PCBS-BAT Printed circuit board switch battery
-- HmIP-PCBS2 Switch circuit board - 2x channels [1]
-- HmIP-MOD-OC8 Open collector module [1]
-- HmIP-WHS2 Switch actuator for heating systems – 2x channels [1]
-- HmIP-DRS8 Wired switch actuator – 8x channels [1]
-- HmIP-DRSI4 Switch actuator for DIN rail mount – 4x channels [1]
+- HmIP-PCBS2 Switch circuit board - 2x channels
+- HmIP-MOD-OC8 Open collector module
+- HmIP-WHS2 Switch actuator for heating systems – 2x channels
+- HmIPW-DRS8 Wired switch actuator – 8x channels
+- HmIPW-DRS4 Wired switch actuator – 4x channels
+- HmIP-BS2 Brand switch - 2x channels
+- HmIP-DRSI4 Switch actuator for DIN rail mount – 4x channels
 - HmIP-PSM Pluggable switch and meter
 - HmIP-BSM Brand switch and meter
 - HmIP-FSM, HmIP-FSM16 Full flush switch and meter
