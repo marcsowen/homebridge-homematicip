@@ -110,6 +110,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
             this.accessory.displayName, this.energyCounter.toFixed(3));
           this.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy, this.energyCounter);
         }
+        break;
       }
     }
   }
