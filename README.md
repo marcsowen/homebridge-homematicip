@@ -7,7 +7,7 @@
 
 ## Homematic IP platform plugin for homebridge
 
-Uses the unofficial HTTP API and WebSockets for continuous channel updates. 
+Uses the unofficial HTTP API and WebSockets for continuous channel updates.
 
 Add one (or more) Homematic IP Access Points to config.json. There are two configuration
 options that you can set:
@@ -21,10 +21,10 @@ options that you can set:
 }
 ```
 
-The Access Point ID is printed on the back of your Homematic IP Access Point (HmIP-HAP) and is 
-labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx. 
+The Access Point ID is printed on the back of your Homematic IP Access Point (HmIP-HAP) and is
+labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 
-### Pairing 
+### Pairing
 
 ```
 {
@@ -35,7 +35,7 @@ labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 }
 ```
 
-If you do not have an auth_token or don't know it, leave it empty. Be sure to add the "pin" property if it is set in the app. 
+If you do not have an auth_token or don't know it, leave it empty. Be sure to add the "pin" property if it is set in the app.
 After startup, watch the logs and wait for "Press blue, glowing link button of HmIP Access Point now!". Then press the
 button and note the "auth_token" that is being generated, add it to your config.json, remove the pin and restart.
 
@@ -51,6 +51,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-eTRV-2 Radiator thermostat
 - HmIP-eTRV-B Radiator thermostat - basic
 - HmIP-eTRV-C Heating thermostat - compact without display
+- HmIP-eTRV-CL Heating thermostat - compact plus with display
 - HmIP-eTRV-E Radiator thermostat - Evo
 - HmIP-FROLL Shutter actuator - flush-mount
 - HmIP-BROLL Shutter actuator - brand-mount
@@ -111,7 +112,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 
 - Implement more devices
 - Implement META-Group (Homematic IP rooms) to HomeKit room-Mapping
-- Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App) 
+- Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App)
 
 ## Many thanks to our contributors
 
