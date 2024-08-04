@@ -74,6 +74,8 @@ const HmIPColorPaletteHSL = new Map<string, number[]>([
   ['WHITE', [ 0, 0, 100]], 
 ]);
 
+const HmIPOpticalSignalAllowedValues = [ 'ON', 'OFF', 'BLINKING_MIDDLE', 'FLASH_MIDDLE', 'BILLOW_MIDDLE' ];
+
 const HmIPTopLightChannelIndex = 2;
 const HmIPBottomLightChannelIndex = 3;
 
@@ -457,6 +459,12 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       } else {
         value = <string>light.opticalSignal;
       }
+    } else if (HmIPOpticalSignalAllowedValues.includes(value.toUpperCase())) {
+      value = value.toUpperCase();
+    } else {
+      this.platform.log.info('Invalid optical signal value of %s:%s to %s, defaults to ON', this.accessory.displayName,
+        light.label, value);
+      value = 'ON';
     }
     const color = this.getNearestHmIPColorFromHSL(light.hue, light.saturation, light.lightness);
     if (light.simpleColor != color || light.opticalSignal != value) {
@@ -468,7 +476,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
           light.label, color, light.hue, light.brightness);
       }
       light.simpleColor = color;
-      light.opticalSignal = value.toUpperCase();
+      light.opticalSignal = value;
       if (light.hasOpticalSignal) {
         const body = {
           channelIndex: light.index,
