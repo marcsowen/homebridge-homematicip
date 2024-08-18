@@ -104,6 +104,10 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-SWO-B Smart weather sensor - basic
 - HmIP-SWO-PL Smart weather sensor - plus
 - HmIP-SWO-PR Smart weather sensor - pro
+- HMIP-WRC2 Homematic IP button - 2 channels
+- HMIP-WRC6 Homematic IP button - 6 channels
+- HMIP-BRC2 Homematic IP brand button - 2 channels
+- HMIP-WRCC2 Homematic IP flat button - 2 channels
 
 [1] Currently, only first channel is supported.<br>
 [2] Please make sure homebridge-homematicip is added to the list of access control clients in HmIP app settings.
