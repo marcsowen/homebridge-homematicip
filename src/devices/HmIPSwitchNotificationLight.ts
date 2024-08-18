@@ -198,7 +198,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         .on('get', this.handleButton2LedSaturationGet.bind(this))
         .on('set', this.handleButton2LedSaturationSet.bind(this));   
 
-      if (this.topLight.hasOpticalSignal) {
+      if (this.bottomLight.hasOpticalSignal) {
         this.button2Led.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal);
         this.button2Led.getCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal)
           .on('get', this.handleButton2LedOpticalSignalGet.bind(this))
@@ -260,25 +260,28 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     callback(null, this.buttonLedOnGet(this.bottomLight));
   }
 
-  async buttonLedOnSet(light: NotificationLight, value: number, callback: CharacteristicSetCallback) {
-    light.on = (value > 0);
+  async buttonLedOnSet(light: NotificationLight, value: boolean, callback: CharacteristicSetCallback) {
     this.platform.log.debug('Set light state of %s:%s to %s', this.accessory.displayName, light.label,
-      light.on ? 'ON' : 'OFF');
-    if (value > 0 && light.brightness == 0) {
+      value ? 'ON' : 'OFF');
+    if (!value) {
+      await this.apiSetLight(light.index, undefined, 0, 'BLACK');
+      callback(null);
+    } else if (light.simpleColor === 'BLACK' || light.opticalSignal === 'OFF') {
+      await this.apiSetLight(light.index, 'ON', 100, 'WHITE');
+      callback(null);
+    } else if (light.brightness == 0) {
       await this.buttonLedBrightnessSet(light, 100, callback);
-    } else if (value == 0) {
-      await this.buttonLedBrightnessSet(light, 0, callback);
     } else {
       callback(null);
     }
   }
 
   async handleButton1LedOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedOnSet(this.topLight, <number>value, callback);
+    await this.buttonLedOnSet(this.topLight, <boolean>value, callback);
   }
 
   async handleButton2LedOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedOnSet(this.bottomLight, <number>value, callback);
+    await this.buttonLedOnSet(this.bottomLight, <boolean>value, callback);
   }
 
 
@@ -302,25 +305,11 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   async buttonLedBrightnessSet(light: NotificationLight, value: number, callback: CharacteristicSetCallback) {
     if (light.brightness != value) {
       light.brightness = value;
-      light.on = (value > 0);
-      if (light.hasOpticalSignal &&
-          ((light.opticalSignal == 'OFF' && value > 0) ||
-           (light.opticalSignal != 'OFF' && value == 0))) {
-        await this.buttonLedOpticalSignalSet(light, "AUTO", callback);
-      } else {
-        this.platform.log.debug('Set light brightness of %s:%s to %d %%', this.accessory.displayName,
-          light.label, value);
-        const body = {
-          channelIndex: light.index,
-          deviceId: this.accessory.context.device.id,
-          dimLevel: value / 100.0,
-        };
-        await this.platform.connector.apiCall('device/control/setDimLevel', body);
-        callback(null);
-      }
-    } else {
-      callback(null);
+      await this.apiSetLight(light.index, light.opticalSignal, value, light.simpleColor);
+      this.platform.log.debug('Set light brightness of %s:%s to %d %%', this.accessory.displayName,
+		light.label, value);
     }
+    callback(null);
   }
 
   async handleButton1LedBrightnessSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
@@ -349,45 +338,30 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     callback(null, this.buttonLedHueGet(this.bottomLight));
   }
 
-  async buttonLedColorSet(light: NotificationLight, callback: CharacteristicSetCallback) {
+  async buttonLedColorSet(light: NotificationLight) {
     const color = this.getNearestHmIPColorFromHSL(light.hue, light.saturation, light.lightness);
     if (light.simpleColor != color) {
-      this.platform.log.info('Set light color of %s:%s to %s (%d, %d)', this.accessory.displayName,
-        light.label, color, light.hue, light.brightness);
       light.simpleColor = color;
-      const body = {
-        channelIndex: light.index,
-        deviceId: this.accessory.context.device.id,
-        dimLevel: light.brightness / 100.0,
-        simpleRGBColorState : light.simpleColor,
-      };
-      await this.platform.connector.apiCall('device/control/setSimpleRGBColorDimLevel', body);
+      this.platform.log.info('Set light color of %s:%s to %s', this.accessory.displayName,
+		light.label, color);
+      await this.apiSetLight(light.index, light.opticalSignal, light.brightness, color);
+    }
+  }
+
+  async handleButton1LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    if (this.topLight.hue != value) {
+      this.topLight.hue = <number>value;
+      await this.buttonLedColorSet(this.topLight);
     }
     callback(null);
   }
 
-  async handleButton1LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.topLight.hasOpticalSignal) {
-      this.topLight.hue = <number>value;
-      await this.buttonLedOpticalSignalSet(this.topLight, "AUTO", callback);
-    } else if (this.topLight.hue != <number>value) {
-      this.topLight.hue = <number>value;
-      await this.buttonLedColorSet(this.topLight, callback);
-    } else {
-      callback(null);
-    }
-  }
-
   async handleButton2LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.bottomLight.hasOpticalSignal) {
+    if (this.bottomLight.hue != value) {
       this.bottomLight.hue = <number>value;
-      await this.buttonLedOpticalSignalSet(this.bottomLight, "AUTO", callback);
-    } else if (this.bottomLight.hue != <number>value) {
-      this.bottomLight.hue = <number>value;
-      await this.buttonLedColorSet(this.bottomLight, callback);
-    } else {
-      callback(null);
+      await this.buttonLedColorSet(this.bottomLight);
     }
+    callback(null);
   }
 
 
@@ -409,27 +383,19 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   }
 
   async handleButton1LedSaturationSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.topLight.hasOpticalSignal) {
+    if (this.topLight.saturation != value) {
       this.topLight.saturation = <number>value;
-      await this.buttonLedOpticalSignalSet(this.topLight, "AUTO", callback);
-    } else if (this.topLight.saturation != <number>value) {
-      this.topLight.saturation = <number>value;
-      await this.buttonLedColorSet(this.topLight, callback);
-    } else {
-      callback(null);
+      await this.buttonLedColorSet(this.topLight);
     }
+    callback(null);
   }
 
   async handleButton2LedSaturationSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.bottomLight.hasOpticalSignal) {
+    if (this.bottomLight.saturation != value) {
       this.bottomLight.saturation = <number>value;
-      await this.buttonLedOpticalSignalSet(this.bottomLight, "AUTO", callback);
-    } else if (this.bottomLight.saturation != <number>value) {
-      this.bottomLight.saturation = <number>value;
-      await this.buttonLedColorSet(this.bottomLight, callback);
-    } else {
-      callback(null);
+      await this.buttonLedColorSet(this.bottomLight);
     }
+    callback(null);
   }
 
 
@@ -451,45 +417,17 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   }
 
   async buttonLedOpticalSignalSet(light: NotificationLight, value: string, callback: CharacteristicSetCallback) {
-    if (value == 'AUTO') {
-      if (light.opticalSignal === 'OFF' && light.brightness > 0) {
-        value = 'ON';
-      } else if (light.brightness == 0) {
-        value = 'OFF';
-      } else {
-        value = <string>light.opticalSignal;
-      }
-    } else if (HmIPOpticalSignalAllowedValues.includes(value.toUpperCase())) {
+    if (HmIPOpticalSignalAllowedValues.includes(value.toUpperCase())) {
       value = value.toUpperCase();
-    } else {
-      this.platform.log.info('Invalid optical signal value of %s:%s to %s, defaults to ON', this.accessory.displayName,
-        light.label, value);
-      value = 'ON';
-    }
-    const color = this.getNearestHmIPColorFromHSL(light.hue, light.saturation, light.lightness);
-    if (light.simpleColor != color || light.opticalSignal != value) {
-      if (light.opticalSignal !== value) {
+      if (light.opticalSignal != value) {
+        light.opticalSignal = value;
         this.platform.log.info('Set optical signal of %s:%s to %s', this.accessory.displayName,
-          light.label, value);
-      } else if (light.simpleColor !== color) {
-        this.platform.log.info('Set light color of %s:%s to %s (%d, %d)', this.accessory.displayName,
-          light.label, color, light.hue, light.brightness);
+		light.label, value);
+        await this.apiSetLight(light.index, value, light.brightness, light.simpleColor);
       }
-      light.simpleColor = color;
-      light.opticalSignal = value;
-      if (light.hasOpticalSignal) {
-        const body = {
-          channelIndex: light.index,
-          deviceId: this.accessory.context.device.id,
-          opticalSignalBehaviour: light.opticalSignal,
-          dimLevel: light.brightness / 100.0,
-          simpleRGBColorState : light.simpleColor,
-        };
-        await this.platform.connector.apiCall('device/control/setOpticalSignal', body);
-      } else {
-        this.platform.log.info('Setting optical signal of %s:%s not supported',
-          this.accessory.displayName, light.label);
-      }
+    } else {
+      this.platform.log.info('Invalid optical signal value of %s:%s to %s', this.accessory.displayName,
+		light.label, value);
     }
     callback(null);
   }
@@ -504,62 +442,109 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
 
 
   /*
+   * Send light status to phsyical device
+   */
+  async apiSetLight(index: number, opticalSignal: string | undefined,
+		    brightness: number, simpleColor: string | undefined) {
+    if (simpleColor === undefined) {
+      simpleColor = (brightness == 0 ? 'BLACK' : 'WHITE');
+    }
+    if (opticalSignal !== undefined) {
+      if (opticalSignal == 'OFF' && brightness > 0) {
+        opticalSignal = 'ON';
+      } else if (opticalSignal != 'OFF' && brightness == 0) {
+        opticalSignal = 'OFF';
+      }
+      const body = {
+        channelIndex: index,
+        deviceId: this.accessory.context.device.id,
+        opticalSignalBehaviour: opticalSignal,
+        dimLevel: brightness / 100.0,
+        simpleRGBColorState : simpleColor,
+      };
+      await this.platform.connector.apiCall('device/control/setOpticalSignal', body);
+    } else {
+      const body = {
+        channelIndex: index,
+        deviceId: this.accessory.context.device.id,
+        dimLevel: brightness / 100.0,
+        simpleRGBColorState : simpleColor,
+      };
+      await this.platform.connector.apiCall('device/control/setSimpleRGBColorDimLevel', body);
+    }
+  }
+
+
+  /*
    * Update state of lights
    */
   updateLightState(light : NotificationLight, channel : NotificationLightChannel){
     if (light.service !== undefined) {
+      let onstate = null;
       
-      if (channel.label !== '' && light.label !== channel.label) {
+      if (channel.label !== null && channel.label !== '' && light.label !== channel.label) {
         light.label = channel.label;
         light.service.displayName = light.label;
         light.service.updateCharacteristic(this.platform.Characteristic.Name, light.label);
         this.platform.log.debug('Update light label of %s to %s', this.accessory.displayName, light.label);
       }
 
-      if (light.on !== channel.on){
-        light.on = channel.on;
-        light.service.updateCharacteristic(this.platform.Characteristic.On, light.on);
-        this.platform.log.debug('Update light state of %s:%s to %s', this.accessory.displayName,
-				light.label, light.on ? 'ON' : 'OFF');
-      }
-
-      const brightness = channel.dimLevel * 100.0;
-      if (brightness !== null && brightness !== light.brightness) {
-        light.brightness = brightness;
-        light.service.updateCharacteristic(this.platform.Characteristic.Brightness, light.brightness);
-        this.platform.log.debug('Update light brightness of %s:%s to %s %%', this.accessory.displayName,
+      if (channel.dimLevel !== null) {
+        const brightness = channel.dimLevel * 100.0;
+        if (brightness !== light.brightness) {
+          light.brightness = brightness;
+          light.service.updateCharacteristic(this.platform.Characteristic.Brightness, light.brightness);
+          this.platform.log.debug('Update light brightness of %s:%s to %s %%', this.accessory.displayName,
 				light.label, light.brightness.toFixed(0));
+        }
+        onstate = (channel.dimLevel > 0);
       }
 
-      if (light.simpleColor !== channel.simpleRGBColorState) {
-        const newColor = channel.simpleRGBColorState;
+      if (channel.simpleRGBColorState !== null && light.simpleColor !== channel.simpleRGBColorState) {
+        const newColor = <string>channel.simpleRGBColorState;
         const hsl = HmIPColorPaletteHSL.get(newColor);            
-        if (hsl !== undefined) {
-          light.simpleColor = newColor;              
-          if (newColor !== 'BLACK'){
+        if (hsl === undefined) {
+          this.platform.log.error('Light color not supported for %s:%s', this.accessory.displayName,
+				  light.label);
+        } else if (newColor != light.simpleColor) {
+          light.simpleColor = newColor;
+          if (newColor != 'BLACK') {
             light.hue = hsl[0];
             light.saturation = hsl[1]; 
             light.lightness = hsl[2];
             light.service.updateCharacteristic(this.platform.Characteristic.Hue, light.hue);
-            light.service.updateCharacteristic(this.platform.Characteristic.Saturation, light.saturation);              
+            light.service.updateCharacteristic(this.platform.Characteristic.Saturation, light.saturation);
+	    if (onstate === null) {
+              onstate = true;
+            }
+          } else {
+            onstate = false;
           }
           this.platform.log.debug('Update light color of %s:%s to %s', this.accessory.displayName,
-				  light.label, newColor);
-        } else {
-          this.platform.log.error('Light color not supported for %s:%s', this.accessory.displayName,
-				  light.label);
+			light.label, newColor);
         }
       }
 
       if (light.hasOpticalSignal) {
-        const opticalSignal = channel.opticalSignalBehaviour;
-        if (opticalSignal !== null && opticalSignal !== light.opticalSignal) {
-          light.opticalSignal = opticalSignal;
+        if (channel.opticalSignalBehaviour !== null && channel.opticalSignalBehaviour !== light.opticalSignal) {
+          light.opticalSignal = channel.opticalSignalBehaviour;
           light.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal,
 					     light.opticalSignal);
+	  if (light.opticalSignal == 'OFF') {
+            onstate = false;
+          } else if (onstate === null) {
+            onstate = true;
+          }
           this.platform.log.debug('Update optical signal of %s:%s to %s', this.accessory.displayName,
-				  light.label, light.opticalSignal);
+			light.label, light.opticalSignal);
         }
+      }
+
+      if (onstate !== null && onstate !== light.on) {
+        light.on = onstate;
+        light.service.updateCharacteristic(this.platform.Characteristic.On, light.on);
+        this.platform.log.debug('Update light state of %s:%s to %s', this.accessory.displayName,
+			light.label, light.on ? 'ON' : 'OFF');
       }
     }
   }
