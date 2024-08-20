@@ -15,6 +15,7 @@ interface ButtonChannel {
   label : string;
   index : number;
   hapService: Service;
+  lastEvent: string;
 }
 
 
@@ -46,18 +47,20 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
         const buttonChannel = <ButtonChannel>channel;
 
         if (!this.channels.has(buttonChannel.index)) {
+          const label = (buttonChannel.label == null || buttonChannel.label == '')
+				? `Button ${buttonChannel.index}`
+				: buttonChannel.label;
           buttonChannel.hapService = <Service>this.accessory.getServiceById(
 		  this.platform.Service.StatelessProgrammableSwitch, buttonChannel.index.toString());
           if (!buttonChannel.hapService) {
-            const label = (buttonChannel.label == null || buttonChannel.label == '')
-				? `Button ${buttonChannel.index}`
-				: buttonChannel.label;
             const service = new this.platform.Service.StatelessProgrammableSwitch(label,
 				buttonChannel.index.toString());
             buttonChannel.hapService = this.accessory.addService(service);
           }
           buttonChannel.hapService.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex,
 				buttonChannel.index);
+          buttonChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name,
+				`${accessory.context.device.label} ${label}`);
           this.channels.set(buttonChannel.index, buttonChannel);
           this.platform.log.debug('Added button channel %d to %s', buttonChannel.index, this.accessory.displayName);
         }
@@ -103,13 +106,22 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
   public channelEvent(channelId: number, channelEventType: string) {
     const currentChannel = this.channels.get(channelId);
     if (currentChannel) {
-      this.platform.log.debug(`Button event: ${currentChannel.index}: ${channelEventType}`);
-      if (channelEventType === 'KEY_PRESS_SHORT') {
-        currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent,
-				this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
-      } else if (channelEventType === 'KEY_PRESS_LONG_STOP') {
-        currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent,
-				this.platform.Characteristic.ProgrammableSwitchEvent.LONG_PRESS);
+      const characteristic = currentChannel.hapService.getCharacteristic(
+						this.platform.Characteristic.ProgrammableSwitchEvent);
+      if (!characteristic) {
+        this.platform.log.warn(`Unable to send event of button ${this.accessory.displayName}`);
+      } else {
+        let hkEvent = null;
+        if (channelEventType === 'KEY_PRESS_SHORT' && currentChannel.lastEvent !== 'KEY_PRESS_LONG_START') {
+          hkEvent = this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS;
+        } else if (channelEventType === 'KEY_PRESS_LONG_STOP') {
+          hkEvent = this.platform.Characteristic.ProgrammableSwitchEvent.LONG_PRESS;
+        }
+        currentChannel.lastEvent = channelEventType;
+        if (hkEvent !== null) {
+          characteristic.sendEventNotification(hkEvent);
+          this.platform.log.info(`${this.accessory.displayName}, Button ${channelId} Event: ${hkEvent}`);
+        }
       }
     }
   }
