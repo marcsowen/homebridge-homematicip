@@ -131,7 +131,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         }
         this.topLight = new NotificationLight('Button 1', <NotificationLightChannel>channel, this.button1Led);
         if (this.topLight.hasOpticalSignal) {
-          this.platform.log.info(`Detected opticalSignal feature for ${channel.label}`);
+          this.platform.log.debug(`Detected opticalSignal feature for ${channel.label}`);
         }
       } else {
         this.platform.log.error('Light for button 1 not available on %s', accessory.context.device.label);
@@ -151,7 +151,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         } 
         this.bottomLight = new NotificationLight('Button 2', <NotificationLightChannel>channel, this.button2Led);
         if (this.bottomLight.hasOpticalSignal) {
-          this.platform.log.info(`Detected opticalSignal feature for ${channel.label}`);
+          this.platform.log.debug(`Detected opticalSignal feature for ${channel.label}`);
         }
       } else {
         this.platform.log.error('Light for button 2 not available on %s', accessory.context.device.label);
@@ -342,7 +342,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     const color = this.getNearestHmIPColorFromHSL(light.hue, light.saturation, light.lightness);
     if (light.simpleColor != color) {
       light.simpleColor = color;
-      this.platform.log.info('Set light color of %s:%s to %s', this.accessory.displayName,
+      this.platform.log.debug('Set light color of %s:%s to %s', this.accessory.displayName,
 		light.label, color);
       await this.apiSetLight(light.index, light.opticalSignal, light.brightness, color);
     }
@@ -421,7 +421,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       value = value.toUpperCase();
       if (light.opticalSignal != value) {
         light.opticalSignal = value;
-        this.platform.log.info('Set optical signal of %s:%s to %s', this.accessory.displayName,
+        this.platform.log.debug('Set optical signal of %s:%s to %s', this.accessory.displayName,
 		light.label, value);
         await this.apiSetLight(light.index, value, light.brightness, light.simpleColor);
       }
@@ -567,7 +567,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         if (switchChannel.on !== null && switchChannel.on !== this.on) {
           this.on = switchChannel.on;
           this.service.updateCharacteristic(this.platform.Characteristic.On, this.on);
-          this.platform.log.info('Switch state of %s changed to %s', this.accessory.displayName,
+          this.platform.log.debug('Switch state of %s changed to %s', this.accessory.displayName,
 				 this.on ? 'ON' : 'OFF');
         }
       }

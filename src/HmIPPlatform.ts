@@ -302,7 +302,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPRotaryHandleSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'SMOKE_DETECTOR') {
       homebridgeDevice = new HmIPSmokeDetector(this, hmIPAccessory.accessory);
-    } else if ( device.type === 'PUSH_BUTTON'
+    } else if (device.type === 'PUSH_BUTTON'
       || device.type === 'PUSH_BUTTON_6'
       || device.type === 'PUSH_BUTTON_FLAT'
       || device.type === 'BRAND_PUSH_BUTTON') {
