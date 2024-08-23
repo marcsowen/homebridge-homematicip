@@ -74,7 +74,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
               this.handleOnSet(switchChannel, value, callback)
             });
           this.channels.set(switchChannel.index, switchChannel);
-          this.platform.log.info('Added switch channel %d to %s', switchChannel.index, this.accessory.displayName);
+          this.platform.log.debug('Added switch channel %d to %s', switchChannel.index, this.accessory.displayName);
         }
       }
     }
@@ -89,13 +89,13 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 
   /* Determine current switch state */
   handleOnGet(switchChannel: SwitchChannel, callback: CharacteristicGetCallback) {
-    callback(null, switchChannel.on);
+    callback(null, switchChannel.on !== null ? switchChannel.on : false);
   }
 
 
   /* Set new switch state */
   async handleOnSet(switchChannel: SwitchChannel, value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.info('Setting switch %s channel %d to %s', this.accessory.displayName,
+    this.platform.log.debug('Setting switch %s channel %d to %s', this.accessory.displayName,
 			   switchChannel.index, value ? 'ON' : 'OFF');
     const body = {
       channelIndex: switchChannel.index,
@@ -119,19 +119,20 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 
 	if (currentChannel) {
 
-          if (switchChannel.label != '' && switchChannel.label != currentChannel.label) {
+          if (switchChannel.label !== null && switchChannel.label != '' &&
+              switchChannel.label != currentChannel.label) {
             currentChannel.label = switchChannel.label;
 	    currentChannel.hapService.displayName = switchChannel.label;
-            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name, switchChannel.label);
+            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name, currentChannel.label);
             this.platform.log.debug('Switch label of %s channel %d changed to %s', this.accessory.displayName,
-				   currentChannel.index, switchChannel.label);
+				   currentChannel.index, currentChannel.label);
           }
 
-          if (switchChannel.on !== currentChannel.on) {
+          if (switchChannel.on !== null && switchChannel.on !== currentChannel.on) {
             currentChannel.on = switchChannel.on;
-            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.On, switchChannel.on);
+            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.On, currentChannel.on);
             this.platform.log.debug('Switch state of %s channel %d changed to %s', this.accessory.displayName,
-				   currentChannel.index, switchChannel.on ? 'ON' : 'OFF');
+				   currentChannel.index, currentChannel.on ? 'ON' : 'OFF');
           }
 
         }

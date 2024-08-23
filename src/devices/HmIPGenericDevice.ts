@@ -78,7 +78,14 @@ export abstract class HmIPGenericDevice {
         || channel.functionalChannelType === 'DEVICE_SABOTAGE') {
         const baseChannel = <DeviceBaseChannel>channel;
 
+        if (baseChannel.unreach !== null) {
+          this.unreach = baseChannel.unreach;
+        }
+
         featureLowBat = baseChannel.supportedOptionalFeatures.IOptionalFeatureLowBat;
+	if (featureLowBat && baseChannel.lowBat !== null) {
+          this.lowBat = baseChannel.lowBat;
+        }
 
         if (channel.functionalChannelType === 'DEVICE_SABOTAGE') {
           this.featureSabotage = true;

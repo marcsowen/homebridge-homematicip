@@ -9,7 +9,7 @@ import {
 } from 'homebridge';
 import {HmIPConnector} from './HmIPConnector.js';
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
-import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, IdentifiableDevice, Updateable} from './HmIPState.js';
+import {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange, IdentifiableDevice, Updateable, EventUpdateable} from './HmIPState.js';
 import {HmIPShutter} from './devices/HmIPShutter.js';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat.js';
 import {HmIPContactSensor} from './devices/HmIPContactSensor.js';
@@ -18,6 +18,7 @@ import {HmIPAccessory} from './HmIPAccessory.js';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat.js';
 import * as os from 'os';
 import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector.js';
+import {HmIPButton} from './devices/HmIPButton.js';
 import {HmIPSwitch} from './devices/HmIPSwitch.js';
 import {HmIPGarageDoor} from './devices/HmIPGarageDoor.js';
 import {HmIPClimateSensor} from './devices/HmIPClimateSensor.js';
@@ -237,6 +238,19 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
               }
             }
             break;
+          case 'DEVICE_CHANNEL_EVENT':
+            if (this.deviceMap.has(event.deviceId)) {
+              this.log.debug(`Channel Event: ${JSON.stringify(event)}`);
+              const hmIPDevice = <EventUpdateable>this.deviceMap.get(event.deviceId);
+	      if (typeof hmIPDevice.channelEvent === 'function') {
+                const ch_id = (event.channelIndex ? event.channelIndex : 1);
+		const ch_type = (event.channelEventType ? event.channelEventType : "");
+                hmIPDevice.channelEvent(ch_id, ch_type);
+              }
+            } else {
+              this.log.debug('Device channel event from unregistered device: ' + event.deviceId);
+            }
+            break;
           case 'HOME_CHANGED':
             if (event.home) {
               this.log.debug(`${event.pushEventType}: ${event.home.id} ${JSON.stringify(event.home)}`);
@@ -288,6 +302,11 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       homebridgeDevice = new HmIPRotaryHandleSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'SMOKE_DETECTOR') {
       homebridgeDevice = new HmIPSmokeDetector(this, hmIPAccessory.accessory);
+    } else if (device.type === 'PUSH_BUTTON'
+      || device.type === 'PUSH_BUTTON_6'
+      || device.type === 'PUSH_BUTTON_FLAT'
+      || device.type === 'BRAND_PUSH_BUTTON') {
+      homebridgeDevice = new HmIPButton(this, hmIPAccessory.accessory);
     } else if ( device.type === 'PLUGABLE_SWITCH'
       || device.type === 'FULL_FLUSH_INPUT_SWITCH'
       || device.type === 'BRAND_SWITCH_2'
@@ -336,7 +355,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     } else if (device.type === 'WEATHER_SENSOR_PRO') {
       homebridgeDevice = new HmIPWeatherSensorPro(this, hmIPAccessory.accessory);
     } else {
-      this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
+      if (device.type !== 'HOME_CONTROL_ACCESS_POINT') {
+        this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
+      }
       return;
     }
 

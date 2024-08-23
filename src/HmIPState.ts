@@ -7,6 +7,9 @@ export interface HmIPStateChangeEvent {
   device: HmIPDevice | null;
   group: HmIPGroup | null;
   home: HmIPHome | null;
+  deviceId: string | null;
+  channelIndex: number | null;
+  channelEventType: string | null;
 }
 
 export interface HmIPStateChange {
@@ -119,4 +122,9 @@ export enum MotionDetectionSendInterval {
 
 export interface Updateable {
   updateDevice(device: HmIPDevice, groups: { [key: string]: HmIPGroup }): void;
+}
+
+export interface EventUpdateable {
+  updateDevice(device: HmIPDevice, groups: { [key: string]: HmIPGroup }): void;
+  channelEvent(channelId: number, channelEventType: string): void;
 }
