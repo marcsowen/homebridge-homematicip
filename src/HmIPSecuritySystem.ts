@@ -3,6 +3,12 @@ import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValu
 import {HmIPPlatform} from './HmIPPlatform.js';
 import {HmIPGroup, HmIPHome} from './HmIPState.js';
 
+enum WindowState {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  TILTED = 'TILTED'
+}
+
 interface SecurityAndAlarmSolution {
   solution: string;
   active: boolean;
@@ -19,6 +25,7 @@ interface SecurityZoneGroup {
   active: boolean;
   silent: boolean;
   sabotage: boolean;
+  windowState: WindowState;
 }
 
 class SecuritySystemTarget {
@@ -46,6 +53,7 @@ export class HmIPSecuritySystem {
   private alarmActive = false;
   private internalZoneActive = false;
   private externalZoneActive = false;
+  private windowState = WindowState.CLOSED;
 
   constructor(
     protected platform: HmIPPlatform,
@@ -74,6 +82,9 @@ export class HmIPSecuritySystem {
       .on('get', this.handleTargetStateGet.bind(this))
       .on('set', this.handleTargetStateSet.bind(this));
 
+    this.service.addOptionalCharacteristic(this.platform.Characteristic.ContactSensorState);
+    this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .on('get', this.handleContactSensorStateGet.bind(this));
   }
 
   handleCurrentStateGet(callback: CharacteristicGetCallback) {
@@ -95,6 +106,12 @@ export class HmIPSecuritySystem {
     };
     await this.platform.connector.apiCall('home/security/setZonesActivation', body, 2);
     callback(null);
+  }
+
+  handleContactSensorStateGet(callback: CharacteristicGetCallback) {
+    callback(null, this.windowState === WindowState.CLOSED
+      ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+      : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
   }
 
   public updateHome(home: HmIPHome) {
@@ -148,6 +165,13 @@ export class HmIPSecuritySystem {
             this.externalZoneActive = securityGroup.active;
             this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
             stateChanged = true;
+          }
+          if (securityGroup.windowState !== null && securityGroup.windowState !== this.windowState) {
+            this.windowState = securityGroup.windowState;
+            this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
+              this.windowState === WindowState.CLOSED
+                ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+                : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
           }
         }
       }

@@ -355,7 +355,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     } else if (device.type === 'WEATHER_SENSOR_PRO') {
       homebridgeDevice = new HmIPWeatherSensorPro(this, hmIPAccessory.accessory);
     } else {
-      if (device.type !== 'HOME_CONTROL_ACCESS_POINT') {
+      if (device.type !== 'HOME_CONTROL_ACCESS_POINT' &&
+          device.type !== 'EXTERNAL') {
         this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       }
       return;
