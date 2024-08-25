@@ -160,18 +160,18 @@ export class HmIPSecuritySystem {
             this.platform.log.info('Security system activation status for internal zone changed to %s', this.internalZoneActive);
             stateChanged = true;
           }
-        } else if (securityGroup.label === 'EXTERNAL') {
-          if (securityGroup.active !== this.externalZoneActive) {
-            this.externalZoneActive = securityGroup.active;
-            this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
-            stateChanged = true;
-          }
           if (securityGroup.windowState !== null && securityGroup.windowState !== this.windowState) {
             this.windowState = securityGroup.windowState;
             this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
               this.windowState === WindowState.CLOSED
                 ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
                 : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+          }
+        } else if (securityGroup.label === 'EXTERNAL') {
+          if (securityGroup.active !== this.externalZoneActive) {
+            this.externalZoneActive = securityGroup.active;
+            this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
+            stateChanged = true;
           }
         }
       }
