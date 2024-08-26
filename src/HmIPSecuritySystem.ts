@@ -53,7 +53,8 @@ export class HmIPSecuritySystem {
   private alarmActive = false;
   private internalZoneActive = false;
   private externalZoneActive = false;
-  private windowState = WindowState.CLOSED;
+  private internalWindowState = WindowState.CLOSED;
+  private externalWindowState = WindowState.CLOSED;
 
   constructor(
     protected platform: HmIPPlatform,
@@ -109,9 +110,10 @@ export class HmIPSecuritySystem {
   }
 
   handleContactSensorStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.windowState === WindowState.CLOSED
-      ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-      : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+    callback(null, this.internalWindowState === WindowState.CLOSED &&
+                   this.externalWindowState === WindowState.CLOSED
+			? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+			: this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
   }
 
   public updateHome(home: HmIPHome) {
@@ -148,6 +150,7 @@ export class HmIPSecuritySystem {
 
   public updateGroups(groups: {[key: string]: HmIPGroup}) {
     let stateChanged = false;
+    let windowChanged = false;
 
     for (const groupKey in groups) {
       const group = groups[groupKey];
@@ -155,23 +158,27 @@ export class HmIPSecuritySystem {
         const securityGroup = <SecurityZoneGroup>group;
 
         if (securityGroup.label === 'INTERNAL') {
+
           if (securityGroup.active !== this.internalZoneActive) {
             this.internalZoneActive = securityGroup.active;
             this.platform.log.info('Security system activation status for internal zone changed to %s', this.internalZoneActive);
             stateChanged = true;
           }
-          if (securityGroup.windowState !== null && securityGroup.windowState !== this.windowState) {
-            this.windowState = securityGroup.windowState;
-            this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
-              this.windowState === WindowState.CLOSED
-                ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-                : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+          if (securityGroup.windowState !== null && securityGroup.windowState !== this.internalWindowState) {
+            this.internalWindowState = securityGroup.windowState;
+	    windowChanged = true;
           }
+
         } else if (securityGroup.label === 'EXTERNAL') {
+
           if (securityGroup.active !== this.externalZoneActive) {
             this.externalZoneActive = securityGroup.active;
             this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
             stateChanged = true;
+          }
+          if (securityGroup.windowState !== null && securityGroup.windowState !== this.externalWindowState) {
+            this.externalWindowState = securityGroup.windowState;
+	    windowChanged = true;
           }
         }
       }
@@ -180,6 +187,14 @@ export class HmIPSecuritySystem {
     if (stateChanged) {
       this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
       this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
+    }
+
+    if (windowChanged) {
+      this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
+		this.internalWindowState === WindowState.CLOSED &&
+		this.externalWindowState === WindowState.CLOSED
+			? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+			: this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
     }
   }
 
