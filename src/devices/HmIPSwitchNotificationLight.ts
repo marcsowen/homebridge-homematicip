@@ -351,6 +351,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   async handleButton1LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.topLight.hue != value) {
       this.topLight.hue = <number>value;
+      if (this.topLight.hue > 0 || this.topLight.saturation > 0) {
+        this.topLight.lightness = 50;
+      }
       await this.buttonLedColorSet(this.topLight);
     }
     callback(null);
@@ -359,6 +362,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   async handleButton2LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.bottomLight.hue != value) {
       this.bottomLight.hue = <number>value;
+      if (this.bottomLight.hue > 0 || this.bottomLight.saturation > 0) {
+        this.bottomLight.lightness = 50;
+      }
       await this.buttonLedColorSet(this.bottomLight);
     }
     callback(null);
@@ -385,6 +391,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   async handleButton1LedSaturationSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.topLight.saturation != value) {
       this.topLight.saturation = <number>value;
+      if (this.topLight.hue > 0 || this.topLight.saturation > 0) {
+        this.topLight.lightness = 50;
+      }
       await this.buttonLedColorSet(this.topLight);
     }
     callback(null);
@@ -393,6 +402,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   async handleButton2LedSaturationSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.bottomLight.saturation != value) {
       this.bottomLight.saturation = <number>value;
+      if (this.bottomLight.hue > 0 || this.bottomLight.saturation > 0) {
+        this.bottomLight.lightness = 50;
+      }
       await this.buttonLedColorSet(this.bottomLight);
     }
     callback(null);
