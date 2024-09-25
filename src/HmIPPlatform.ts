@@ -323,7 +323,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       || device.type === 'FULL_FLUSH_SWITCH_MEASURING') {
       homebridgeDevice = new HmIPSwitchMeasuring(this, hmIPAccessory.accessory);
     } else if (device.type === 'TORMATIC_MODULE'
-      || device.type === 'HOERMANN_DRIVES_MODULE') {
+      || device.type === 'HOERMANN_DRIVES_MODULE'
+      || device.type === 'WALL_MOUNTED_GARAGE_DOOR_CONTROLLER') {
       homebridgeDevice = new HmIPGarageDoor(this, hmIPAccessory.accessory);
     } else if (device.type === 'WATER_SENSOR') {
       homebridgeDevice = new HmIPWaterSensor(this, hmIPAccessory.accessory);
