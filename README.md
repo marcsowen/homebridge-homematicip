@@ -87,6 +87,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-FSI16 full flush switch (16A)
 - HmIP-MOD-TM Garage door module - Tormatic
 - HmIP-MOD-HO Garage door module - Hörmann
+- HmIP-WGC Wall mounted garage door controller
 - HmIP-SWD Water sensor
 - HmIP-SLO Light sensor outdoor
 - HmIP-SMI Motion detector with brightness sensor - indoor
