@@ -21,6 +21,7 @@ import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector.js';
 import {HmIPButton} from './devices/HmIPButton.js';
 import {HmIPSwitch} from './devices/HmIPSwitch.js';
 import {HmIPGarageDoor} from './devices/HmIPGarageDoor.js';
+import {HmIPGarageDoorController} from './devices/HmIPGarageDoorController.js';
 import {HmIPClimateSensor} from './devices/HmIPClimateSensor.js';
 import {HmIPWaterSensor} from './devices/HmIPWaterSensor.js';
 import {HmIPBlind} from './devices/HmIPBlind.js';
@@ -325,6 +326,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     } else if (device.type === 'TORMATIC_MODULE'
       || device.type === 'HOERMANN_DRIVES_MODULE') {
       homebridgeDevice = new HmIPGarageDoor(this, hmIPAccessory.accessory);
+    } else if (device.type === 'WALL_MOUNTED_GARAGE_DOOR_CONTROLLER') {
+      homebridgeDevice = new HmIPGarageDoorController(this, hmIPAccessory.accessory);
     } else if (device.type === 'WATER_SENSOR') {
       homebridgeDevice = new HmIPWaterSensor(this, hmIPAccessory.accessory);
     } else if (device.type === 'LIGHT_SENSOR') {
