@@ -3,6 +3,12 @@ import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValu
 import {HmIPPlatform} from './HmIPPlatform.js';
 import {HmIPGroup, HmIPHome} from './HmIPState.js';
 
+enum WindowState {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  TILTED = 'TILTED'
+}
+
 interface SecurityAndAlarmSolution {
   solution: string;
   active: boolean;
@@ -19,6 +25,7 @@ interface SecurityZoneGroup {
   active: boolean;
   silent: boolean;
   sabotage: boolean;
+  windowState: WindowState;
 }
 
 class SecuritySystemTarget {
@@ -46,6 +53,8 @@ export class HmIPSecuritySystem {
   private alarmActive = false;
   private internalZoneActive = false;
   private externalZoneActive = false;
+  private internalWindowState = WindowState.CLOSED;
+  private externalWindowState = WindowState.CLOSED;
 
   constructor(
     protected platform: HmIPPlatform,
@@ -74,6 +83,9 @@ export class HmIPSecuritySystem {
       .on('get', this.handleTargetStateGet.bind(this))
       .on('set', this.handleTargetStateSet.bind(this));
 
+    this.service.addOptionalCharacteristic(this.platform.Characteristic.ContactSensorState);
+    this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .on('get', this.handleContactSensorStateGet.bind(this));
   }
 
   handleCurrentStateGet(callback: CharacteristicGetCallback) {
@@ -95,6 +107,13 @@ export class HmIPSecuritySystem {
     };
     await this.platform.connector.apiCall('home/security/setZonesActivation', body, 2);
     callback(null);
+  }
+
+  handleContactSensorStateGet(callback: CharacteristicGetCallback) {
+    callback(null, this.internalWindowState === WindowState.CLOSED &&
+                   this.externalWindowState === WindowState.CLOSED
+			? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+			: this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
   }
 
   public updateHome(home: HmIPHome) {
@@ -131,6 +150,7 @@ export class HmIPSecuritySystem {
 
   public updateGroups(groups: {[key: string]: HmIPGroup}) {
     let stateChanged = false;
+    let windowChanged = false;
 
     for (const groupKey in groups) {
       const group = groups[groupKey];
@@ -138,16 +158,27 @@ export class HmIPSecuritySystem {
         const securityGroup = <SecurityZoneGroup>group;
 
         if (securityGroup.label === 'INTERNAL') {
+
           if (securityGroup.active !== this.internalZoneActive) {
             this.internalZoneActive = securityGroup.active;
             this.platform.log.info('Security system activation status for internal zone changed to %s', this.internalZoneActive);
             stateChanged = true;
           }
+          if (securityGroup.windowState !== null && securityGroup.windowState !== this.internalWindowState) {
+            this.internalWindowState = securityGroup.windowState;
+	    windowChanged = true;
+          }
+
         } else if (securityGroup.label === 'EXTERNAL') {
+
           if (securityGroup.active !== this.externalZoneActive) {
             this.externalZoneActive = securityGroup.active;
             this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
             stateChanged = true;
+          }
+          if (securityGroup.windowState !== null && securityGroup.windowState !== this.externalWindowState) {
+            this.externalWindowState = securityGroup.windowState;
+	    windowChanged = true;
           }
         }
       }
@@ -156,6 +187,14 @@ export class HmIPSecuritySystem {
     if (stateChanged) {
       this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
       this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
+    }
+
+    if (windowChanged) {
+      this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
+		this.internalWindowState === WindowState.CLOSED &&
+		this.externalWindowState === WindowState.CLOSED
+			? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+			: this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
     }
   }
 
