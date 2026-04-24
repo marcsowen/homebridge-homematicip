@@ -37,6 +37,7 @@ interface SwitchChannel {
  * HMIPW-DRS8 (Homematic IP Wired Switch Actuator – 8x channels)
  * HMIPW-DRS4 (Homematic IP Wired Switch Actuator – 4x channels)
  * HMIP-DRSI4 (Homematic IP Switch Actuator for DIN rail mount – 4x channels)
+ * ELV-SH-SPS25 (ELV Battery powered switchable power supply)
  *
  */
 export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
@@ -50,6 +51,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 
     this.platform.log.debug(`Created switch ${accessory.context.device.label}`);
 
+    const needLabelIndex = (accessory.context.device.functionalChannels.length > 2);
     for (const id in accessory.context.device.functionalChannels) {
       const channel = accessory.context.device.functionalChannels[id];
       if (channel.functionalChannelType === 'SWITCH_CHANNEL' ||
@@ -57,15 +59,23 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
         const switchChannel = <SwitchChannel>channel;
 
         if (!this.channels.has(switchChannel.index)) {
+          const label = (switchChannel.label == null || switchChannel.label == '')
+				? (needLabelIndex
+				     ? `${accessory.context.device.label} Channel ${switchChannel.index}`
+				     : accessory.context.device.label)
+				: switchChannel.label;
           switchChannel.hapService = <Service>this.accessory.getServiceById(this.platform.Service.Switch,
 									    switchChannel.index.toString());
           if (!switchChannel.hapService) {
-            const label = (switchChannel.label == null || switchChannel.label == '')
-				? accessory.context.device.label
-				: switchChannel.label;
             const service = new this.platform.Service.Switch(label, switchChannel.index.toString());
+            service.addCharacteristic(this.platform.Characteristic.ConfiguredName);
+	    if (needLabelIndex) {
+              service.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex,
+                                           switchChannel.index);
+            }
             switchChannel.hapService = this.accessory.addService(service);
           }
+          switchChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName, label);
           switchChannel.hapService.getCharacteristic(this.platform.Characteristic.On)
             .on('get', (callback) => {
               this.handleOnGet(switchChannel, callback)
@@ -122,8 +132,8 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
           if (switchChannel.label !== null && switchChannel.label != '' &&
               switchChannel.label != currentChannel.label) {
             currentChannel.label = switchChannel.label;
-	    currentChannel.hapService.displayName = switchChannel.label;
-            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name, currentChannel.label);
+            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName,
+							   currentChannel.label);
             this.platform.log.debug('Switch label of %s channel %d changed to %s', this.accessory.displayName,
 				   currentChannel.index, currentChannel.label);
           }

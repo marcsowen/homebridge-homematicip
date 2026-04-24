@@ -41,6 +41,7 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
 
     this.platform.log.debug(`Created button ${accessory.context.device.label}`);
 
+    const needLabelIndex = (accessory.context.device.functionalChannels.length > 2);
     for (const id in accessory.context.device.functionalChannels) {
       const channel = accessory.context.device.functionalChannels[id];
       if (channel.functionalChannelType === 'SINGLE_KEY_CHANNEL') {
@@ -48,19 +49,21 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
 
         if (!this.channels.has(buttonChannel.index)) {
           const label = (buttonChannel.label == null || buttonChannel.label == '')
-				? `Button ${buttonChannel.index}`
+				? `${accessory.context.device.label} Button ${buttonChannel.index}`
 				: buttonChannel.label;
           buttonChannel.hapService = <Service>this.accessory.getServiceById(
 		  this.platform.Service.StatelessProgrammableSwitch, buttonChannel.index.toString());
           if (!buttonChannel.hapService) {
             const service = new this.platform.Service.StatelessProgrammableSwitch(label,
 				buttonChannel.index.toString());
+            service.addCharacteristic(this.platform.Characteristic.ConfiguredName);
+	    if (needLabelIndex) {
+              service.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex,
+                                           buttonChannel.index);
+            }
             buttonChannel.hapService = this.accessory.addService(service);
           }
-          buttonChannel.hapService.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex,
-				buttonChannel.index);
-          buttonChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name,
-				`${accessory.context.device.label} ${label}`);
+          buttonChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName, label);
           this.channels.set(buttonChannel.index, buttonChannel);
           this.platform.log.debug('Added button channel %d to %s', buttonChannel.index, this.accessory.displayName);
         }
@@ -90,8 +93,8 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
           if (buttonChannel.label !== null && buttonChannel.label != '' &&
               buttonChannel.label != currentChannel.label) {
             currentChannel.label = buttonChannel.label;
-	    currentChannel.hapService.displayName = buttonChannel.label;
-            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name, currentChannel.label);
+            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName,
+								currentChannel.label);
             this.platform.log.debug('Button label of %s channel %d changed to %s', this.accessory.displayName,
 				   currentChannel.index, currentChannel.label);
           }

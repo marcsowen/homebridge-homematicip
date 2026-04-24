@@ -99,6 +99,7 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - HmIP-FDT Dimming actuator flush-mount
 - HmIPW-DRD3 Wired dimming actuator – 3x channels [1]
 - HmIP-DRDI3 DIN rail dimming actuator (multichannel)
+- HmIP-RGBW LED dimming actuator (multichannel, only dimming, no hue/saturation control)
 - HmIP-DLD Door lock drive [2]
 - HmIP-DLS Door lock sensor
 - HmIP-BSL Notification light switch

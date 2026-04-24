@@ -25,6 +25,7 @@ interface MultiModeInputDimmerChannel {
  * HomematicIP multi channel dimmer
  *
  * HmIP-DRDI3 (Homematic IP Dimming Actuator – 3x channels)
+ * HmIP-RGBW  (Homematic IP LED Dimming Actuator - 2-4x channel depending on configuration)
  *
  */
 export class HmIPDimmerMultiChannel extends HmIPGenericDevice implements Updateable {
@@ -35,7 +36,7 @@ export class HmIPDimmerMultiChannel extends HmIPGenericDevice implements Updatea
     platform: HmIPPlatform,
     accessory: PlatformAccessory,
   ) {
-   super(platform, accessory);
+    super(platform, accessory);
     this.platform.log.debug(`Created dimmer ${accessory.context.device.label}`);
 
     /* necessary services will be created during updateDevice() */
@@ -77,13 +78,17 @@ export class HmIPDimmerMultiChannel extends HmIPGenericDevice implements Updatea
 
   public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
+    const needLabelIndex = (this.accessory.context.device.functionalChannels.length > 2);
     for (const id in hmIPDevice.functionalChannels) {
        const channel = hmIPDevice.functionalChannels[id];
        //this.platform.log.info(`Dimmer update: ${JSON.stringify(channel)}`);
 
-       if (channel.functionalChannelType === 'MULTI_MODE_INPUT_DIMMER_CHANNEL') { 
+       if (channel.functionalChannelType === 'MULTI_MODE_INPUT_DIMMER_CHANNEL' ||
+           channel.functionalChannelType === 'UNIVERSAL_LIGHT_CHANNEL') {
         this.platform.log.debug(`Dimmer update: ${JSON.stringify(channel)}`);
         const dimmerChannel = <MultiModeInputDimmerChannel>channel;
+
+        if (!dimmerChannel.label) continue;
 
         if (!this.channels.has(dimmerChannel.index)){
 
@@ -91,10 +96,15 @@ export class HmIPDimmerMultiChannel extends HmIPGenericDevice implements Updatea
           if (!dimmerChannel.hapService){
             const service = new this.platform.Service.Lightbulb(dimmerChannel.label, dimmerChannel.index.toString());
             service.addCharacteristic(this.platform.Characteristic.ConfiguredName);
+	    if (needLabelIndex) {
+              service.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex,
+						dimmerChannel.index);
+            }
             dimmerChannel.hapService = this.accessory.addService(service);
             
             /* The name is set only once when the accessory is added to Homebridge */
-            dimmerChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName, dimmerChannel.label);
+            dimmerChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName,
+							  dimmerChannel.label);
             
             this.platform.log.info('Dimmer %s adding channel %s: %s', this.accessory.displayName, dimmerChannel.index, dimmerChannel.index, dimmerChannel.label);
           }
