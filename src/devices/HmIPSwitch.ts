@@ -50,6 +50,15 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 
     this.platform.log.debug(`Created switch ${accessory.context.device.label}`);
 
+    // Remove a legacy Switch service that older plugin versions added without a subtype.
+    // Without this cleanup, upgraded accessories keep an orphaned single Switch alongside
+    // the new per-channel services (e.g. on HmIPW-DRS8 cached from v1.3.1).
+    const legacyService = this.accessory.getService(this.platform.Service.Switch);
+    if (legacyService && !legacyService.subtype) {
+      this.platform.log.info('Removing legacy single-channel switch service from %s', this.accessory.displayName);
+      this.accessory.removeService(legacyService);
+    }
+
     for (const id in accessory.context.device.functionalChannels) {
       const channel = accessory.context.device.functionalChannels[id];
       if (channel.functionalChannelType === 'SWITCH_CHANNEL' ||
@@ -61,10 +70,12 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
 									    switchChannel.index.toString());
           if (!switchChannel.hapService) {
             const label = (switchChannel.label == null || switchChannel.label == '')
-				? accessory.context.device.label
+				? `${accessory.context.device.label} ${switchChannel.index}`
 				: switchChannel.label;
             const service = new this.platform.Service.Switch(label, switchChannel.index.toString());
+            service.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
             switchChannel.hapService = this.accessory.addService(service);
+            switchChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName, label);
           }
           switchChannel.hapService.getCharacteristic(this.platform.Characteristic.On)
             .on('get', (callback) => {
@@ -112,7 +123,8 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
     super.updateDevice(hmIPDevice, groups);
     for (const id in hmIPDevice.functionalChannels) {
       const channel = hmIPDevice.functionalChannels[id];
-      if (channel.functionalChannelType === 'SWITCH_CHANNEL') {
+      if (channel.functionalChannelType === 'SWITCH_CHANNEL' ||
+          channel.functionalChannelType === 'MULTI_MODE_INPUT_SWITCH_CHANNEL') {
         const switchChannel = <SwitchChannel>channel;
         const currentChannel = this.channels.get(switchChannel.index);
         //this.platform.log.debug(`Switch update: ${JSON.stringify(channel)}`);
@@ -124,6 +136,7 @@ export class HmIPSwitch extends HmIPGenericDevice implements Updateable {
             currentChannel.label = switchChannel.label;
 	    currentChannel.hapService.displayName = switchChannel.label;
             currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name, currentChannel.label);
+            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.ConfiguredName, currentChannel.label);
             this.platform.log.debug('Switch label of %s channel %d changed to %s', this.accessory.displayName,
 				   currentChannel.index, currentChannel.label);
           }

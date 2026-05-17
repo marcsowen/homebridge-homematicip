@@ -1,3 +1,24 @@
+## 1.4.0 (2026-05-17)
+
+### Improvements
+
+- **HmIPW-DRS8 / HmIPW-DRS4 / HmIP-BS2 / HmIP-PCBS2 / HmIP-MOD-OC8 / HmIP-WHS2 / HmIP-DRSI4**:
+  All switch channels are now exposed as individual HomeKit Switch services (multi-channel
+  support, originally added in master via @gkminix's work, is now part of a tagged release).
+- **Switches**: Add `ConfiguredName` characteristic per channel so channel-specific labels
+  are displayed in the Home app, and provide a sensible default name when the device label
+  is empty.
+- **Switches**: Migrate cached accessories from older single-service layout by removing the
+  orphaned legacy Switch service that was created without a subtype.
+- **MULTI_MODE_INPUT_SWITCH_CHANNEL**: State updates from this channel type are now applied
+  (previously only handled at registration time).
+
+### Packaging
+
+- Add `prepare` script and `files` allowlist so the plugin can be installed straight from
+  a GitHub fork (`npm i github:<user>/homebridge-homematicip`) and still ship a built
+  `dist/` directory.
+
 ## 1.3.1 (2024-01-13)
 
 ### New devices
