@@ -1,3 +1,30 @@
+## 2.0.0 (2026-07-31)
+
+### Breaking changes
+
+- **General**: Homebridge 2.2 is now required. Node.js 22 and 24 are the supported Node.js releases ([#586](https://github.com/marcsowen/homebridge-homematicip/issues/586)).
+
+### Improvements
+
+- **Homebridge**: Migrated characteristic handlers to the promise-based API so failed device commands are reported back to HomeKit instead of being silently ignored.
+- **Accessories**: Added live handling for devices added to or removed from the Homematic IP installation and reliable reconciliation of cached Homebridge accessories at startup.
+- **Accessories**: Device firmware changes are now published to Homebridge immediately. Homematic IP device renames no longer overwrite names customized in Apple Home.
+- **Connector**: Added validated API responses, request timeouts, cancellation, rate limiting, structured failure handling, and safer diagnostics.
+- **Connector**: Added an explicit WebSocket lifecycle with heartbeat detection, stale-connection protection, bounded reconnect backoff, and clean shutdown.
+- **Pairing**: Pairing now distinguishes a pending button press from connection failures and stops after five minutes instead of polling indefinitely.
+- **Lifecycle**: Added idempotent platform startup and shutdown, including cleanup of active requests, WebSockets, reconnect timers, and device history timers.
+- **Configuration**: Added typed configuration and accessory contexts together with a Homebridge settings schema for platform and per-device options ([#524](https://github.com/marcsowen/homebridge-homematicip/issues/524)).
+- **General**: Upgraded the project to TypeScript 7 and modern Node.js APIs, enabled stricter compiler checks, and added focused tests for API, WebSocket, event-routing, accessory-cache, and firmware behavior.
+- **General**: Upgraded maintained dependencies, replaced the unmaintained request limiter, removed obsolete runtime polyfills, and modernized linting and CI for Node.js 22 and 24.
+
+### Bug fixes
+
+- **SecuritySystem**: Added support for the `ABSENCE` and `PRESENCE` zone labels used by request-based alarm configurations, preventing HTTP 400 errors when changing the security state ([#603](https://github.com/marcsowen/homebridge-homematicip/issues/603)).
+- **Events**: Fixed channel events with channel index `0` being treated as missing.
+- **WebSocket**: Prevented duplicate reconnect attempts and ignored events arriving from obsolete sockets.
+- **Accessories**: Prevented duplicate UUID registration and ensured dynamically removed or hidden accessories release their resources.
+- **API**: Malformed JSON, invalid endpoint URLs, and incomplete Homematic IP state or event payloads are now rejected safely.
+
 ## 1.3.1 (2024-01-13)
 
 ### New devices

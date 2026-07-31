@@ -1,13 +1,11 @@
-import {
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
+import type {
   CharacteristicValue,
-  PlatformAccessory,
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface NotificationLightSupportedOptionalFeatures {
@@ -63,7 +61,7 @@ class NotificationLight {
 }
 
 /* HmIP color palette based on HSL values */
-const HmIPColorPaletteHSL = new Map<string, number[]>([
+const HmIPColorPaletteHSL = new Map<string, readonly [number, number, number]>([
   ['BLACK', [ 0, 0, 0]], 
   ['BLUE', [240, 100, 50]], 
   ['GREEN', [120, 100, 50]], 
@@ -87,7 +85,7 @@ const HmIPBottomLightChannelIndex = 3;
  * HMIP-BSL (Brand Switch Notification Light)
  *
  */
-export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Updateable {
+export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
   private service: Service;
   private on = false;
   private button1Led : Service | undefined;
@@ -100,7 +98,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -110,28 +108,29 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleOnGet.bind(this))
-      .on('set', this.handleOnSet.bind(this));
+      .onGet(() => this.on)
+      .onSet(value => this.handleOnSet(value));
 
-    this.simpleSwitch = this.accessoryConfig?.['simpleSwitch'] === true;
+    this.simpleSwitch = this.accessoryConfig?.simpleSwitch === true;
 
     if (!this.simpleSwitch){
 
       /* Create service for top light */
       let channel = accessory.context.device.functionalChannels[HmIPTopLightChannelIndex];
       this.button1Led = <Service>this.accessory.getServiceById(this.platform.Service.Lightbulb, 'Button1');
-      if (channel.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
+      if (channel?.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
+        const notificationChannel = channel as NotificationLightChannel;
         if (!this.button1Led) {
-          this.button1Led = new this.platform.Service.Lightbulb(channel.label, 'Button1');
+          this.button1Led = new this.platform.Service.Lightbulb(notificationChannel.label, 'Button1');
           if (this.button1Led) {
             this.button1Led = this.accessory.addService(this.button1Led);
           } else {
             this.platform.log.error('Error adding service to %s for button 1 led', accessory.context.device.label);
           }
         }
-        this.topLight = new NotificationLight('Button 1', <NotificationLightChannel>channel, this.button1Led);
+        this.topLight = new NotificationLight('Button 1', notificationChannel, this.button1Led);
         if (this.topLight.hasOpticalSignal) {
-          this.platform.log.debug(`Detected opticalSignal feature for ${channel.label}`);
+          this.platform.log.debug(`Detected opticalSignal feature for ${notificationChannel.label}`);
         }
       } else {
         this.platform.log.error('Light for button 1 not available on %s', accessory.context.device.label);
@@ -140,18 +139,19 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       /* Create service for bottom light */
       channel = accessory.context.device.functionalChannels[HmIPBottomLightChannelIndex];
       this.button2Led = <Service>this.accessory.getServiceById(this.platform.Service.Lightbulb, 'Button2');
-      if (channel.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
+      if (channel?.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
+        const notificationChannel = channel as NotificationLightChannel;
         if (!this.button2Led) {
-          this.button2Led = new this.platform.Service.Lightbulb(channel.label, 'Button2');
+          this.button2Led = new this.platform.Service.Lightbulb(notificationChannel.label, 'Button2');
           if (this.button2Led) {
             this.button2Led = this.accessory.addService(this.button2Led);
           } else {
             this.platform.log.error('Error adding service to %s for button 2 led', accessory.context.device.label);
           }
         } 
-        this.bottomLight = new NotificationLight('Button 2', <NotificationLightChannel>channel, this.button2Led);
+        this.bottomLight = new NotificationLight('Button 2', notificationChannel, this.button2Led);
         if (this.bottomLight.hasOpticalSignal) {
-          this.platform.log.debug(`Detected opticalSignal feature for ${channel.label}`);
+          this.platform.log.debug(`Detected opticalSignal feature for ${notificationChannel.label}`);
         }
       } else {
         this.platform.log.error('Light for button 2 not available on %s', accessory.context.device.label);
@@ -159,50 +159,50 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
 
       /* Bind handlers for top light */
       this.button1Led.getCharacteristic(this.platform.Characteristic.On)
-        .on('get', this.handleButton1LedOnGet.bind(this))
-        .on('set', this.handleButton1LedOnSet.bind(this));
+        .onGet(() => this.buttonLedOnGet(this.topLight))
+        .onSet(value => this.buttonLedOnSet(this.topLight, Boolean(value)));
       
       this.button1Led.getCharacteristic(this.platform.Characteristic.Brightness)
-        .on('get', this.handleButton1LedBrightnessGet.bind(this))
-        .on('set', this.handleButton1LedBrightnessSet.bind(this));
+        .onGet(() => this.buttonLedBrightnessGet(this.topLight))
+        .onSet(value => this.buttonLedBrightnessSet(this.topLight, Number(value)));
 
       this.button1Led.getCharacteristic(this.platform.Characteristic.Hue)
-        .on('get', this.handleButton1LedHueGet.bind(this))
-        .on('set', this.handleButton1LedHueSet.bind(this));
+        .onGet(() => this.buttonLedHueGet(this.topLight))
+        .onSet(value => this.buttonLedHueSet(this.topLight, Number(value)));
 
       this.button1Led.getCharacteristic(this.platform.Characteristic.Saturation)
-        .on('get', this.handleButton1LedSaturationGet.bind(this))
-        .on('set', this.handleButton1LedSaturationSet.bind(this));
+        .onGet(() => this.buttonLedSaturationGet(this.topLight))
+        .onSet(value => this.buttonLedSaturationSet(this.topLight, Number(value)));
 
       if (this.topLight.hasOpticalSignal) {
         this.button1Led.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal);
         this.button1Led.getCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal)
-          .on('get', this.handleButton1LedOpticalSignalGet.bind(this))
-          .on('set', this.handleButton1LedOpticalSignalSet.bind(this));
+          .onGet(() => this.buttonLedOpticalSignalGet(this.topLight))
+          .onSet(value => this.buttonLedOpticalSignalSet(this.topLight, String(value)));
       }
 
       /* Bind handlers for bottom light */
       this.button2Led.getCharacteristic(this.platform.Characteristic.On)
-        .on('get', this.handleButton2LedOnGet.bind(this))
-        .on('set', this.handleButton2LedOnSet.bind(this)); 
+        .onGet(() => this.buttonLedOnGet(this.bottomLight))
+        .onSet(value => this.buttonLedOnSet(this.bottomLight, Boolean(value)));
       
       this.button2Led.getCharacteristic(this.platform.Characteristic.Brightness)
-        .on('get', this.handleButton2LedBrightnessGet.bind(this))
-        .on('set', this.handleButton2LedBrightnessSet.bind(this));
+        .onGet(() => this.buttonLedBrightnessGet(this.bottomLight))
+        .onSet(value => this.buttonLedBrightnessSet(this.bottomLight, Number(value)));
 
       this.button2Led.getCharacteristic(this.platform.Characteristic.Hue)
-        .on('get', this.handleButton2LedHueGet.bind(this))
-        .on('set', this.handleButton2LedHueSet.bind(this));
+        .onGet(() => this.buttonLedHueGet(this.bottomLight))
+        .onSet(value => this.buttonLedHueSet(this.bottomLight, Number(value)));
 
       this.button2Led.getCharacteristic(this.platform.Characteristic.Saturation)
-        .on('get', this.handleButton2LedSaturationGet.bind(this))
-        .on('set', this.handleButton2LedSaturationSet.bind(this));   
+        .onGet(() => this.buttonLedSaturationGet(this.bottomLight))
+        .onSet(value => this.buttonLedSaturationSet(this.bottomLight, Number(value)));
 
       if (this.bottomLight.hasOpticalSignal) {
         this.button2Led.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal);
         this.button2Led.getCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal)
-          .on('get', this.handleButton2LedOpticalSignalGet.bind(this))
-          .on('set', this.handleButton2LedOpticalSignalSet.bind(this));
+          .onGet(() => this.buttonLedOpticalSignalGet(this.bottomLight))
+          .onSet(value => this.buttonLedOpticalSignalSet(this.bottomLight, String(value)));
       }
     
     } else{
@@ -226,20 +226,14 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   /*
    * Switch handlers
    */
-  handleOnGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Current switch state of %s is %s', this.accessory.displayName, this.on ? 'ON' : 'OFF');
-    callback(null, this.on);
-  }
-
-  async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleOnSet(value: CharacteristicValue): Promise<void> {
     this.platform.log.debug('Setting switch %s to %s', this.accessory.displayName, value ? 'ON' : 'OFF');
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
       on: value,
     };
-    await this.platform.connector.apiCall('device/control/setSwitchState', body);
-    callback(null);
+    await this.platform.connector.command('device/control/setSwitchState', body);
   }
 
 
@@ -252,36 +246,16 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     return (light.on ? 1 : 0);
   }
 
-  handleButton1LedOnGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedOnGet(this.topLight));
-  }
-
-  handleButton2LedOnGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedOnGet(this.bottomLight));
-  }
-
-  async buttonLedOnSet(light: NotificationLight, value: boolean, callback: CharacteristicSetCallback) {
+  async buttonLedOnSet(light: NotificationLight, value: boolean): Promise<void> {
     this.platform.log.debug('Set light state of %s:%s to %s', this.accessory.displayName, light.label,
       value ? 'ON' : 'OFF');
     if (!value) {
       await this.apiSetLight(light.index, undefined, 0, 'BLACK');
-      callback(null);
     } else if (light.simpleColor === 'BLACK' || light.opticalSignal === 'OFF') {
       await this.apiSetLight(light.index, 'ON', 100, 'WHITE');
-      callback(null);
-    } else if (light.brightness == 0) {
-      await this.buttonLedBrightnessSet(light, 100, callback);
-    } else {
-      callback(null);
+    } else if (light.brightness === 0) {
+      await this.buttonLedBrightnessSet(light, 100);
     }
-  }
-
-  async handleButton1LedOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedOnSet(this.topLight, <boolean>value, callback);
-  }
-
-  async handleButton2LedOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedOnSet(this.bottomLight, <boolean>value, callback);
   }
 
 
@@ -294,30 +268,13 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     return light.brightness;
   }
 
-  handleButton1LedBrightnessGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedBrightnessGet(this.topLight));
-  }
-
-  handleButton2LedBrightnessGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedBrightnessGet(this.bottomLight));
-  }
-
-  async buttonLedBrightnessSet(light: NotificationLight, value: number, callback: CharacteristicSetCallback) {
-    if (light.brightness != value) {
+  async buttonLedBrightnessSet(light: NotificationLight, value: number): Promise<void> {
+    if (light.brightness !== value) {
       light.brightness = value;
       await this.apiSetLight(light.index, light.opticalSignal, value, light.simpleColor);
       this.platform.log.debug('Set light brightness of %s:%s to %d %%', this.accessory.displayName,
 		light.label, value);
     }
-    callback(null);
-  }
-
-  async handleButton1LedBrightnessSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedBrightnessSet(this.topLight, <number>value, callback);
-  }
-
-  async handleButton2LedBrightnessSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedBrightnessSet(this.bottomLight, <number>value, callback);
   }
 
 
@@ -330,17 +287,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     return light.hue;
   }
 
-  handleButton1LedHueGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedHueGet(this.topLight));
-  }
-
-  handleButton2LedHueGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedHueGet(this.bottomLight));
-  }
-
   async buttonLedColorSet(light: NotificationLight) {
     const color = this.getNearestHmIPColorFromHSL(light.hue, light.saturation, light.lightness);
-    if (light.simpleColor != color) {
+    if (light.simpleColor !== color) {
       light.simpleColor = color;
       this.platform.log.debug('Set light color of %s:%s to %s', this.accessory.displayName,
 		light.label, color);
@@ -348,20 +297,11 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     }
   }
 
-  async handleButton1LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.topLight.hue != value) {
-      this.topLight.hue = <number>value;
-      await this.buttonLedColorSet(this.topLight);
+  private async buttonLedHueSet(light: NotificationLight, value: number): Promise<void> {
+    if (light.hue !== value) {
+      light.hue = value;
+      await this.buttonLedColorSet(light);
     }
-    callback(null);
-  }
-
-  async handleButton2LedHueSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.bottomLight.hue != value) {
-      this.bottomLight.hue = <number>value;
-      await this.buttonLedColorSet(this.bottomLight);
-    }
-    callback(null);
   }
 
 
@@ -374,28 +314,11 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     return light.saturation;
   }
 
-  handleButton1LedSaturationGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedSaturationGet(this.topLight));
-  }
-
-  handleButton2LedSaturationGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedSaturationGet(this.bottomLight));
-  }
-
-  async handleButton1LedSaturationSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.topLight.saturation != value) {
-      this.topLight.saturation = <number>value;
-      await this.buttonLedColorSet(this.topLight);
+  private async buttonLedSaturationSet(light: NotificationLight, value: number): Promise<void> {
+    if (light.saturation !== value) {
+      light.saturation = value;
+      await this.buttonLedColorSet(light);
     }
-    callback(null);
-  }
-
-  async handleButton2LedSaturationSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.bottomLight.saturation != value) {
-      this.bottomLight.saturation = <number>value;
-      await this.buttonLedColorSet(this.bottomLight);
-    }
-    callback(null);
   }
 
 
@@ -405,21 +328,13 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   buttonLedOpticalSignalGet(light: NotificationLight): string {
     this.platform.log.debug('Get optical signal of %s:%s (%s)', this.accessory.displayName, light.label,
       light.opticalSignal);
-    return <string>light.opticalSignal;
+    return light.opticalSignal ?? 'OFF';
   }
 
-  handleButton1LedOpticalSignalGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedOpticalSignalGet(this.topLight));
-  }
-
-  handleButton2LedOpticalSignalGet(callback: CharacteristicGetCallback) {
-    callback(null, this.buttonLedOpticalSignalGet(this.bottomLight));
-  }
-
-  async buttonLedOpticalSignalSet(light: NotificationLight, value: string, callback: CharacteristicSetCallback) {
+  async buttonLedOpticalSignalSet(light: NotificationLight, value: string): Promise<void> {
     if (HmIPOpticalSignalAllowedValues.includes(value.toUpperCase())) {
       value = value.toUpperCase();
-      if (light.opticalSignal != value) {
+      if (light.opticalSignal !== value) {
         light.opticalSignal = value;
         this.platform.log.debug('Set optical signal of %s:%s to %s', this.accessory.displayName,
 		light.label, value);
@@ -429,15 +344,6 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
       this.platform.log.info('Invalid optical signal value of %s:%s to %s', this.accessory.displayName,
 		light.label, value);
     }
-    callback(null);
-  }
-
-  async handleButton1LedOpticalSignalSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedOpticalSignalSet(this.topLight, <string>value, callback);
-  }
-
-  async handleButton2LedOpticalSignalSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    await this.buttonLedOpticalSignalSet(this.bottomLight, <string>value, callback);
   }
 
 
@@ -447,12 +353,12 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
   async apiSetLight(index: number, opticalSignal: string | undefined,
 		    brightness: number, simpleColor: string | undefined) {
     if (simpleColor === undefined) {
-      simpleColor = (brightness == 0 ? 'BLACK' : 'WHITE');
+      simpleColor = (brightness === 0 ? 'BLACK' : 'WHITE');
     }
     if (opticalSignal !== undefined) {
-      if (opticalSignal == 'OFF' && brightness > 0) {
+      if (opticalSignal === 'OFF' && brightness > 0) {
         opticalSignal = 'ON';
-      } else if (opticalSignal != 'OFF' && brightness == 0) {
+      } else if (opticalSignal !== 'OFF' && brightness === 0) {
         opticalSignal = 'OFF';
       }
       const body = {
@@ -462,7 +368,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         dimLevel: brightness / 100.0,
         simpleRGBColorState : simpleColor,
       };
-      await this.platform.connector.apiCall('device/control/setOpticalSignal', body);
+      await this.platform.connector.command('device/control/setOpticalSignal', body);
     } else {
       const body = {
         channelIndex: index,
@@ -470,7 +376,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         dimLevel: brightness / 100.0,
         simpleRGBColorState : simpleColor,
       };
-      await this.platform.connector.apiCall('device/control/setSimpleRGBColorDimLevel', body);
+      await this.platform.connector.command('device/control/setSimpleRGBColorDimLevel', body);
     }
   }
 
@@ -506,9 +412,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
         if (hsl === undefined) {
           this.platform.log.error('Light color not supported for %s:%s', this.accessory.displayName,
 				  light.label);
-        } else if (newColor != light.simpleColor) {
+        } else if (newColor !== light.simpleColor) {
           light.simpleColor = newColor;
-          if (newColor != 'BLACK') {
+          if (newColor !== 'BLACK') {
             light.hue = hsl[0];
             light.saturation = hsl[1]; 
             light.lightness = hsl[2];
@@ -530,7 +436,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
           light.opticalSignal = channel.opticalSignalBehaviour;
           light.service.updateCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal,
 					     light.opticalSignal);
-	  if (light.opticalSignal == 'OFF') {
+	  if (light.opticalSignal === 'OFF') {
             onstate = false;
           } else if (onstate === null) {
             onstate = true;
@@ -554,10 +460,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
    * Update device state - note that there is only one functional channel with
    * type SWITCH_CHANNEL on this device!
    */
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       //this.platform.log.info(`Switch update: ${JSON.stringify(channel)}`);
 
       if (channel.functionalChannelType === 'SWITCH_CHANNEL') {
@@ -574,9 +479,9 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
 
       if (channel.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL' && !this.simpleSwitch) {
         const notificationLightChannel = <NotificationLightChannel>channel;
-	if (notificationLightChannel.index == this.topLight.index) {
+	if (notificationLightChannel.index === this.topLight.index) {
           this.updateLightState(this.topLight, notificationLightChannel);
-        } else if (notificationLightChannel.index == this.bottomLight.index) {
+        } else if (notificationLightChannel.index === this.bottomLight.index) {
           this.updateLightState(this.bottomLight, notificationLightChannel);
         }
       }
@@ -606,4 +511,3 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice implements Up
     return nearestHmIPColor;
   }
 }
-

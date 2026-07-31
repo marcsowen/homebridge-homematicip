@@ -9,10 +9,18 @@
 
 Uses the unofficial HTTP API and WebSockets for continuous channel updates.
 
+### Requirements
+
+- Homebridge 2.2.x
+- Node.js 22 or 24
+
+Older Homebridge and Node.js releases are no longer supported by version 2.x of this plugin.
+Existing `access_point`, `auth_token`, and per-device configuration remains compatible when upgrading from version 1.x.
+
 Add one (or more) Homematic IP Access Points to config.json. There are two configuration
 options that you can set:
 
-```
+```json
 {
     "platform": "HomematicIP",
     "name": "HomematicIP",
@@ -26,7 +34,7 @@ labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 
 ### Pairing
 
-```
+```json
 {
     "platform": "HomematicIP",
     "name": "HomematicIP",
@@ -35,13 +43,25 @@ labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 }
 ```
 
-If you do not have an auth_token or don't know it, leave it empty. Be sure to add the "pin" property if it is set in the app.
-After startup, watch the logs and wait for "Press blue, glowing link button of HmIP Access Point now!". Then press the
-button and note the "auth_token" that is being generated, add it to your config.json, remove the pin and restart.
+If you do not have an auth token, leave `auth_token` empty. Add the `pin` property only if a PIN is configured in the app.
+After startup, wait for "Press blue, glowing link button of HmIP Access Point now!", then press the button. Copy the
+generated token from the log into `config.json`, remove `pin`, and restart Homebridge.
+
+A pairing attempt waits for the Access Point button for up to five minutes. It stops earlier when the cloud connection
+fails. Restart Homebridge to begin another pairing attempt.
 
 ### Additional config
 
-See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details.
+The Homebridge settings UI exposes the available platform and per-device options. See the
+[Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for additional details.
+
+### Accessory synchronization
+
+Devices added to or removed from the Homematic IP installation are reflected in Homebridge while the plugin is running.
+Cached accessories that no longer exist are removed during startup.
+
+Firmware revisions are updated in Homebridge when Homematic IP reports a change. Renaming a device in the Homematic IP
+app does not overwrite an accessory name customized in Apple Home.
 
 
 ## Currently supported devices
@@ -120,6 +140,17 @@ See [Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for details
 - Implement more devices
 - Implement META-Group (Homematic IP rooms) to HomeKit room-Mapping
 - Implement custom characteristics (Actuator) for Radiator Thermostats (e.g. to be used in Eve App)
+
+## Development
+
+This project uses pnpm and TypeScript 7:
+
+```shell
+pnpm install
+pnpm run lint
+pnpm run build
+pnpm run test
+```
 
 ## Many thanks to our contributors
 

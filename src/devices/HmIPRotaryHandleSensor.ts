@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory, Service} from 'homebridge';
+import type {CharacteristicValue, Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 enum WindowState {
@@ -21,14 +22,14 @@ interface RotaryHandleChannel {
  *
  * HMIP-SRH
  */
-export class HmIPRotaryHandleSensor extends HmIPGenericDevice implements Updateable {
+export class HmIPRotaryHandleSensor extends HmIPGenericDevice {
   private service: Service;
 
   private windowState = WindowState.CLOSED;
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -36,31 +37,18 @@ export class HmIPRotaryHandleSensor extends HmIPGenericDevice implements Updatea
     this.service = this.accessory.getService(this.platform.Service.Window) || this.accessory.addService(this.platform.Service.Window);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
-      .on('get', this.handleWindowCurrentPositionGet.bind(this));
+      .onGet(() => this.getWindowPosition());
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
-      .on('get', this.handleWindowPositionStateGet.bind(this));
+      .onGet(() => this.platform.Characteristic.PositionState.STOPPED);
     this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-      .on('get', this.handleWindowTargetPositionGet.bind(this))
-      .on('set', this.handleWindowTargetPositionSet.bind(this));
+      .onGet(() => this.getWindowPosition())
+      .onSet(value => this.handleWindowTargetPositionSet(value));
 
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
-  handleWindowCurrentPositionGet(callback: CharacteristicGetCallback) {
-    callback(null, this.getWindowPosition());
-  }
-
-  handleWindowPositionStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.platform.Characteristic.PositionState.STOPPED);
-  }
-
-  handleWindowTargetPositionGet(callback: CharacteristicGetCallback) {
-    callback(null, this.getWindowPosition());
-  }
-
-  handleWindowTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private handleWindowTargetPositionSet(value: CharacteristicValue): void {
     this.platform.log.info('Ignoring setting target position for %s to %s', this.accessory.displayName, value);
-    callback(null);
   }
 
   private getWindowPosition(): number {
@@ -74,10 +62,9 @@ export class HmIPRotaryHandleSensor extends HmIPGenericDevice implements Updatea
     }
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'ROTARY_HANDLE_CHANNEL') {
 
         const rotaryHandleChannel = <RotaryHandleChannel>channel;

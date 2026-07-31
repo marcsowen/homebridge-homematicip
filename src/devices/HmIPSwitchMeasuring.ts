@@ -1,13 +1,11 @@
-import {
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
+import type {
   CharacteristicValue,
-  PlatformAccessory,
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface SwitchMeasuringChannel {
@@ -27,7 +25,7 @@ interface SwitchMeasuringChannel {
  * HmIP-FSM, HMIP-FSM16 (Full flush Switch and Meter)
  *
  */
-export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable {
+export class HmIPSwitchMeasuring extends HmIPGenericDevice {
   private service: Service;
 
   private on = false;
@@ -36,7 +34,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -49,43 +47,29 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice implements Updateable
     this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleOnGet.bind(this))
-      .on('set', this.handleOnSet.bind(this));
+      .onGet(() => this.on)
+      .onSet(value => this.handleOnSet(value));
 
     this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower)
-      .on('get', this.handleElectricPowerGet.bind(this));
+      .onGet(() => this.currentPowerConsumption);
 
     this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy)
-      .on('get', this.handleElectricalEnergyGet.bind(this));
+      .onGet(() => this.energyCounter);
   }
 
-  handleOnGet(callback: CharacteristicGetCallback) {
-    callback(null, this.on);
-  }
-
-  async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleOnSet(value: CharacteristicValue): Promise<void> {
     this.platform.log.info('Setting switch %s to %s', this.accessory.displayName, value ? 'ON' : 'OFF');
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
       on: value,
     };
-    await this.platform.connector.apiCall('device/control/setSwitchState', body);
-    callback(null);
+    await this.platform.connector.command('device/control/setSwitchState', body);
   }
 
-  handleElectricPowerGet(callback: CharacteristicGetCallback) {
-    callback(null, this.currentPowerConsumption);
-  }
-
-  handleElectricalEnergyGet(callback: CharacteristicGetCallback) {
-    callback(null, this.energyCounter);
-  }
-
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'SWITCH_MEASURING_CHANNEL') {
         const switchMeasuringChannel = <SwitchMeasuringChannel>channel;
         this.platform.log.debug('Switch (measuring) update: %s', JSON.stringify(channel));

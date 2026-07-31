@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue, PlatformAccessory} from 'homebridge';
+import type {CharacteristicValue} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPShutter} from './HmIPShutter.js';
 
 interface BlindChannel {
@@ -19,49 +20,39 @@ interface BlindChannel {
  * HmIP-BBL (Blind Actuator - brand-mount)
  *
  */
-export class HmIPBlind extends HmIPShutter implements Updateable {
+export class HmIPBlind extends HmIPShutter {
 
   // Values are HomeKit style (-90..+90)
   private slatsLevel = 0;
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentHorizontalTiltAngle)
-      .on('get', this.handleCurrentHorizontalTiltAngleGet.bind(this));
+      .onGet(() => this.slatsLevel);
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetHorizontalTiltAngle)
-      .on('get', this.handleTargetHorizontalTiltAngleGet.bind(this))
-      .on('set', this.handleTargetHorizontalTiltAngleSet.bind(this));
+      .onGet(() => this.slatsLevel)
+      .onSet(value => this.handleTargetHorizontalTiltAngleSet(value));
   }
 
-  handleCurrentHorizontalTiltAngleGet(callback: CharacteristicGetCallback) {
-    callback(null, this.slatsLevel);
-  }
-
-  handleTargetHorizontalTiltAngleGet(callback: CharacteristicGetCallback) {
-    callback(null, this.slatsLevel);
-  }
-
-  async handleTargetHorizontalTiltAngleSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleTargetHorizontalTiltAngleSet(value: CharacteristicValue): Promise<void> {
     this.platform.log.info('Setting target horizontal slats position for %s to %s°', this.accessory.displayName, value);
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
       shutterLevel: HmIPShutter.shutterHomeKitToHmIP(this.shutterLevel),
-      slatsLevel: HmIPBlind.slatsHomeKitToHmIP(<number>value),
+      slatsLevel: HmIPBlind.slatsHomeKitToHmIP(Number(value)),
     };
-    await this.platform.connector.apiCall('device/control/setSlatsLevel', body);
-    callback(null);
+    await this.platform.connector.command('device/control/setSlatsLevel', body);
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'BLIND_CHANNEL') {
         const blindChannel = <BlindChannel>channel;
 

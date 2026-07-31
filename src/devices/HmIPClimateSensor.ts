@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import type {Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface ClimateSensorChannel {
@@ -18,7 +19,7 @@ interface ClimateSensorChannel {
  * HmIP-STHO-A
  *
  */
-export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
+export class HmIPClimateSensor extends HmIPGenericDevice {
   private temperatureService: Service;
   private humidityService: Service;
 
@@ -27,7 +28,7 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -43,25 +44,16 @@ export class HmIPClimateSensor extends HmIPGenericDevice implements Updateable {
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({minValue: -100})
-      .on('get', this.handleCurrentTemperatureGet.bind(this));
+      .onGet(() => this.actualTemperature);
 
     this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .on('get', this.handleCurrentRelativeHumidityGet.bind(this));
-  }
-
-  handleCurrentTemperatureGet(callback: CharacteristicGetCallback) {
-    callback(null, this.actualTemperature);
-  }
-
-  handleCurrentRelativeHumidityGet(callback: CharacteristicGetCallback) {
-    callback(null, this.humidity);
+      .onGet(() => this.humidity);
   }
 
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'CLIMATE_SENSOR_CHANNEL' 
           || channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_WITHOUT_DISPLAY_CHANNEL'
           || channel.functionalChannelType === 'WALL_MOUNTED_THERMOSTAT_PRO_CHANNEL') {

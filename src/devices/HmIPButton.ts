@@ -1,13 +1,10 @@
-import {
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  PlatformAccessory,
+import type {
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, EventUpdateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface ButtonChannel {
@@ -30,24 +27,24 @@ interface ButtonChannel {
  * HMIP-WRCC2 (Homematic IP flat button - 2 channels)
  *
  */
-export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
+export class HmIPButton extends HmIPGenericDevice {
   private channels = new Map<number, ButtonChannel>();
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
     this.platform.log.debug(`Created button ${accessory.context.device.label}`);
 
-    for (const id in accessory.context.device.functionalChannels) {
-      const channel = accessory.context.device.functionalChannels[id];
+    const device = accessory.context.device as HmIPDevice;
+    for (const channel of Object.values(device.functionalChannels)) {
       if (channel.functionalChannelType === 'SINGLE_KEY_CHANNEL') {
         const buttonChannel = <ButtonChannel>channel;
 
         if (!this.channels.has(buttonChannel.index)) {
-          const label = (buttonChannel.label == null || buttonChannel.label == '')
+          const label = (buttonChannel.label == null || buttonChannel.label === '')
 				? `Button ${buttonChannel.index}`
 				: buttonChannel.label;
           buttonChannel.hapService = <Service>this.accessory.getServiceById(
@@ -67,7 +64,7 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
       }
     }
 
-    if (this.channels.size == 0) {
+    if (this.channels.size === 0) {
       this.platform.log.warn('No functional channels found for device %s', this.accessory.displayName);
     } else {
       this.updateDevice(accessory.context.device, platform.groups);
@@ -76,10 +73,9 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
 
 
   /* Update device state */
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'SINGLE_KEY_CHANNEL') {
         const buttonChannel = <ButtonChannel>channel;
         const currentChannel = this.channels.get(buttonChannel.index);
@@ -87,8 +83,8 @@ export class HmIPButton extends HmIPGenericDevice implements EventUpdateable {
 
 	if (currentChannel) {
 
-          if (buttonChannel.label !== null && buttonChannel.label != '' &&
-              buttonChannel.label != currentChannel.label) {
+          if (buttonChannel.label !== null && buttonChannel.label !== '' &&
+              buttonChannel.label !== currentChannel.label) {
             currentChannel.label = buttonChannel.label;
 	    currentChannel.hapService.displayName = buttonChannel.label;
             currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name, currentChannel.label);

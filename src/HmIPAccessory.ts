@@ -1,15 +1,17 @@
-import {API, Logger, PlatformAccessory} from 'homebridge';
+import type {API, Logger} from 'homebridge';
+import type {IdentifiableDevice} from './HmIPState.js';
+import type {HmIPPlatformAccessory} from './HmIPTypes.js';
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings.js';
 
 /**
  * Accessory wrapper
  */
-export class HmIPAccessory {
+export class HmIPAccessory<T extends IdentifiableDevice = IdentifiableDevice> {
 
   public constructor(
     private readonly api: API,
     private readonly log: Logger,
-    public readonly accessory: PlatformAccessory,
+    public readonly accessory: HmIPPlatformAccessory<T>,
     private readonly isFromCache: boolean,
   ) {
   }

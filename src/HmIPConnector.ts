@@ -1,16 +1,13 @@
-import * as os from 'os';
-import * as crypto from 'crypto';
-import fetch from 'node-fetch';
-import WebSocket from 'ws';
-import {Logger} from 'homebridge';
+import * as crypto from 'node:crypto';
+import * as os from 'node:os';
+import type {Logger} from 'homebridge';
+import type {RawData} from 'ws';
+import {HmIPHttpClient, type HmIPHttpError, type HmIPHttpResult} from './HmIPHttpClient.js';
+import {type HmIPState, isHmIPState} from './HmIPState.js';
+import {HmIPWebSocketClient, type HmIPWebSocketOptions} from './HmIPWebSocketClient.js';
 import {PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
-import Timeout = NodeJS.Timeout;
-import Bottleneck from 'bottleneck';
 
-interface LookUpResult {
-  urlREST: string;
-  urlWebSocket: string;
-}
+export type {HmIPWebSocketOptions as HmIPConnectorWebSocketOptions} from './HmIPWebSocketClient.js';
 
 interface AuthTokenResult {
   authToken: string;
@@ -18,6 +15,33 @@ interface AuthTokenResult {
 
 interface ConfirmResult {
   clientId: string;
+}
+
+export type HmIPPairingAcknowledgement =
+  | {status: 'acknowledged'}
+  | {status: 'pending'}
+  | {status: 'failed'; error: HmIPHttpError};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+const REQUEST_TIMEOUT_MILLIS = 30000;
+const REST_PROTOCOLS = new Set(['http:', 'https:']);
+const WEBSOCKET_PROTOCOLS = new Set(['ws:', 'wss:']);
+
+interface HmIPEndpoints {
+  rest: URL;
+  webSocket: URL;
+}
+
+function parseEndpoint(value: string, protocols: ReadonlySet<string>): URL | undefined {
+  try {
+    const url = new URL(value);
+    return protocols.has(url.protocol) ? url : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export class HmIPConnector {
@@ -29,22 +53,28 @@ export class HmIPConnector {
   public readonly clientCharacteristics: Record<string, unknown>;
 
   private readonly log: Logger;
-  private urlREST!: string;
-  private urlWebSocket!: string;
+  private readonly fetchImplementation: typeof fetch;
+  private endpoints: HmIPEndpoints | undefined;
+  private initialization: Promise<boolean> | undefined;
+  private readonly shutdownController = new AbortController();
 
-  private wsClosed = false;
-  private wsPingIntervalMillis = 5000;
-  private wsPingIntervalId: Timeout | null = null;
-  private wsReconnectIntervalId: Timeout | null = null;
-  private wsReconnectIntervalMillis = 10000;
-  private ws: WebSocket | null = null;
-  private limiter: Bottleneck;
-  private limiterDepleted = false;
+  private httpClient: HmIPHttpClient | undefined;
+  private readonly webSocketOptions: HmIPWebSocketOptions;
+  private webSocketClient: HmIPWebSocketClient | undefined;
 
-  constructor(log: Logger, accessPoint: string, authToken: string, pin: string) {
+  constructor(
+    log: Logger,
+    accessPoint: string,
+    authToken?: string,
+    pin?: string,
+    fetchImplementation: typeof fetch = globalThis.fetch,
+    webSocketOptions: HmIPWebSocketOptions = {},
+  ) {
     this.log = log;
-    this.authToken = authToken;
-    this.pin = pin;
+    this.fetchImplementation = fetchImplementation;
+    this.webSocketOptions = webSocketOptions;
+    this.authToken = authToken ?? '';
+    this.pin = pin ?? '';
     this.accessPoint = accessPoint ? accessPoint.replace(/[^a-fA-F0-9 ]/g, '').toUpperCase() : '';
     this.clientCharacteristics = {
       'clientCharacteristics':
@@ -64,46 +94,53 @@ export class HmIPConnector {
     this.clientAuthToken = crypto
       .createHash('sha512')
       .setEncoding('utf-8')
-      .update(this.accessPoint + 'jiLpVitHvWnIGD1yo7MA')
+      .update(`${this.accessPoint}jiLpVitHvWnIGD1yo7MA`)
       .digest('hex')
       .toUpperCase();
-    
-    this.limiter = new Bottleneck({
-      maxConcurrent: 1,
-      minTime: 100,
-      reservoir: 10,
-      reservoirIncreaseInterval: 1000,
-      reservoirIncreaseAmount: 1,
-      reservoirIncreaseMaximum: 10,
-      highWater: 120, // = 2 * 60s / (interval / 1000ms / amount)
-      strategy: Bottleneck.strategy.LEAK,
-    });
-    this.limiter.on('dropped', () => {
-      this.log.warn('High water mark reached, dropping oldest job with lowest priority');
-    });
-    this.limiter.on('depleted', (empty: boolean) => {
-      if (!this.limiterDepleted && !empty) {
-        this.limiterDepleted = true;
-        this.log.info('Limiter depleted, throttling requests');
-      }
-    });
-    this.limiter.on('empty', () => {
-      if (this.limiterDepleted) {
-        this.log.info('Limiter empty again, requests are no longer throttled');
-        this.limiterDepleted = false;
-      }
-    });
   }
 
-  isReadyForUse() {
-    return this.accessPoint && this.authToken;
+  isReadyForUse(): boolean {
+    return Boolean(this.accessPoint && this.authToken);
   }
 
-  isReadyForPairing() {
-    return this.accessPoint;
+  isReadyForPairing(): boolean {
+    return Boolean(this.accessPoint);
   }
 
-  async init(): Promise<boolean> {
+  async init(signal?: AbortSignal): Promise<boolean> {
+    if (this.shutdownController.signal.aborted) {
+      return false;
+    }
+    if (this.endpoints) {
+      return true;
+    }
+    if (!this.initialization) {
+      this.initialization = this.lookupEndpoints(signal)
+        .then(endpoints => {
+          if (endpoints === false) {
+            return false;
+          }
+          this.endpoints = endpoints;
+          this.httpClient = new HmIPHttpClient(
+            this.log,
+            endpoints.rest,
+            {
+              authToken: this.authToken,
+              clientAuthToken: this.clientAuthToken,
+              pin: this.pin,
+            },
+            {fetch: this.fetchImplementation},
+          );
+          return true;
+        })
+        .finally(() => {
+          this.initialization = undefined;
+        });
+    }
+    return this.initialization;
+  }
+
+  private async lookupEndpoints(signal?: AbortSignal): Promise<HmIPEndpoints | false> {
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -111,181 +148,177 @@ export class HmIPConnector {
       'AUTHTOKEN': '',
       'CLIENTAUTH': this.clientAuthToken,
     };
-    const response = await fetch('https://lookup.homematic.com:48335/getHost', {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(this.clientCharacteristics),
-    });
-    const result = <LookUpResult>await response.json();
-    if (response.status !== 200 || !result.urlREST || !result.urlWebSocket) {
-      this.log.error('Cannot lookup device: request=' + JSON.stringify(this.clientCharacteristics)
-          + ', headers=' + JSON.stringify(headers) + ', code='
-          + response.status + ', message=' + response.statusText + ', json=' + JSON.stringify(result));
-      return false;
-    }
-    this.urlREST = result.urlREST;
-    this.urlWebSocket = result.urlWebSocket;
-    return true;
-  }
-
-  async apiCall<T>(path: string, _body?: Record<string, unknown>, priority = 5) {
-    return this._apiCall<T>(true, true, path, _body, priority);
-  }
-
-  async _apiCall<T>(addTokens: boolean, logError: boolean, path: string, _body?: Record<string, unknown>, priority = 5) {
-    const url = `${this.urlREST}/hmip/${path}`;
-    const headers = {
-      'content-type': 'application/json',
-      'accept': 'application/json',
-      'VERSION': '12',
-      'AUTHTOKEN': <string><unknown>undefined,
-      'CLIENTAUTH': this.clientAuthToken,
-      'PIN': this.pin,
-    };
-
-    if (addTokens) {
-      headers.AUTHTOKEN = this.authToken;
-    }
-    const body = _body ? JSON.stringify(_body) : null;
-    this.log.debug('Requesting ' + url + ': ' + JSON.stringify(body) + ', headers=' + JSON.stringify(headers));
-    const response = await this.limiter.schedule(
-      {priority: priority},
-      () => fetch(url, {
+    try {
+      const response = await this.fetchImplementation('https://lookup.homematic.com:48335/getHost', {
         method: 'POST',
-        headers: headers,
-        body: body,
-      }));
-    if (response.status >= 400) {
-      if (logError) {
-        this.log.error('Cannot request: url=' + url + ', request=' + JSON.stringify(body) + ', headers=' + JSON.stringify(headers)
-          + ', code=' + response.status + ', message=' + response.statusText + ', response.headers=' + JSON.stringify(response.headers));
+        headers,
+        body: JSON.stringify(this.clientCharacteristics),
+        signal: this.createRequestSignal(signal),
+      });
+      if (!response.ok) {
+        this.log.error('Cannot look up Homematic IP endpoint: HTTP %d %s', response.status, response.statusText);
+        return false;
+      }
+      const result: unknown = await response.json();
+      if (!isRecord(result) || typeof result.urlREST !== 'string' || typeof result.urlWebSocket !== 'string') {
+        this.log.error('Cannot look up Homematic IP endpoint: response has an invalid shape');
+        return false;
+      }
+      const rest = parseEndpoint(result.urlREST, REST_PROTOCOLS);
+      const webSocket = parseEndpoint(result.urlWebSocket, WEBSOCKET_PROTOCOLS);
+      if (!rest || !webSocket) {
+        this.log.error('Cannot look up Homematic IP endpoint: response contains invalid endpoint URLs');
+        return false;
+      }
+      return {rest, webSocket};
+    } catch (error) {
+      if (!this.shutdownController.signal.aborted && !signal?.aborted) {
+        this.log.error('Cannot look up Homematic IP endpoint: %s', HmIPConnector.errorMessage(error));
       }
       return false;
     }
-    if (response.headers.get('Content-Type') === 'application/json') {
-      const json = await response.json();
-      this.log.debug('API response ' + response.status + ' ' + response.statusText + ': ' + json);
-      return <T>json;
-    } else {
-      this.log.debug('API response ' + response.status + ' ' + response.statusText + ': bytes=' + response.size);
-      return true;
+  }
+
+  async apiCall(path: string, body?: Record<string, unknown>, priority = 5,
+    signal?: AbortSignal): Promise<unknown | false> {
+    const result = await this.request(true, true, path, body, priority, signal);
+    return result.ok ? result.body : false;
+  }
+
+  async command(path: string, body: Record<string, unknown>, priority = 5): Promise<void> {
+    const result = await this.apiCall(path, body, priority);
+    if (result === false) {
+      throw new Error(`Homematic IP command failed: ${path}`);
     }
   }
 
-  async connectWs(listener: (this: WebSocket, data: WebSocket.Data) => void) {
-
-    this.wsClosed = false;
-    this.clearWsPingInterval();
-
-    this.ws = new WebSocket(this.urlWebSocket, {
-      headers: {
-        'AUTHTOKEN': this.authToken,
-        'CLIENTAUTH': this.clientAuthToken,
-      },
-    });
-
-    this.ws.on('message', listener);
-
-    /*
-    this.ws.on('ping', () => {
-    });
-
-    this.ws.on('pong', () => {
-    });
-     */
-
-    this.ws.on('open', () => {
-      this.log.info('HmIP websocket connected.');
-      // reset ping timer upon reconnect
-      this.setWsPingInterval();
-    });
-
-    this.ws.on('close', () => {
-      this.log.info('HmIP websocket disconnected.');
-      this.clearWsPingInterval();
-      if (!this.wsClosed) {
-        this.setWsReconnectInterval(listener);
+  async getCurrentState(signal?: AbortSignal): Promise<HmIPState | false> {
+    const result = await this.request(true, true, 'home/getCurrentState',
+      this.clientCharacteristics, 1, signal);
+    if (!result.ok) {
+      return false;
+    }
+    if (!isHmIPState(result.body)) {
+      if (result.body !== false) {
+        this.log.error('Homematic IP returned an invalid home state response.');
       }
-    });
-
-    this.ws.on('error', (error) => {
-      this.log.error('HmIP websocket error: ' + error.message);
-      this.clearWsPingInterval();
-      if (!this.wsClosed) {
-        this.setWsReconnectInterval(listener);
-      }
-    });
-
-    this.ws.on('unexpected-response', (request, response) => {
-      this.log.error('HmIP websocket unexpected response: ' + response.statusMessage + ' (' + response.statusCode + ')');
-      this.clearWsPingInterval();
-      if (!this.wsClosed) {
-        this.setWsReconnectInterval(listener);
-      }
-    });
-  }
-
-  disconnectWs() {
-    if (!this.wsClosed) {
-      this.log.info('HmIP websocket shutdown...');
-      this.wsClosed = true;
-      this.ws?.close();
+      return false;
     }
+    return result.body;
   }
 
-  clearWsPingInterval() {
-    if (this.wsPingIntervalId) {
-      clearInterval(this.wsPingIntervalId);
+  connectWs(listener: (data: RawData) => void): void {
+    if (this.shutdownController.signal.aborted) {
+      return;
     }
-  }
-
-  clearWsReconnectInterval() {
-    if (this.wsReconnectIntervalId) {
-      clearInterval(this.wsReconnectIntervalId);
+    if (!this.endpoints) {
+      this.log.error('Cannot connect Homematic IP websocket before connector initialization.');
+      return;
     }
-  }
-
-  setWsPingInterval() {
-    this.clearWsReconnectInterval();
-    if (this.ws) {
-      this.wsPingIntervalId = setInterval(() => this.ws!.ping(), this.wsPingIntervalMillis);
+    if (!this.webSocketClient) {
+      this.webSocketClient = new HmIPWebSocketClient(
+        this.log,
+        this.endpoints.webSocket.toString(),
+        {
+          'AUTHTOKEN': this.authToken,
+          'CLIENTAUTH': this.clientAuthToken,
+        },
+        this.webSocketOptions,
+      );
     }
+    this.webSocketClient.start(listener);
   }
 
-  setWsReconnectInterval(listener: (this: WebSocket, data: WebSocket.Data) => void) {
-    this.clearWsReconnectInterval();
-    this.wsReconnectIntervalId = setInterval(() => this.connectWs(listener), this.wsReconnectIntervalMillis);
+  disconnectWs(): void {
+    this.webSocketClient?.stop();
+    this.webSocketClient = undefined;
   }
 
-  authConnectionRequest(deviceId: string): Promise<boolean> {
+  shutdown(): void {
+    this.shutdownController.abort();
+    this.httpClient?.shutdown();
+    this.disconnectWs();
+  }
+
+  async authConnectionRequest(deviceId: string, signal?: AbortSignal): Promise<boolean> {
     const request = {
       'deviceId': deviceId,
       'deviceName': PLUGIN_NAME,
       'sgtin': this.accessPoint,
     };
-    return this._apiCall(false, true, 'auth/connectionRequest', request, 0);
+    const result = await this.request(false, true, 'auth/connectionRequest', request, 0, signal);
+    return result.ok && Boolean(result.body);
   }
 
-  authRequestAcknowledged(deviceId: string): Promise<boolean> {
+  async authRequestAcknowledged(
+    deviceId: string,
+    signal?: AbortSignal,
+  ): Promise<HmIPPairingAcknowledgement> {
     const request = {
       'deviceId': deviceId,
     };
-    return this._apiCall(false, false, 'auth/isRequestAcknowledged', request, 0);
+    const result = await this.request(false, false, 'auth/isRequestAcknowledged', request, 0, signal);
+    if (result.ok) {
+      return {status: result.body ? 'acknowledged' : 'pending'};
+    }
+    if (result.error.kind === 'http' && result.error.status === 400) {
+      return {status: 'pending'};
+    }
+    return {status: 'failed', error: result.error};
   }
 
-  authRequestToken(deviceId: string): Promise<AuthTokenResult> {
+  async authRequestToken(deviceId: string, signal?: AbortSignal): Promise<AuthTokenResult | false> {
     const request = {
       'deviceId': deviceId,
     };
-    return <Promise<AuthTokenResult>>this._apiCall(false, true, 'auth/requestAuthToken', request, 0);
+    const result = await this.request(false, true, 'auth/requestAuthToken', request, 0, signal);
+    return result.ok && isRecord(result.body) && typeof result.body.authToken === 'string'
+      ? {authToken: result.body.authToken}
+      : false;
   }
 
-  authConfirmToken(deviceId: string, authToken: string): Promise<ConfirmResult> {
+  async authConfirmToken(deviceId: string, authToken: string, signal?: AbortSignal): Promise<ConfirmResult | false> {
     const request = {
       'deviceId': deviceId,
       'authToken': authToken,
     };
-    return <Promise<ConfirmResult>>this._apiCall(false, true, 'auth/confirmAuthToken', request, 0);
+    const result = await this.request(false, true, 'auth/confirmAuthToken', request, 0, signal);
+    return result.ok && isRecord(result.body) && typeof result.body.clientId === 'string'
+      ? {clientId: result.body.clientId}
+      : false;
+  }
+
+  private static errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  private request(authenticated: boolean, logError: boolean, path: string,
+    body?: Record<string, unknown>, priority = 5, signal?: AbortSignal): Promise<HmIPHttpResult> {
+    if (!this.httpClient) {
+      const error: HmIPHttpError = {
+        kind: 'not-initialized',
+        message: 'connector has not been initialized',
+        path,
+      };
+      if (logError) {
+        this.log.error('Cannot request %s before connector initialization.', path);
+      }
+      return Promise.resolve({ok: false, error});
+    }
+    return this.httpClient.request(path, body, {
+      authenticated,
+      logError,
+      priority,
+      ...(signal ? {signal} : {}),
+    });
+  }
+
+  private createRequestSignal(signal?: AbortSignal): AbortSignal {
+    const signals = [this.shutdownController.signal, AbortSignal.timeout(REQUEST_TIMEOUT_MILLIS)];
+    if (signal) {
+      signals.push(signal);
+    }
+    return AbortSignal.any(signals);
   }
 
 }

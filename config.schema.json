@@ -1,0 +1,56 @@
+{
+  "pluginAlias": "HomematicIP",
+  "pluginType": "platform",
+  "singular": false,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "HomematicIP"
+      },
+      "access_point": {
+        "title": "Access Point ID",
+        "type": "string",
+        "required": true
+      },
+      "auth_token": {
+        "title": "Authentication Token",
+        "type": "string"
+      },
+      "pin": {
+        "title": "Pairing PIN",
+        "type": "string"
+      },
+      "devices": {
+        "title": "Per-device Options",
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "hide": {"type": "boolean"},
+            "asClimateSensor": {"type": "boolean"},
+            "lightSensor": {"type": "boolean"},
+            "lightSwitch": {"type": "boolean"},
+            "openLatch": {"type": "boolean"},
+            "pin": {"type": "string"},
+            "simpleSwitch": {"type": "boolean"},
+            "withRainSensor": {"type": "boolean"},
+            "withStormSensor": {"type": "boolean"},
+            "withSunshineSensor": {"type": "boolean"},
+            "withWindSpeedSensor": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "required": ["access_point"]
+  },
+  "layout": [
+    "name",
+    "access_point",
+    "auth_token",
+    "pin",
+    "devices"
+  ]
+}

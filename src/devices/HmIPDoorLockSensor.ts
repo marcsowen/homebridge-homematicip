@@ -1,10 +1,10 @@
-import {
-  PlatformAccessory,
+import type {
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 enum LockState {
@@ -27,7 +27,7 @@ interface DoorLockSensorChannel {
  * HmIP-DLS
  *
  */
-export class HmIPDoorLockSensor extends HmIPGenericDevice implements Updateable {
+export class HmIPDoorLockSensor extends HmIPGenericDevice {
   private service: Service;
 
   private lockState: LockState = LockState.UNKNOWN;
@@ -35,7 +35,7 @@ export class HmIPDoorLockSensor extends HmIPGenericDevice implements Updateable 
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -61,10 +61,9 @@ export class HmIPDoorLockSensor extends HmIPGenericDevice implements Updateable 
     return this.targetLockState;
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'DOOR_LOCK_SENSOR_CHANNEL') {
         const doorLockSensorChannel = <DoorLockSensorChannel>channel;
         this.platform.log.debug(`Door lock sensor update: ${JSON.stringify(channel)}`);

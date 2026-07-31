@@ -1,14 +1,13 @@
-import {
-    CharacteristicGetCallback,
-    CharacteristicSetCallback,
+import type {
     CharacteristicValue,
-    PlatformAccessory,
-    Service,
+      Service,
   } from 'homebridge';
-  
-  import {HmIPPlatform} from '../HmIPPlatform.js';
-  import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+
+  import type {HmIPPlatform} from '../HmIPPlatform.js';
+  import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
   import {HmIPGenericDevice} from './HmIPGenericDevice.js';
+
   
   enum DoorState {
     CLOSED = 'CLOSED',
@@ -29,7 +28,7 @@ import {
    * HmIP-WGC (Wall Mounted Garage Door Controller)
    *
    */
-  export class HmIPGarageDoorController extends HmIPGenericDevice implements Updateable {
+  export class HmIPGarageDoorController extends HmIPGenericDevice {
     private service: Service;
   
     private currentDoorState: DoorState = DoorState.CLOSED;
@@ -39,7 +38,7 @@ import {
   
     constructor(
       platform: HmIPPlatform,
-      accessory: PlatformAccessory,
+      accessory: HmIPPlatformAccessory,
     ) {
       super(platform, accessory);
   
@@ -49,39 +48,29 @@ import {
       this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
   
       this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
-        .on('get', this.handleCurrentDoorStateGet.bind(this));
+        .onGet(() => this.getHmKitCurrentDoorState(this.currentDoorState));
   
       this.service.getCharacteristic(this.platform.Characteristic.TargetDoorState)
-        .on('get', this.handleTargetDoorStateGet.bind(this))
-        .on('set', this.handleTargetDoorStateSet.bind(this));
+        .onGet(() => this.targetDoorState)
+        .onSet(value => this.handleTargetDoorStateSet(value));
   
       this.updateDevice(accessory.context.device, platform.groups);
     }
   
-    handleCurrentDoorStateGet(callback: CharacteristicGetCallback) {
-      callback(null, this.getHmKitCurrentDoorState(this.currentDoorState));
-    }
-  
-    handleTargetDoorStateGet(callback: CharacteristicGetCallback) {
-      callback(null, this.targetDoorState);
-    }
-  
-    async handleTargetDoorStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-      this.targetDoorState = <number>value;
+    private async handleTargetDoorStateSet(value: CharacteristicValue): Promise<void> {
+      this.targetDoorState = Number(value);
       this.platform.log.info('Setting garage door %s to %s', this.accessory.displayName,
         value === this.platform.Characteristic.TargetDoorState.OPEN ? 'OPEN' : 'CLOSED');
       const body = {
         channelIndex: 2,
         deviceId: this.accessory.context.device.id,
       };
-      await this.platform.connector.apiCall('device/control/startImpulse', body);
-      callback(null);
+      await this.platform.connector.command('device/control/startImpulse', body);
     }
   
-    public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+    public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
       super.updateDevice(hmIPDevice, groups);
-      for (const id in hmIPDevice.functionalChannels) {
-        const channel = hmIPDevice.functionalChannels[id];
+      for (const channel of Object.values(hmIPDevice.functionalChannels)) {
         if (channel.functionalChannelType === 'IMPULSE_OUTPUT_CHANNEL') {
           const impulseOutputChannel = <ImpulseOutputChannel>channel;
           this.platform.log.debug(`Garage door update: ${JSON.stringify(channel)}`);
@@ -164,7 +153,6 @@ import {
           this.accessory.displayName, this.targetDoorState);
         this.service.updateCharacteristic(this.platform.Characteristic.TargetDoorState, this.targetDoorState);
       }
-    }
-  
   }
-  
+
+  }

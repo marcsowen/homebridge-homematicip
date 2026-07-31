@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import type {Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface PresenceDetectionChannel {
@@ -20,7 +21,7 @@ interface PresenceDetectionChannel {
  * HmIP-SPI (Presence Sensor - indoor)
  *
  */
-export class HmIPPresenceDetector extends HmIPGenericDevice implements Updateable {
+export class HmIPPresenceDetector extends HmIPGenericDevice {
   private service: Service;
 
   private presenceDetected = false;
@@ -28,7 +29,7 @@ export class HmIPPresenceDetector extends HmIPGenericDevice implements Updateabl
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -38,32 +39,23 @@ export class HmIPPresenceDetector extends HmIPGenericDevice implements Updateabl
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .on('get', this.handleOccupancyDetectedGet.bind(this));
+      .onGet(() => this.presenceDetected
+        ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
 
     if (this.featureSabotage) {
       this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .on('get', this.handleStatusTamperedGet.bind(this));
+        .onGet(() => this.sabotage
+          ? this.platform.Characteristic.StatusTampered.TAMPERED
+          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
     }
 
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
-  handleOccupancyDetectedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.presenceDetected
-      ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-      : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
-  }
-
-  handleStatusTamperedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.sabotage
-      ? this.platform.Characteristic.StatusTampered.TAMPERED
-      : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
-  }
-
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'PRESENCE_DETECTION_CHANNEL') {
         const presenceDetectionChannel = <PresenceDetectionChannel>channel;
         this.platform.log.debug('Presence detector update: %s', JSON.stringify(channel));

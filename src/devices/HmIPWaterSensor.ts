@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import type {Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface WaterSensorChannel {
@@ -15,7 +16,7 @@ interface WaterSensorChannel {
  *
  * HmIP-SWD
  */
-export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
+export class HmIPWaterSensor extends HmIPGenericDevice {
   private waterLevelService: Service;
 
   private moistureDetected = false;
@@ -23,7 +24,7 @@ export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -34,21 +35,16 @@ export class HmIPWaterSensor extends HmIPGenericDevice implements Updateable {
     this.waterLevelService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.waterLevelService.getCharacteristic(this.platform.Characteristic.LeakDetected)
-      .on('get', this.handleWaterLevelDetectedGet.bind(this));
+      .onGet(() => this.waterlevelDetected
+        ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
+        : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED);
 
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
-  handleWaterLevelDetectedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.waterlevelDetected
-      ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
-      : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED);
-  }
-
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'WATER_SENSOR_CHANNEL') {
         const waterSensorChannel = <WaterSensorChannel>channel;
         this.platform.log.debug(`Water sensor update: ${JSON.stringify(channel)}`);

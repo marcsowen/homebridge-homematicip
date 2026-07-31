@@ -1,7 +1,8 @@
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
-import {HmIPWeatherSensor, WeatherSensorChannel} from './HmIPWeatherSensor.js';
+import type {Service} from 'homebridge';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
+import {HmIPWeatherSensor, type WeatherSensorChannel} from './HmIPWeatherSensor.js';
 
 export interface WeatherSensorPlusChannel extends WeatherSensorChannel {
   raining: boolean;
@@ -15,7 +16,7 @@ export interface WeatherSensorPlusChannel extends WeatherSensorChannel {
  *
  * HMIP-SWO-PL
  */
-export class HmIPWeatherSensorPlus extends HmIPWeatherSensor implements Updateable {
+export class HmIPWeatherSensorPlus extends HmIPWeatherSensor {
 
   protected raining = false;
   protected todayRainCounter = 0.0;
@@ -24,14 +25,14 @@ export class HmIPWeatherSensorPlus extends HmIPWeatherSensor implements Updateab
   private rainingOccupancyService?: Service;
   private withRainSensor = false;
 
-  constructor(platform: HmIPPlatform, accessory: PlatformAccessory) {
+  constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
     super(platform, accessory);
 
-    this.withRainSensor = accessory.context.config && accessory.context.config.withRainSensor;
+    this.withRainSensor = accessory.context.config?.withRainSensor ?? false;
 
     if (this.withRainSensor) {
       this.rainingOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'Rain')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(accessory.context.device.label + ' Rain', 'Rain'));
+        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label} Rain`, 'Rain'));
       this.rainingOccupancyService.setCharacteristic(this.platform.Characteristic.Name, 'Rain');
     }
 
@@ -39,50 +40,35 @@ export class HmIPWeatherSensorPlus extends HmIPWeatherSensor implements Updateab
     this.updateDevice(accessory.context.device, platform.groups);
 
     this.rainingOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .on('get', this.handleGetRaining.bind(this));
+      .onGet(() => this.raining ? 1 : 0);
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.RainBool)
-      .on('get', this.handleGetRainingBool.bind(this));
+      .onGet(() => this.raining);
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.RainDay)
-      .on('get', this.handleGetTodayRainCounter.bind(this));
+      .onGet(() => this.todayRainCounter);
 
   }
 
-  handleGetRainingBool(callback: CharacteristicGetCallback) {
-    callback(null, this.raining);
-  }
-
-  handleGetRaining(callback: CharacteristicGetCallback) {
-    callback(null, this.raining ? 1 : 0);
-  }
-
-  handleGetTodayRainCounter(callback: CharacteristicGetCallback) {
-    callback(null, this.todayRainCounter);
-  }
-
-  protected handleGetWeatherConditionCategory(callback: CharacteristicGetCallback) {
+  protected override getWeatherConditionCategory(): number {
     if (this.storm) {
-      callback(null, 9);
-    } else if (this.humidity >= 99) {
-      callback(null, 4);
-    } else if (this.sunshine) {
-      callback(null, 0);
-    } else if (this.raining) {
-      if (this.todayRainCounter > 30) {
-        callback(null, 6);
-      } else {
-        callback(null, 5);
-      }
-    } else {
-      callback(null, 3);
+      return 9;
     }
+    if (this.humidity >= 99) {
+      return 4;
+    }
+    if (this.sunshine) {
+      return 0;
+    }
+    if (this.raining) {
+      return this.todayRainCounter > 30 ? 6 : 5;
+    }
+    return 3;
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'WEATHER_SENSOR_PLUS_CHANNEL'
         || channel.functionalChannelType === 'WEATHER_SENSOR_PRO_CHANNEL') {
         const weatherSensorChannel = <WeatherSensorPlusChannel>channel;

@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import type {Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface MotionDetectionChannel {
@@ -22,7 +23,7 @@ interface MotionDetectionChannel {
  * HmIP-SMI55 (Motion Detector with Brightness Sensor and Remote Control - 2-button)
  *
  */
-export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable {
+export class HmIPMotionDetector extends HmIPGenericDevice {
   private motionSensorService: Service;
   private lightSensorService: Service | undefined;
 
@@ -34,7 +35,7 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -44,14 +45,16 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
     this.motionSensorService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.motionSensorService.getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .on('get', this.handleMotionDetectedGet.bind(this));
+      .onGet(() => this.motionDetected);
 
     if (this.featureSabotage) {
       this.motionSensorService.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .on('get', this.handleStatusTamperedGet.bind(this));
+        .onGet(() => this.sabotage
+          ? this.platform.Characteristic.StatusTampered.TAMPERED
+          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
     }
 
-    this.addLightSensor = this.accessoryConfig?.['lightSensor'] === true;
+    this.addLightSensor = this.accessoryConfig?.lightSensor === true;
 
     if (this.addLightSensor) {
       this.lightSensorService = <Service>this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
@@ -65,7 +68,7 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
       }
 
       this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-        .on('get', this.handleAmbientLightLevelGet.bind(this));
+        .onGet(() => Math.max(1, this.lightLevel));
 
     } else {
       const lightSensorService = <Service>this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
@@ -77,24 +80,9 @@ export class HmIPMotionDetector extends HmIPGenericDevice implements Updateable 
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
-  handleMotionDetectedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.motionDetected);
-  }
-
-  handleStatusTamperedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.sabotage
-      ? this.platform.Characteristic.StatusTampered.TAMPERED
-      : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
-  }
-
-  handleAmbientLightLevelGet(callback: CharacteristicGetCallback) {
-    callback(null, this.lightLevel < 1 ? 1 : this.lightLevel);
-  }
-
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'MOTION_DETECTION_CHANNEL') {
         const motionDetectionChannel = <MotionDetectionChannel>channel;
         this.platform.log.debug('Motion detector update: %s', JSON.stringify(channel));

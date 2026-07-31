@@ -1,13 +1,11 @@
-import {
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
+import type {
   CharacteristicValue,
-  PlatformAccessory,
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface MultiModeInputDimmerChannel {
@@ -27,13 +25,13 @@ interface MultiModeInputDimmerChannel {
  * HmIP-DRDI3 (Homematic IP Dimming Actuator – 3x channels)
  *
  */
-export class HmIPDimmerMultiChannel extends HmIPGenericDevice implements Updateable {
+export class HmIPDimmerMultiChannel extends HmIPGenericDevice {
   
   private channels = new Map<number, MultiModeInputDimmerChannel>();
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
    super(platform, accessory);
     this.platform.log.debug(`Created dimmer ${accessory.context.device.label}`);
@@ -42,43 +40,40 @@ export class HmIPDimmerMultiChannel extends HmIPGenericDevice implements Updatea
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
-  handleOnGet(dimmerChannel: MultiModeInputDimmerChannel, callback: CharacteristicGetCallback) {
+  private handleOnGet(dimmerChannel: MultiModeInputDimmerChannel): boolean {
     this.platform.log.debug('Current dimmer state of %s channel %s is %s', this.accessory.displayName, dimmerChannel.label, dimmerChannel.on ? 'ON' : 'OFF');
-    callback(null, dimmerChannel.dimLevel>0);
+    return dimmerChannel.dimLevel > 0;
   }
 
-  async handleOnSet(dimmerChannel: MultiModeInputDimmerChannel, value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleOnSet(dimmerChannel: MultiModeInputDimmerChannel, value: CharacteristicValue): Promise<void> {
     this.platform.log.info('Setting dimmer state %s channel %s to %s', this.accessory.displayName, dimmerChannel.label, value ? 'ON' : 'OFF');
     if (value && dimmerChannel.dimLevel === 0) {
-      await this.handleBrightnessSet(dimmerChannel, 100, callback);
+      await this.handleBrightnessSet(dimmerChannel, 100);
     } else if (!value) {
-      await this.handleBrightnessSet(dimmerChannel, 0, callback);
-    } else {
-        callback(null);
+      await this.handleBrightnessSet(dimmerChannel, 0);
     }
   }
 
-  handleBrightnessGet(dimmerChannel: MultiModeInputDimmerChannel, callback: CharacteristicGetCallback) {
+  private handleBrightnessGet(dimmerChannel: MultiModeInputDimmerChannel): number {
     this.platform.log.debug('Current dimmer brightness of %s channel %s is %s', this.accessory.displayName, dimmerChannel.label, dimmerChannel.dimLevel);
-    callback(null, dimmerChannel.dimLevel*100);
+    return dimmerChannel.dimLevel * 100;
   }
 
-  async handleBrightnessSet(dimmerChannel: MultiModeInputDimmerChannel, value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleBrightnessSet(dimmerChannel: MultiModeInputDimmerChannel,
+    value: CharacteristicValue): Promise<void> {
     this.platform.log.info('Setting brightness of %s channel %s to %s %%', this.accessory.displayName, dimmerChannel.label, value);
     const body = {
       channelIndex: dimmerChannel.index,
       deviceId: this.accessory.context.device.id,
-      dimLevel: <number>value / 100.0,
+      dimLevel: Number(value) / 100.0,
     };
 
-    await this.platform.connector.apiCall('device/control/setDimLevel', body);
-    callback(null);
+    await this.platform.connector.command('device/control/setDimLevel', body);
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-       const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
        //this.platform.log.info(`Dimmer update: ${JSON.stringify(channel)}`);
 
        if (channel.functionalChannelType === 'MULTI_MODE_INPUT_DIMMER_CHANNEL') { 
@@ -100,20 +95,12 @@ export class HmIPDimmerMultiChannel extends HmIPGenericDevice implements Updatea
           }
 
           dimmerChannel.hapService.getCharacteristic(this.platform.Characteristic.On)
-          .on('get', (callback) => {
-            this.handleOnGet(dimmerChannel, callback)
-          })
-          .on('set', (value, callback) => {
-              this.handleOnSet(dimmerChannel, value, callback)
-          });
+            .onGet(() => this.handleOnGet(dimmerChannel))
+            .onSet(value => this.handleOnSet(dimmerChannel, value));
 
           dimmerChannel.hapService.getCharacteristic(this.platform.Characteristic.Brightness)
-          .on('get', (callback) => {
-            this.handleBrightnessGet(dimmerChannel, callback)
-          })
-          .on('set', (value, callback) => {
-              this.handleBrightnessSet(dimmerChannel, value, callback)
-          });         
+            .onGet(() => this.handleBrightnessGet(dimmerChannel))
+            .onSet(value => this.handleBrightnessSet(dimmerChannel, value));
 
           this.channels.set(dimmerChannel.index, dimmerChannel);
         }

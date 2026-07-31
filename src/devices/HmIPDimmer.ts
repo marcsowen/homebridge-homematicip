@@ -1,13 +1,11 @@
-import {
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
+import type {
   CharacteristicValue,
-  PlatformAccessory,
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface DimmerChannel {
@@ -26,14 +24,14 @@ interface DimmerChannel {
  * HmIPW-DRD3 (Homematic IP Wired Dimming Actuator – 3x channels)
  *
  */
-export class HmIPDimmer extends HmIPGenericDevice implements Updateable {
+export class HmIPDimmer extends HmIPGenericDevice {
   private service: Service;
 
   private brightness = 0;
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -42,49 +40,38 @@ export class HmIPDimmer extends HmIPGenericDevice implements Updateable {
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleOnGet.bind(this))
-      .on('set', this.handleOnSet.bind(this));
+      .onGet(() => this.brightness > 0)
+      .onSet(value => this.handleOnSet(value));
 
     this.service.getCharacteristic(this.platform.Characteristic.Brightness)
-      .on('get', this.handleBrightnessGet.bind(this))
-      .on('set', this.handleBrightnessSet.bind(this));
+      .onGet(() => this.brightness)
+      .onSet(value => this.handleBrightnessSet(value));
 
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
-  handleOnGet(callback: CharacteristicGetCallback) {
-    callback(null, this.brightness > 0);
-  }
-
-  async handleOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleOnSet(value: CharacteristicValue): Promise<void> {
     if (value && this.brightness === 0) {
-      await this.handleBrightnessSet(100, callback);
+      await this.handleBrightnessSet(100);
     } else if (!value) {
-      await this.handleBrightnessSet(0, callback);
-    } else {
-      callback(null);
+      await this.handleBrightnessSet(0);
     }
   }
 
-  handleBrightnessGet(callback: CharacteristicGetCallback) {
-    callback(null, this.brightness);
-  }
-
-  async handleBrightnessSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleBrightnessSet(value: CharacteristicValue): Promise<void> {
+    const brightness = Number(value);
     this.platform.log.info('Setting brightness of %s to %s %%', this.accessory.displayName, value);
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
-      dimLevel: <number>value / 100.0,
+      dimLevel: brightness / 100.0,
     };
-    await this.platform.connector.apiCall('device/control/setDimLevel', body);
-    callback(null);
+    await this.platform.connector.command('device/control/setDimLevel', body);
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'DIMMER_CHANNEL') {
         const dimmerChannel = <DimmerChannel>channel;
         this.platform.log.debug(`Dimmer update: ${JSON.stringify(channel)}`);

@@ -1,9 +1,9 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type fakegato from 'fakegato-history';
+import type {Service} from 'homebridge';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
-import moment from 'moment';
-import fakegato from 'fakegato-history';
 
 enum WindValueType {
   CURRENT_VALUE = 'CURRENT_VALUE',
@@ -73,7 +73,7 @@ export interface WeatherSensorChannel {
  *    "weathervaneAlignmentNeeded": false
  *
  */
-export class HmIPWeatherSensor extends HmIPGenericDevice implements Updateable {
+export class HmIPWeatherSensor extends HmIPGenericDevice {
 
   // every 5 minutes
   protected readonly historyEventUpdateFrequencyMs: number = 5 * 60 * 1000;
@@ -95,19 +95,19 @@ export class HmIPWeatherSensor extends HmIPGenericDevice implements Updateable {
   protected stormOccupancyService?: Service;
   protected sunshineOccupancyService?: Service;
   protected windSpeedOccupancyService?: Service;
-  private readonly withStormSensor = false;
-  private readonly withSunshineSensor = false;
-  private readonly withWindSpeedSensor = false;
+  private readonly withStormSensor: boolean;
+  private readonly withSunshineSensor: boolean;
+  private readonly withWindSpeedSensor: boolean;
   protected weatherService?: Service;
   private historyService: typeof fakegato;
-  private eventEmitterTimeout?: NodeJS.Timeout;
+  private eventEmitterTimeout: NodeJS.Timeout | null = null;
 
-  constructor(platform: HmIPPlatform, accessory: PlatformAccessory) {
+  constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
     super(platform, accessory);
 
-    this.withStormSensor = accessory.context.config && accessory.context.config.withStormSensor;
-    this.withSunshineSensor = accessory.context.config && accessory.context.config.withSunshineSensor;
-    this.withWindSpeedSensor = accessory.context.config && accessory.context.config.withWindSpeedSensor;
+    this.withStormSensor = accessory.context.config?.withStormSensor ?? false;
+    this.withSunshineSensor = accessory.context.config?.withSunshineSensor ?? false;
+    this.withWindSpeedSensor = accessory.context.config?.withWindSpeedSensor ?? false;
 
     this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
       || this.accessory.addService(this.platform.Service.TemperatureSensor);
@@ -126,27 +126,27 @@ export class HmIPWeatherSensor extends HmIPGenericDevice implements Updateable {
 
     if (this.withStormSensor) {
       this.stormOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'Storm')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(accessory.context.device.label + ' Storm', 'Storm'));
-      this.stormOccupancyService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label + ' Storm',);
+        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label} Storm`, 'Storm'));
+      this.stormOccupancyService.setCharacteristic(this.platform.Characteristic.Name, `${accessory.context.device.label} Storm`,);
     }
 
     if (this.withSunshineSensor) {
       this.sunshineOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'Sunshine')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(accessory.context.device.label + ' Sunshine', 'Sunshine'));
-      this.sunshineOccupancyService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label + ' Sunshine',);
+        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label} Sunshine`, 'Sunshine'));
+      this.sunshineOccupancyService.setCharacteristic(this.platform.Characteristic.Name, `${accessory.context.device.label} Sunshine`,);
     }
 
     if (this.withWindSpeedSensor) {
       this.windSpeedOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'WindSpeed')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(accessory.context.device.label + '  WindSpeed', 'WindSpeed'));
-      this.windSpeedOccupancyService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label + ' WindSpeed');
+        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label}  WindSpeed`, 'WindSpeed'));
+      this.windSpeedOccupancyService.setCharacteristic(this.platform.Characteristic.Name, `${accessory.context.device.label} WindSpeed`);
     }
 
     this.historyService = new this.platform.FakeGatoHistoryService('weather', this.accessory, {
       log: this.platform.log,
       storage: 'fs',
-      path: this.platform.api.user.storagePath() + '/accessories',
-      filename: 'history_' + this.accessory.context.device.id + '.json',
+      path: `${this.platform.api.user.storagePath()}/accessories`,
+      filename: `history_${this.accessory.context.device.id}.json`,
       length: 1000,
     });
 
@@ -156,83 +156,52 @@ export class HmIPWeatherSensor extends HmIPGenericDevice implements Updateable {
 
     // register characteristics
     this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-      .on('get', this.handleGetIllumination.bind(this));
+      .onGet(() => this.illumination);
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({minValue: -100})
-      .on('get', this.handleGetActualTemperature.bind(this));
+      .onGet(() => this.actualTemperature);
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
-      .on('get', this.handleGetTemperatureDisplayUnits.bind(this))
+      .onGet(() => this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS);
 
     this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .on('get', this.handleGetHumidity.bind(this));
+      .onGet(() => this.humidity);
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.WindSpeed)
-      .on('get', this.handleGetWindSpeed.bind(this));
+      .onGet(() => this.windSpeed);
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.WeatherConditionCategory)
-      .on('get', this.handleGetWeatherConditionCategory.bind(this));
+      .onGet(() => this.getWeatherConditionCategory());
 
     this.stormOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .on('get', this.handleGetStorm.bind(this));
+      .onGet(() => this.storm
+        ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
 
     this.sunshineOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .on('get', this.handleGetSunshine.bind(this));
+      .onGet(() => this.sunshine
+        ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
 
     this.windSpeedOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .on('get', this.handleGetWindSpeedOccupancy.bind(this));
+      .onGet(() => this.windSpeed >= 1.852
+        ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
 
   }
 
-  handleGetActualTemperature(callback: CharacteristicGetCallback) {
-    callback(null, this.actualTemperature);
-  }
-
-  handleGetHumidity(callback: CharacteristicGetCallback) {
-    callback(null, this.humidity);
-  }
-
-  handleGetIllumination(callback: CharacteristicGetCallback) {
-    callback(null, this.illumination);
-  }
-
-  handleGetWindSpeed(callback: CharacteristicGetCallback) {
-    callback(null, this.windSpeed)
-  }
-
-  handleGetStorm(callback: CharacteristicGetCallback) {
-    callback(null, this.storm
-      ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-      : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
-  }
-
-  handleGetSunshine(callback: CharacteristicGetCallback) {
-    callback(null, this.sunshine
-      ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-      : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
-  }
-
-  handleGetWindSpeedOccupancy(callback: CharacteristicGetCallback) {
-    callback(null, this.windSpeed >= 1.852 // considering >= 1 knots as "wind"
-      ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-      : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
-  }
-
-  handleGetTemperatureDisplayUnits(callback: CharacteristicGetCallback) {
-    callback(null, this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS);
-  }
-
-  protected handleGetWeatherConditionCategory(callback: CharacteristicGetCallback) {
+  protected getWeatherConditionCategory(): number {
     if (this.storm) {
-      callback(null, 9);
-    } else if (this.humidity >= 99) {
-      callback(null, 4);
-    } else if (this.sunshine) {
-      callback(null, 0);
-    } else {
-      callback(null, 3);
+      return 9;
     }
+    if (this.humidity >= 99) {
+      return 4;
+    }
+    if (this.sunshine) {
+      return 0;
+    }
+    return 3;
   }
 
   private startHistoryEventEmitter() {
@@ -244,9 +213,16 @@ export class HmIPWeatherSensor extends HmIPGenericDevice implements Updateable {
     this.eventEmitterTimeout = setTimeout(() => this.startHistoryEventEmitter(), this.historyEventUpdateFrequencyMs);
   }
 
+  public override dispose(): void {
+    if (this.eventEmitterTimeout !== null) {
+      clearTimeout(this.eventEmitterTimeout);
+      this.eventEmitterTimeout = null;
+    }
+  }
+
   private emitHistoryEvent() {
     const data = {
-      time: moment().unix(),
+      time: Math.floor(Date.now() / 1000),
       temp: this.actualTemperature,
       pressure: 0,
       humidity: this.humidity
@@ -254,10 +230,9 @@ export class HmIPWeatherSensor extends HmIPGenericDevice implements Updateable {
     this.historyService.addEntry(data);
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'WEATHER_SENSOR_CHANNEL'
         || channel.functionalChannelType === 'WEATHER_SENSOR_PLUS_CHANNEL'
         || channel.functionalChannelType === 'WEATHER_SENSOR_PRO_CHANNEL') {

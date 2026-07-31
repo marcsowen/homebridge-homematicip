@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import type {Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, SabotageChannel, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup, SabotageChannel} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 enum WindowState {
@@ -26,7 +27,7 @@ interface ContactChannel {
  * HMIP-SCI (Contact Interface Sensor)
  *
  */
-export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
+export class HmIPContactSensor extends HmIPGenericDevice {
   private service: Service;
 
   private windowState = WindowState.CLOSED;
@@ -34,7 +35,7 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -44,32 +45,23 @@ export class HmIPContactSensor extends HmIPGenericDevice implements Updateable {
       || this.accessory.addService(this.platform.Service.ContactSensor);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .on('get', this.handleContactSensorStateGet.bind(this));
+      .onGet(() => this.windowState === WindowState.CLOSED
+        ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+        : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
 
     if (this.featureSabotage) {
       this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .on('get', this.handleStatusTamperedGet.bind(this));
+        .onGet(() => this.sabotage
+          ? this.platform.Characteristic.StatusTampered.TAMPERED
+          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
     }
 
     this.updateDevice(accessory.context.device, platform.groups);
   }
 
-  handleContactSensorStateGet(callback: CharacteristicGetCallback) {
-    callback(null, this.windowState === WindowState.CLOSED
-      ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-      : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
-  }
-
-  handleStatusTamperedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.sabotage
-      ? this.platform.Characteristic.StatusTampered.TAMPERED
-      : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
-  }
-
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'SHUTTER_CONTACT_CHANNEL'
           || channel.functionalChannelType === 'CONTACT_INTERFACE_CHANNEL') {
 

@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import type {Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 /**
@@ -32,14 +33,14 @@ interface SmokeDetectorChannel {
  *
  * HmIP-SWSD (Smoke Alarm with Q label)
  */
-export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
+export class HmIPSmokeDetector extends HmIPGenericDevice {
   private service: Service;
 
   private smokeDetectorAlarmType = SmokeDetectorAlarmType.IDLE_OFF;
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -51,19 +52,14 @@ export class HmIPSmokeDetector extends HmIPGenericDevice implements Updateable {
     this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.SmokeDetected)
-      .on('get', this.handleSmokeDetectedGet.bind(this));
-  }
-
-  handleSmokeDetectedGet(callback: CharacteristicGetCallback) {
-    callback(null, this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
+      .onGet(() => this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
       ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
       : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED);
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'SMOKE_DETECTOR_CHANNEL') {
         const smokeDetectorChannel = <SmokeDetectorChannel>channel;
         this.platform.log.debug('Smoke detector update: %s', JSON.stringify(channel));

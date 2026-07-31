@@ -1,11 +1,11 @@
-import {
+import type {
   CharacteristicValue,
-  PlatformAccessory,
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 enum LockState {
@@ -42,7 +42,7 @@ interface DoorLockChannel {
  * HmIP-DLD
  *
  */
-export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
+export class HmIPDoorLockDrive extends HmIPGenericDevice {
   private service: Service;
 
   private lockState: LockState = LockState.UNLOCKED;
@@ -53,12 +53,12 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
-    this.openLatch = this.accessoryConfig?.['openLatch'] === true;
-    this.pin = this.accessoryConfig?.['pin'];
+    this.openLatch = this.accessoryConfig?.openLatch === true;
+    this.pin = this.accessoryConfig?.pin;
 
     this.platform.log.debug(`Created door lock drive ${accessory.context.device.label}`);
     this.service = this.accessory.getService(this.platform.Service.LockMechanism)
@@ -84,7 +84,7 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
   }
 
   async handleLockTargetStateSet(value: CharacteristicValue) {
-    this.targetLockState = <number>value;
+    this.targetLockState = Number(value);
     this.platform.log.info('Setting door lock drive %s to %s', this.accessory.displayName, this.getLockTargetStateString(value));
     const body = {
       channelIndex: 1,
@@ -92,13 +92,12 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice implements Updateable {
       authorizationPin: this.pin !== undefined ? this.pin : '',
       targetLockState: this.getHmIPTargetLockState(value),
     };
-    await this.platform.connector.apiCall('device/control/setLockState', body);
+    await this.platform.connector.command('device/control/setLockState', body);
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'DOOR_LOCK_CHANNEL') {
         const doorLockChannel = <DoorLockChannel>channel;
         this.platform.log.debug(`Door lock drive update: ${JSON.stringify(channel)}`);

@@ -1,7 +1,8 @@
-import {CharacteristicGetCallback, PlatformAccessory, Service} from 'homebridge';
+import type {Service} from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface LightSensorChannel {
@@ -17,14 +18,14 @@ interface LightSensorChannel {
  *
  * HmIP-SLO (Light Sensor outdoor)
  */
-export class HmIPLightSensor extends HmIPGenericDevice implements Updateable {
+export class HmIPLightSensor extends HmIPGenericDevice {
   private service: Service;
 
   private averageIllumination = 0;
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -36,17 +37,12 @@ export class HmIPLightSensor extends HmIPGenericDevice implements Updateable {
     this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-      .on('get', this.handleCurrentAmbientLightLevelGet.bind(this));
+      .onGet(() => this.averageIllumination);
   }
 
-  handleCurrentAmbientLightLevelGet(callback: CharacteristicGetCallback) {
-    callback(null, this.averageIllumination);
-  }
-
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'LIGHT_SENSOR_CHANNEL') {
         const lightSensorChannel = <LightSensorChannel>channel;
         this.platform.log.debug('Light sensor update: %s', JSON.stringify(channel));

@@ -1,13 +1,11 @@
-import {
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
+import type {
   CharacteristicValue,
-  PlatformAccessory,
   Service,
 } from 'homebridge';
 
-import {HmIPPlatform} from '../HmIPPlatform.js';
-import {HmIPDevice, HmIPGroup, Updateable} from '../HmIPState.js';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
+import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface ShutterChannel {
@@ -23,7 +21,7 @@ interface ShutterChannel {
  * HMIP-BROLL (Shutter Actuator - Brand-mount)
  *
  */
-export class HmIPShutter extends HmIPGenericDevice implements Updateable {
+export class HmIPShutter extends HmIPGenericDevice {
   protected service: Service;
 
   // Values are HomeKit style (100..0)
@@ -32,7 +30,7 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
 
   constructor(
     platform: HmIPPlatform,
-    accessory: PlatformAccessory,
+    accessory: HmIPPlatformAccessory,
   ) {
     super(platform, accessory);
 
@@ -43,62 +41,45 @@ export class HmIPShutter extends HmIPGenericDevice implements Updateable {
     this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
-      .on('get', this.handleCurrentPositionGet.bind(this));
+      .onGet(() => this.shutterLevel);
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-      .on('get', this.handleTargetPositionGet.bind(this))
-      .on('set', this.handleTargetPositionSet.bind(this));
+      .onGet(() => this.shutterLevel)
+      .onSet(value => this.handleTargetPositionSet(value));
 
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
-      .on('get', this.handlePositionStateGet.bind(this));
+      .onGet(() => this.processing
+        ? this.platform.Characteristic.PositionState.DECREASING
+        : this.platform.Characteristic.PositionState.STOPPED);
 
     this.service.getCharacteristic(this.platform.Characteristic.HoldPosition)
-      .on('set', this.handleHoldPositionSet.bind(this));
+      .onSet(value => this.handleHoldPositionSet(value));
   }
 
-  handleCurrentPositionGet(callback: CharacteristicGetCallback) {
-    callback(null, this.shutterLevel);
-  }
-
-  handleTargetPositionGet(callback: CharacteristicGetCallback) {
-    callback(null, this.shutterLevel);
-  }
-
-  async handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleTargetPositionSet(value: CharacteristicValue): Promise<void> {
     this.platform.log.info('Setting target shutter position for %s to %s %%', this.accessory.displayName, value);
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
-      shutterLevel: HmIPShutter.shutterHomeKitToHmIP(<number>value),
+      shutterLevel: HmIPShutter.shutterHomeKitToHmIP(Number(value)),
     };
-    await this.platform.connector.apiCall('device/control/setShutterLevel', body);
-    callback(null);
+    await this.platform.connector.command('device/control/setShutterLevel', body);
   }
 
-  handlePositionStateGet(callback: CharacteristicGetCallback) {
-    if (this.processing) {
-      callback(null, this.platform.Characteristic.PositionState.DECREASING);
-    } else {
-      callback(null, this.platform.Characteristic.PositionState.STOPPED);
-    }
-  }
-
-  async handleHoldPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  private async handleHoldPositionSet(value: CharacteristicValue): Promise<void> {
     this.platform.log.info('Setting shutter hold position for %s to %s', this.accessory.displayName, value);
     if (value === true) {
       const body = {
         channelIndex: 1,
         deviceId: this.accessory.context.device.id,
       };
-      await this.platform.connector.apiCall('device/control/stop', body);
+      await this.platform.connector.command('device/control/stop', body);
     }
-    callback(null);
   }
 
-  public updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
+  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
-    for (const id in hmIPDevice.functionalChannels) {
-      const channel = hmIPDevice.functionalChannels[id];
+    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (channel.functionalChannelType === 'SHUTTER_CHANNEL' || channel.functionalChannelType === 'BLIND_CHANNEL') {
         const shutterChannel = <ShutterChannel>channel;
 
