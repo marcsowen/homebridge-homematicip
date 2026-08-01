@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc@sowen.net>",
@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcsowen/homebridge-homematicip"
+    "url": "git+https://github.com/marcsowen/homebridge-homematicip.git"
   },
   "bugs": {
     "url": "https://github.com/marcsowen/homebridge-homematicip/issues"

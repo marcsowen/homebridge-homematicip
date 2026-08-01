@@ -4,7 +4,7 @@ import {HmIPAccessoryRepository} from '../dist/HmIPAccessoryRepository.js';
 import {HmIPConnector} from '../dist/HmIPConnector.js';
 import {getHmIPDeviceKind} from '../dist/HmIPDeviceFactory.js';
 import {HmIPEventRouter} from '../dist/HmIPEventRouter.js';
-import {isHmIPState, isHmIPStateChange, parseHmIPStateChange} from '../dist/HmIPState.js';
+import {isHmIPState, isHmIPStateChange, parseHmIPState, parseHmIPStateChange} from '../dist/HmIPState.js';
 import {HmIPGenericDevice} from '../dist/devices/HmIPGenericDevice.js';
 
 const log = {
@@ -59,6 +59,11 @@ test('validates the minimum usable Homematic IP state shape', () => {
   };
 
   assert.equal(isHmIPState(state), true);
+  const {oem: _oem, ...externalDevice} = state.devices.device1;
+  assert.equal(isHmIPState({...state, devices: {
+    external: {...externalDevice, id: 'external', type: 'EXTERNAL'},
+  }}), true);
+  assert.equal(isHmIPState({...state, devices: {device1: externalDevice}}), false);
   assert.equal(isHmIPState({...state, devices: {device1: {...state.devices.device1, functionalChannels: null}}}), false);
   assert.equal(isHmIPState({...state, devices: {
     device1: {...state.devices.device1, functionalChannels: {channel1: {}}},
@@ -68,6 +73,16 @@ test('validates the minimum usable Homematic IP state shape', () => {
     ...state.home,
     functionalHomes: {security: {solution: 'SECURITY_AND_ALARM'}},
   }}), false);
+});
+
+test('reports the state entry that failed validation', () => {
+  const result = parseHmIPState({
+    devices: {brokenDevice: {id: 'brokenDevice'}},
+    groups: {},
+    home: {id: 'home1', currentAPVersion: '1.0.0', functionalHomes: {}},
+  });
+
+  assert.deepEqual(result, {success: false, error: 'device brokenDevice is invalid'});
 });
 
 test('rejects malformed websocket event envelopes', () => {

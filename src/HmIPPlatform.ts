@@ -271,7 +271,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     const homebridgeDevice = this.deviceFactory.create(device, hmIPAccessory.accessory);
     if (!homebridgeDevice) {
       this.accessoryRepository.remove(uuid);
-      if (device.type !== 'HOME_CONTROL_ACCESS_POINT') {
+      if (device.type !== 'HOME_CONTROL_ACCESS_POINT' && device.type !== 'EXTERNAL') {
         this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       }
       return undefined;

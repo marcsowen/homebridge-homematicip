@@ -27,7 +27,8 @@ export interface HmIPFunctionalChannel {
 export interface HmIPDevice extends IdentifiableDevice {
   label: string;
   type: string;
-  oem: string;
+  /** Not supplied for devices with the EXTERNAL archetype. */
+  oem?: string;
   modelType: string;
   firmwareVersion: string;
   functionalChannels: Record<string, HmIPFunctionalChannel>;
@@ -55,7 +56,8 @@ export interface HmIPHeatingGroup extends HmIPGroup {
 export interface HmIPSecurityZoneGroup extends HmIPGroup {
   type: 'SECURITY_ZONE';
   label: string;
-  active: boolean;
+  /** Omitted for disarmed zones in request-based security installations. */
+  active?: boolean;
 }
 
 export interface HmIPHome extends IdentifiableDevice {
@@ -119,7 +121,7 @@ export function isHmIPDevice(value: unknown): value is HmIPDevice {
     && typeof value.id === 'string'
     && typeof value.type === 'string'
     && typeof value.label === 'string'
-    && typeof value.oem === 'string'
+    && (value.type === 'EXTERNAL' || typeof value.oem === 'string')
     && typeof value.modelType === 'string'
     && typeof value.firmwareVersion === 'string'
     && typeof value.permanentlyReachable === 'boolean'
@@ -165,7 +167,7 @@ export function isHmIPSecurityZoneGroup(value: HmIPGroup): value is HmIPSecurity
   return value.type === 'SECURITY_ZONE'
     && isHmIPRecord(candidate)
     && typeof candidate.label === 'string'
-    && typeof candidate.active === 'boolean';
+    && (candidate.active === undefined || typeof candidate.active === 'boolean');
 }
 
 export function isHmIPSecurityAndAlarmSolution(
@@ -181,17 +183,32 @@ export function isHmIPSecurityAndAlarmSolution(
 }
 
 export function isHmIPState(value: unknown): value is HmIPState {
+  return parseHmIPState(value).success;
+}
+
+export function parseHmIPState(value: unknown): HmIPParseResult<HmIPState> {
   if (!isHmIPRecord(value) || !isHmIPRecord(value.devices)
     || !isHmIPRecord(value.groups) || !isHmIPRecord(value.home)) {
-    return false;
+    return {success: false, error: 'response must contain devices, groups, and home objects'};
   }
 
   if (!isHmIPHome(value.home)) {
-    return false;
+    return {success: false, error: 'home is invalid'};
   }
 
-  return Object.values(value.devices).every(isHmIPDevice)
-    && Object.values(value.groups).every(isHmIPGroup);
+  for (const [id, device] of Object.entries(value.devices)) {
+    if (!isHmIPDevice(device)) {
+      return {success: false, error: `device ${id} is invalid`};
+    }
+  }
+
+  for (const [id, group] of Object.entries(value.groups)) {
+    if (!isHmIPGroup(group)) {
+      return {success: false, error: `group ${id} is invalid`};
+    }
+  }
+
+  return {success: true, value: value as unknown as HmIPState};
 }
 
 export function parseHmIPStateChange(value: unknown): HmIPParseResult<HmIPStateChange> {

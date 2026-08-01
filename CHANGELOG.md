@@ -1,3 +1,9 @@
+## 2.0.1 (2026-08-01)
+
+### Bug fixes
+
+- **API**: Accept external devices without an `oem` field and request-based security zones without an `active` field, matching the shapes handled by the reference Homematic IP client ([#604](https://github.com/marcsowen/homebridge-homematicip/issues/604)).
+
 ## 2.0.0 (2026-07-31)
 
 ### Breaking changes

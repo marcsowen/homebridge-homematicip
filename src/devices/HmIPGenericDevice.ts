@@ -55,7 +55,10 @@ export abstract class HmIPGenericDevice {
     this.accessoryConfig = platform.config.devices?.[accessory.context.device.id];
     this.hidden = this.accessoryConfig?.hide === true;
 
-    this.accessory.getService(this.platform.Service.AccessoryInformation)?.setCharacteristic(this.platform.Characteristic.Manufacturer, accessory.context.device.oem)
+    this.accessory.getService(this.platform.Service.AccessoryInformation)?.setCharacteristic(
+      this.platform.Characteristic.Manufacturer,
+      accessory.context.device.oem ?? 'eq-3',
+    )
       .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)
       .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.device.id)
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);

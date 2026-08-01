@@ -93,7 +93,7 @@ function createSecuritySystem() {
 test('uses request-based security zone labels reported by the installation', async () => {
   const {commands, getTargetState, securitySystem, setTargetState} = createSecuritySystem();
   securitySystem.updateGroups({
-    absence: {active: false, id: 'absence', label: 'ABSENCE', type: 'SECURITY_ZONE'},
+    absence: {id: 'absence', label: 'ABSENCE', type: 'SECURITY_ZONE'},
     presence: {active: true, id: 'presence', label: 'PRESENCE', type: 'SECURITY_ZONE'},
   });
 

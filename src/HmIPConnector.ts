@@ -3,7 +3,7 @@ import * as os from 'node:os';
 import type {Logger} from 'homebridge';
 import type {RawData} from 'ws';
 import {HmIPHttpClient, type HmIPHttpError, type HmIPHttpResult} from './HmIPHttpClient.js';
-import {type HmIPState, isHmIPState} from './HmIPState.js';
+import {type HmIPState, parseHmIPState} from './HmIPState.js';
 import {HmIPWebSocketClient, type HmIPWebSocketOptions} from './HmIPWebSocketClient.js';
 import {PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
 
@@ -198,13 +198,14 @@ export class HmIPConnector {
     if (!result.ok) {
       return false;
     }
-    if (!isHmIPState(result.body)) {
+    const state = parseHmIPState(result.body);
+    if (!state.success) {
       if (result.body !== false) {
-        this.log.error('Homematic IP returned an invalid home state response.');
+        this.log.error('Homematic IP returned an invalid home state response: %s.', state.error);
       }
       return false;
     }
-    return result.body;
+    return state.value;
   }
 
   connectWs(listener: (data: RawData) => void): void {

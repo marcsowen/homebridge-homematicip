@@ -141,15 +141,16 @@ export class HmIPSecuritySystem {
     let stateChanged = false;
 
     for (const group of securityZoneGroups) {
+      const active = group.active ?? false;
       if (group.label === securityZoneLabels.internal) {
-        if (group.active !== this.internalZoneActive) {
-          this.internalZoneActive = group.active;
+        if (active !== this.internalZoneActive) {
+          this.internalZoneActive = active;
           this.platform.log.info('Security system activation status for internal zone changed to %s', this.internalZoneActive);
           stateChanged = true;
         }
       } else if (group.label === securityZoneLabels.external) {
-        if (group.active !== this.externalZoneActive) {
-          this.externalZoneActive = group.active;
+        if (active !== this.externalZoneActive) {
+          this.externalZoneActive = active;
           this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
           stateChanged = true;
         }
