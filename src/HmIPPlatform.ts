@@ -19,7 +19,7 @@ import {
 import {CustomCharacteristic} from './CustomCharacteristic.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
 import type {HmIPPlatformConfig} from './HmIPConfig.js';
-import {HmIPDeviceFactory} from './HmIPDeviceFactory.js';
+import {HmIPDeviceFactory, isHmIPControllerDevice} from './HmIPDeviceFactory.js';
 import {HmIPEventRouter} from './HmIPEventRouter.js';
 import {HmIPSecuritySystem} from './HmIPSecuritySystem.js';
 import {type HmIPDeviceAdapter, type HmIPPlatformAccessory, isHmIPAccessoryContext} from './HmIPTypes.js';
@@ -27,6 +27,7 @@ import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
 
 type PlatformLifecycleState = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped';
 const PAIRING_TIMEOUT_MILLIS = 5 * 60 * 1000;
+const HCU_PAIRING_PREPARATION_MILLIS = 10 * 1000;
 
 /**
  * HomematicIP platform
@@ -103,7 +104,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
     if (!this.connector.isReadyForUse() && !this.connector.isReadyForPairing()) {
       this.log.error('Please configure \'access_point\' in \'config.json\' (sticker on the back) and make ' +
-        'sure the Access Point is glowing blue.');
+        'sure the Homematic IP controller is online.');
       this.lifecycleState = 'stopped';
       return;
     }
@@ -145,14 +146,22 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   private async completePairing(accessPointId: string, signal: AbortSignal): Promise<boolean> {
     signal.throwIfAborted();
     const uuid = this.api.hap.uuid.generate(`${PLUGIN_NAME}_${os.hostname()}`);
+    this.log.info(
+      'If pairing an HmIP-HCU1, press the button on top now. Registration starts in %d seconds.',
+      HCU_PAIRING_PREPARATION_MILLIS / 1000,
+    );
+    await sleep(HCU_PAIRING_PREPARATION_MILLIS, undefined, {signal});
     const connectionStarted = await this.connector.authConnectionRequest(uuid, signal);
     signal.throwIfAborted();
     if (!connectionStarted) {
-      this.log.error(`Cannot start auth request for access_point=${accessPointId}`);
+      this.log.error(
+        'Cannot start auth request for access_point=%s. For an HmIP-HCU1, press its top button before retrying.',
+        accessPointId,
+      );
       return false;
     }
     while (true) {
-      this.log.info('Press blue, glowing link button of HmIP Access Point now!');
+      this.log.info('Press the blue link button of the HmIP-HAP now; HmIP-HCU1 users can wait for registration.');
       await sleep(5000, undefined, {signal});
       const acknowledgement = await this.connector.authRequestAcknowledged(uuid, signal);
       if (acknowledgement.status === 'acknowledged') {
@@ -257,7 +266,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     const homebridgeDevice = this.deviceFactory.create(device, hmIPAccessory.accessory);
     if (!homebridgeDevice) {
       this.accessoryRepository.remove(uuid);
-      if (device.type !== 'HOME_CONTROL_ACCESS_POINT' && device.type !== 'EXTERNAL') {
+      if (!isHmIPControllerDevice(device) && device.type !== 'EXTERNAL') {
         this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       }
       return undefined;

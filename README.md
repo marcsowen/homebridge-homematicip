@@ -11,9 +11,9 @@ This Homebridge plugin makes a wide range of Homematic IP devices available in H
 Supported devices include thermostats, switches, dimmers, shutters and blinds, locks, contact and motion sensors,
 smoke and water detectors, weather sensors, buttons, and security systems.
 
-The plugin discovers supported devices connected to one or more Homematic IP Access Points, creates native HomeKit
-accessories for them, and keeps their state synchronized continuously. Devices can be controlled from Apple Home,
-included in scenes and automations, and used through Siri.
+The plugin discovers supported devices connected to one or more Homematic IP Access Points or Home Control Units,
+creates native HomeKit accessories for them, and keeps their state synchronized continuously. Devices can be controlled
+from Apple Home, included in scenes and automations, and used through Siri.
 
 ### Requirements
 
@@ -33,7 +33,7 @@ The recommended way to install this plugin is through the Homebridge UI:
 1. Open **Plugins** in the Homebridge UI.
 2. Search for `homebridge-homematicip`.
 3. Select **Install**.
-4. Open the plugin settings to configure your Homematic IP Access Point.
+4. Open the plugin settings to configure your Homematic IP Access Point or Home Control Unit.
 
 The [Homebridge UI project](https://github.com/homebridge/homebridge-config-ui-x) provides additional installation and
 plugin-management documentation.
@@ -41,11 +41,11 @@ plugin-management documentation.
 ### Configuration
 
 The Homebridge UI exposes the available platform and per-device settings. You can also configure the plugin manually in
-`config.json`. Add one configuration entry for each Homematic IP Access Point you want to expose.
+`config.json`. Add one configuration entry for each Homematic IP Access Point or Home Control Unit you want to expose.
 
 #### Using an existing auth token
 
-Configure the Access Point ID and authentication token:
+Configure the controller ID and authentication token:
 
 ```json
 {
@@ -56,13 +56,12 @@ Configure the Access Point ID and authentication token:
 }
 ```
 
-The Access Point ID is printed on the back of your Homematic IP Access Point (HmIP-HAP) and is
-labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
+The controller ID is its SGTIN, e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 
 #### Pairing without an auth token
 
-If you do not have an authentication token yet, configure the Access Point ID without `auth_token`. Add `pin` only when
-a PIN is configured in the Homematic IP app:
+If you do not have an authentication token yet, configure the controller ID without `auth_token`. Add `pin` only when a
+PIN is configured in the Homematic IP app:
 
 ```json
 {
@@ -73,8 +72,11 @@ a PIN is configured in the Homematic IP app:
 }
 ```
 
-After startup, wait for "Press blue, glowing link button of HmIP Access Point now!", then press the button. Copy the
-generated token from the log into `config.json`, remove `pin`, and restart Homebridge.
+For an **HmIP-HCU1**, watch the Homebridge log during startup and press the button on top when prompted. The plugin waits
+ten seconds before sending the registration request. For an **HmIP-HAP**, wait for the subsequent link-button prompt and
+press its blue button.
+
+Copy the generated token from the log into `config.json`, remove `pin`, and restart Homebridge.
 
 A pairing attempt waits for the Access Point button for up to five minutes. It stops earlier when the cloud connection
 fails. Restart Homebridge to begin another pairing attempt.
@@ -95,6 +97,7 @@ app does not overwrite an accessory name customized in Apple Home.
 ## Currently supported devices
 
 - HmIP-HAP Access point
+- HmIP-HCU1 Home Control Unit
 - HmIP-eTRV Radiator thermostat
 - HmIP-eTRV-2 Radiator thermostat
 - HmIP-eTRV-B Radiator thermostat - basic

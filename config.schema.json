@@ -11,7 +11,7 @@
         "default": "HomematicIP"
       },
       "access_point": {
-        "title": "Access Point ID",
+        "title": "Access Point / HCU ID",
         "type": "string",
         "required": true
       },

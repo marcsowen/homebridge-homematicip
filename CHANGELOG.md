@@ -1,3 +1,12 @@
+## 2.4.0 (2026-08-03)
+
+### Improvements
+
+- **Home Control Unit**: Added HmIP-HCU1 cloud connectivity and pairing support through `homematicip-cloud-client-ts` 0.2.x ([#575](https://github.com/marcsowen/homebridge-homematicip/issues/575)). The controller itself remains hidden while its compatible devices are exposed to HomeKit.
+- **Dependencies**: Updated `homematicip-cloud-client-ts` from 0.1.x to 0.2.x.
+
+This release does not require any Homebridge configuration changes.
+
 ## 2.3.0 (2026-08-03)
 
 ### Improvements

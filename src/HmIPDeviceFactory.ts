@@ -102,6 +102,12 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['WEATHER_SENSOR_PRO', 'weatherSensorPro'],
 ]);
 
+const controllerDeviceTypes = new Set([
+  'ACCESS_POINT',
+  'HOME_CONTROL_ACCESS_POINT',
+  'WIRELESS_ACCESS_POINT_BASIC',
+]);
+
 export type HmIPDeviceKind =
   | 'heatingThermostat'
   | 'wallMountedThermostat'
@@ -138,6 +144,10 @@ export function getHmIPDeviceKind(device: HmIPDevice): HmIPDeviceKind | undefine
     return deviceKinds.get(device.type) ?? 'wallMountedThermostat';
   }
   return deviceKinds.get(device.type);
+}
+
+export function isHmIPControllerDevice(device: Pick<HmIPDevice, 'type'>): boolean {
+  return controllerDeviceTypes.has(device.type);
 }
 
 export class HmIPDeviceFactory {

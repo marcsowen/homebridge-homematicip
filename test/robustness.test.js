@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {HmIPAccessoryRepository} from '../dist/HmIPAccessoryRepository.js';
-import {getHmIPDeviceKind} from '../dist/HmIPDeviceFactory.js';
+import {getHmIPDeviceKind, isHmIPControllerDevice} from '../dist/HmIPDeviceFactory.js';
 import {HmIPEventRouter} from '../dist/HmIPEventRouter.js';
 import {HmIPGenericDevice} from '../dist/devices/HmIPGenericDevice.js';
 
@@ -168,6 +168,13 @@ test('maps Homematic IP device types to adapters', () => {
   assert.equal(getHmIPDeviceKind(device('WIRED_DIMMER_3')), 'dimmer');
   assert.equal(getHmIPDeviceKind(device('DIN_RAIL_DIMMER_3')), 'dimmer');
   assert.equal(getHmIPDeviceKind(device('UNKNOWN_DEVICE')), undefined);
+});
+
+test('recognizes HAP and HCU controller devices as infrastructure', () => {
+  for (const type of ['HOME_CONTROL_ACCESS_POINT', 'ACCESS_POINT', 'WIRELESS_ACCESS_POINT_BASIC']) {
+    assert.equal(isHmIPControllerDevice({type}), true);
+  }
+  assert.equal(isHmIPControllerDevice({type: 'PLUGABLE_SWITCH'}), false);
 });
 
 test('routes dynamic devices and preserves channel index zero', () => {

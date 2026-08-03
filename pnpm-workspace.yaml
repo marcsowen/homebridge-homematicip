@@ -1,4 +1,4 @@
 minimumReleaseAgeExclude:
-  - homematicip-cloud-client-ts@0.1.0
+  - homematicip-cloud-client-ts@0.2.0
 overrides:
   brace-expansion: ^5.0.9
