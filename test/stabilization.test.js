@@ -9,6 +9,7 @@ const CurrentHeatingCoolingState = {COOL: 2, HEAT: 1, OFF: 0};
 const TargetHeatingCoolingState = {AUTO: 3, COOL: 2, HEAT: 1, OFF: 0};
 const TemperatureDisplayUnits = {CELSIUS: 0};
 const Characteristic = {
+  ContactSensorState: {CONTACT_DETECTED: 0, CONTACT_NOT_DETECTED: 1},
   CurrentAmbientLightLevel: 'CurrentAmbientLightLevel',
   CurrentHeatingCoolingState,
   CurrentRelativeHumidity: 'CurrentRelativeHumidity',
@@ -93,6 +94,7 @@ function serviceClass(UUID) {
 }
 
 const BatteryService = serviceClass('Battery');
+const ContactSensorService = serviceClass('ContactSensor');
 const HumiditySensorService = serviceClass('HumiditySensor');
 const LightSensorService = serviceClass('LightSensor');
 const MotionSensorService = serviceClass('MotionSensor');
@@ -101,6 +103,7 @@ const ThermostatService = serviceClass('Thermostat');
 const Service = {
   AccessoryInformation: 'AccessoryInformation',
   Battery: BatteryService,
+  ContactSensor: ContactSensorService,
   HumiditySensor: HumiditySensorService,
   LightSensor: LightSensorService,
   MotionSensor: MotionSensorService,
@@ -236,4 +239,40 @@ test('cached sensor service names are not overwritten during construction', () =
   assert.equal(humidityService.displayName, 'Custom humidity name');
   assert.deepEqual(temperatureService.sets, []);
   assert.deepEqual(humidityService.sets, []);
+});
+
+test('factory exposes HmIP-FCI1 as a contact sensor', () => {
+  const device = baseDevice({
+    type: 'FULL_FLUSH_CONTACT_INTERFACE',
+    modelType: 'HmIP-FCI1',
+    functionalChannels: {
+      1: {
+        functionalChannelType: 'MULTI_MODE_INPUT_CHANNEL',
+        index: 1,
+        binaryBehaviorType: 'NORMALLY_CLOSE',
+        multiModeInputMode: 'BINARY_BEHAVIOR',
+        windowState: 'CLOSED',
+      },
+    },
+  });
+  const accessory = createAccessory(device);
+  const adapter = new HmIPDeviceFactory(createPlatform()).create(device, accessory);
+  const contactService = accessory.getService(ContactSensorService);
+
+  assert.ok(adapter);
+  assert.ok(contactService);
+  assert.equal(contactService.getCharacteristic(Characteristic.ContactSensorState).getter(),
+    Characteristic.ContactSensorState.CONTACT_DETECTED);
+
+  adapter.updateDevice({
+    ...device,
+    functionalChannels: {
+      1: {...device.functionalChannels[1], windowState: 'OPEN'},
+    },
+  }, {});
+
+  assert.deepEqual(contactService.updates, [[
+    Characteristic.ContactSensorState,
+    Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
+  ]]);
 });

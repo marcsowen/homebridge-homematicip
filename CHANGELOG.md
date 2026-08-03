@@ -1,3 +1,11 @@
+## 2.2.0 (2026-08-03)
+
+### New devices
+
+- **Thermostats**: Added HmIP-eTRV-F and HmIP-eTRV-3 radiator thermostats supported by the reference Homematic IP client ([#585](https://github.com/marcsowen/homebridge-homematicip/issues/585)).
+- **Contact sensors**: Added HmIP-FCI1 and multichannel HmIP-FCI6 flush-mounted contact interface support ([#522](https://github.com/marcsowen/homebridge-homematicip/issues/522)).
+- **Window coverings**: Added HmIP-HDM1 shading-module support. HmIP-HDM2 remains unverified pending an API state dump ([#521](https://github.com/marcsowen/homebridge-homematicip/issues/521)).
+
 ## 2.1.0 (2026-08-03)
 
 ### Bug fixes

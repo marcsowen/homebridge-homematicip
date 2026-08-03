@@ -73,10 +73,13 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-eTRV-C Heating thermostat - compact without display
 - HmIP-eTRV-CL Heating thermostat - compact plus with display
 - HmIP-eTRV-E Radiator thermostat - Evo
+- HmIP-eTRV-3 Radiator thermostat - pure
+- HmIP-eTRV-F Radiator thermostat - flex
 - HmIP-FROLL Shutter actuator - flush-mount
 - HmIP-BROLL Shutter actuator - brand-mount
 - HmIP-FBL Blind actuator - flush-mount
 - HmIP-BBL Blind actuator - brand-mount
+- HmIP-HDM1 Hunter Douglas and erfal window covering module
 - HmIP-WTH Wall thermostat
 - HmIP-WTH-2 Wall thermostat with humidity sensor
 - HmIP-BWTH Brand wall thermostat with humidity sensor
@@ -89,6 +92,7 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-SWDO-PL Door / window contact – optical, plus
 - HmIP-SWDM / HMIP-SWDM-B2 Door / window Contact - magnetic
 - HmIP-SCI Contact interface sensor
+- HmIP-FCI1 / HmIP-FCI6 Contact interfaces - flush-mount, 1/6 channels
 - HmIP-SRH Rotary handle switch
 - HmIP-SWSD Smoke detector
 - HmIP-PS / HmIP-PS-2 Pluggable switch

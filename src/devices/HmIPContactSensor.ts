@@ -1,7 +1,14 @@
 import type {Service} from 'homebridge';
 
 import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPDevice, HmIPGroup, SabotageChannel} from '../HmIPState.js';
+import {
+  type HmIPDevice,
+  type HmIPFunctionalChannel,
+  type HmIPGroup,
+  hasFunctionalChannelType,
+  isHmIPRecord,
+  type SabotageChannel,
+} from '../HmIPState.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
@@ -11,10 +18,27 @@ enum WindowState {
   TILTED = 'TILTED'
 }
 
-interface ContactChannel {
-  functionalChannelType: string;
+interface ContactChannel extends HmIPFunctionalChannel {
+  functionalChannelType:
+    | 'SHUTTER_CONTACT_CHANNEL'
+    | 'CONTACT_INTERFACE_CHANNEL'
+    | 'MULTI_MODE_INPUT_CHANNEL';
   windowState: WindowState;
-  eventDelay: number;
+}
+
+const windowStates: ReadonlySet<unknown> = new Set(Object.values(WindowState));
+
+function isContactChannel(channel: HmIPFunctionalChannel): channel is ContactChannel {
+  if (!hasFunctionalChannelType(
+    channel,
+    'SHUTTER_CONTACT_CHANNEL',
+    'CONTACT_INTERFACE_CHANNEL',
+    'MULTI_MODE_INPUT_CHANNEL',
+  )) {
+    return false;
+  }
+  const candidate: unknown = channel;
+  return isHmIPRecord(candidate) && windowStates.has(candidate.windowState);
 }
 
 /**
@@ -25,6 +49,7 @@ interface ContactChannel {
  * HMIP-SWDM /  HMIP-SWDM-B2  (Door / Window Contact - magnetic)
  * HmIP-SWDO-PL ( Window / Door Contact – optical, plus)
  * HMIP-SCI (Contact Interface Sensor)
+ * HmIP-FCI1 (Contact Interface flush-mount – 1 channel)
  *
  */
 export class HmIPContactSensor extends HmIPGenericDevice {
@@ -59,14 +84,11 @@ export class HmIPContactSensor extends HmIPGenericDevice {
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (channel.functionalChannelType === 'SHUTTER_CONTACT_CHANNEL'
-          || channel.functionalChannelType === 'CONTACT_INTERFACE_CHANNEL') {
-
-        const wthChannel = <ContactChannel>channel;
+      if (isContactChannel(channel)) {
         this.platform.log.debug(`Contact update: ${JSON.stringify(channel)}`);
 
-        if (wthChannel.windowState !== this.windowState) {
-          this.windowState = wthChannel.windowState;
+        if (channel.windowState !== this.windowState) {
+          this.windowState = channel.windowState;
           this.platform.log.info('Contact state of %s changed to %s', this.accessory.displayName, this.windowState);
           this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
             this.windowState === WindowState.CLOSED

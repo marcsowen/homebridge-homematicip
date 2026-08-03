@@ -93,6 +93,8 @@ export interface HistoryEvent {
  * HmIP-eTRV-2
  * HmIP-eTRV-C-2
  * HmIP-eTRV-CL
+ * HmIP-eTRV-3
+ * HmIP-eTRV-F
  */
 export class HmIPHeatingThermostat extends HmIPGenericDevice {
 
@@ -439,7 +441,9 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
     return deviceType === 'HEATING_THERMOSTAT'
       || deviceType === 'HEATING_THERMOSTAT_COMPACT'
       || deviceType === 'HEATING_THERMOSTAT_COMPACT_PLUS'
-      || deviceType === 'HEATING_THERMOSTAT_EVO';
+      || deviceType === 'HEATING_THERMOSTAT_EVO'
+      || deviceType === 'HEATING_THERMOSTAT_THREE'
+      || deviceType === 'HEATING_THERMOSTAT_FLEX';
   }
 
 }

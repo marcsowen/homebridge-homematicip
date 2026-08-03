@@ -286,8 +286,17 @@ test('device updates publish firmware without changing HomeKit names', () => {
 test('maps Homematic IP device types to adapters', () => {
   const device = type => ({type});
 
-  assert.equal(getHmIPDeviceKind(device('HEATING_THERMOSTAT')), 'heatingThermostat');
+  for (const thermostatType of [
+    'HEATING_THERMOSTAT',
+    'HEATING_THERMOSTAT_THREE',
+    'HEATING_THERMOSTAT_FLEX',
+  ]) {
+    assert.equal(getHmIPDeviceKind(device(thermostatType)), 'heatingThermostat');
+  }
   assert.equal(getHmIPDeviceKind(device('WALL_MOUNTED_THERMOSTAT_PRO')), 'wallMountedThermostat');
+  assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_CONTACT_INTERFACE')), 'contactSensor');
+  assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_CONTACT_INTERFACE_6')), 'multiModeInput');
+  assert.equal(getHmIPDeviceKind(device('BLIND_MODULE')), 'shading');
   for (const buttonType of [
     'PUSH_BUTTON_6_LED_SWITCH',
     'DOOR_BELL_BUTTON',

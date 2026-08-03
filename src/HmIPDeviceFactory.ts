@@ -10,8 +10,10 @@ import {HmIPGarageDoorController} from './devices/HmIPGarageDoorController.js';
 import {HmIPHeatingThermostat} from './devices/HmIPHeatingThermostat.js';
 import {HmIPLightSensor} from './devices/HmIPLightSensor.js';
 import {HmIPMotionDetector} from './devices/HmIPMotionDetector.js';
+import {HmIPMultiModeInput} from './devices/HmIPMultiModeInput.js';
 import {HmIPPresenceDetector} from './devices/HmIPPresenceDetector.js';
 import {HmIPRotaryHandleSensor} from './devices/HmIPRotaryHandleSensor.js';
+import {HmIPShading} from './devices/HmIPShading.js';
 import {HmIPShutter} from './devices/HmIPShutter.js';
 import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector.js';
 import {HmIPSwitch} from './devices/HmIPSwitch.js';
@@ -33,11 +35,14 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['BRAND_SHUTTER', 'shutter'],
   ['FULL_FLUSH_BLIND', 'blind'],
   ['BRAND_BLIND', 'blind'],
+  ['BLIND_MODULE', 'shading'],
   ['SHUTTER_CONTACT', 'contactSensor'],
   ['SHUTTER_CONTACT_INTERFACE', 'contactSensor'],
   ['SHUTTER_CONTACT_INVISIBLE', 'contactSensor'],
   ['SHUTTER_CONTACT_MAGNETIC', 'contactSensor'],
   ['SHUTTER_CONTACT_OPTICAL_PLUS', 'contactSensor'],
+  ['FULL_FLUSH_CONTACT_INTERFACE', 'contactSensor'],
+  ['FULL_FLUSH_CONTACT_INTERFACE_6', 'multiModeInput'],
   ['ROTARY_HANDLE_SENSOR', 'rotaryHandleSensor'],
   ['SMOKE_DETECTOR', 'smokeDetector'],
   ['PUSH_BUTTON', 'button'],
@@ -103,6 +108,7 @@ export type HmIPDeviceKind =
   | 'climateSensor'
   | 'shutter'
   | 'blind'
+  | 'shading'
   | 'contactSensor'
   | 'rotaryHandleSensor'
   | 'smokeDetector'
@@ -114,6 +120,7 @@ export type HmIPDeviceKind =
   | 'waterSensor'
   | 'lightSensor'
   | 'motionDetector'
+  | 'multiModeInput'
   | 'presenceDetector'
   | 'dimmer'
   | 'doorLockDrive'
@@ -156,6 +163,7 @@ export class HmIPDeviceFactory {
       case 'climateSensor': return new HmIPClimateSensor(this.platform, accessory);
       case 'shutter': return new HmIPShutter(this.platform, accessory);
       case 'blind': return new HmIPBlind(this.platform, accessory);
+      case 'shading': return new HmIPShading(this.platform, accessory);
       case 'contactSensor': return new HmIPContactSensor(this.platform, accessory);
       case 'rotaryHandleSensor': return new HmIPRotaryHandleSensor(this.platform, accessory);
       case 'smokeDetector': return new HmIPSmokeDetector(this.platform, accessory);
@@ -167,6 +175,7 @@ export class HmIPDeviceFactory {
       case 'waterSensor': return new HmIPWaterSensor(this.platform, accessory);
       case 'lightSensor': return new HmIPLightSensor(this.platform, accessory);
       case 'motionDetector': return new HmIPMotionDetector(this.platform, accessory);
+      case 'multiModeInput': return new HmIPMultiModeInput(this.platform, accessory);
       case 'presenceDetector': return new HmIPPresenceDetector(this.platform, accessory);
       case 'dimmer': return new HmIPDimmer(this.platform, accessory);
       case 'doorLockDrive': return new HmIPDoorLockDrive(this.platform, accessory);
