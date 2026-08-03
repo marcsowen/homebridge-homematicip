@@ -40,9 +40,10 @@ export class HmIPMotionDetector extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug('Created MotionDetector %s', accessory.context.device.label);
-    this.motionSensorService = this.accessory.getService(this.platform.Service.MotionSensor)
-      || this.accessory.addService(this.platform.Service.MotionSensor);
-    this.motionSensorService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.motionSensorService = this.getOrAddService(
+      this.platform.Service.MotionSensor,
+      accessory.context.device.label,
+    );
 
     this.motionSensorService.getCharacteristic(this.platform.Characteristic.MotionDetected)
       .onGet(() => this.motionDetected);
@@ -57,27 +58,22 @@ export class HmIPMotionDetector extends HmIPGenericDevice {
     this.addLightSensor = this.accessoryConfig?.lightSensor === true;
 
     if (this.addLightSensor) {
-      this.lightSensorService = <Service>this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
-      if (!this.lightSensorService) {
-        this.lightSensorService = new this.platform.Service.LightSensor(accessory.context.device.label, 'LightSensor');
-	if (this.lightSensorService) {
-          this.lightSensorService = this.accessory.addService(this.lightSensorService);
-        } else {
-          this.platform.log.error('Error adding service to %s for light sensor', accessory.context.device.label);
-        }
-      }
+      this.lightSensorService = this.getOrAddService(
+        this.platform.Service.LightSensor,
+        accessory.context.device.label,
+        'LightSensor',
+      );
 
       this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
         .onGet(() => Math.max(1, this.lightLevel));
 
     } else {
-      const lightSensorService = <Service>this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
+      const lightSensorService = this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
       if (lightSensorService !== undefined) {
         this.accessory.removeService(lightSensorService);
       }
     }
 
-    this.updateDevice(accessory.context.device, platform.groups);
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
@@ -98,8 +94,8 @@ export class HmIPMotionDetector extends HmIPGenericDevice {
           this.lightLevel = motionDetectionChannel.illumination;
           this.platform.log.debug('Illumination detector state of %s changed to %s', this.accessory.displayName,
 				  this.lightLevel);
-          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel,
-							this.lightLevel < 1 ? 1 : this.lightLevel);
+          this.lightSensorService?.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel,
+            Math.max(1, this.lightLevel));
         }
       }
 

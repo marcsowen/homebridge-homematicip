@@ -15,7 +15,7 @@ import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface SwitchChannel extends HmIPFunctionalChannel {
-  functionalChannelType: 'SWITCH_CHANNEL' | 'MULTI_MODE_INPUT_SWITCH_CHANNEL';
+  functionalChannelType: 'SWITCH_CHANNEL';
   label: string | null;
   on: boolean | null;
   index: number;
@@ -23,14 +23,13 @@ interface SwitchChannel extends HmIPFunctionalChannel {
 
 interface SwitchRuntimeChannel {
   functionalChannelType: SwitchChannel['functionalChannelType'];
-  label: string;
   on: boolean;
   index: number;
   hapService: Service;
 }
 
 function isSwitchChannel(channel: HmIPFunctionalChannel): channel is SwitchChannel {
-  if (!hasFunctionalChannelType(channel, 'SWITCH_CHANNEL', 'MULTI_MODE_INPUT_SWITCH_CHANNEL')) {
+  if (!hasFunctionalChannelType(channel, 'SWITCH_CHANNEL')) {
     return false;
   }
   const candidate: unknown = channel;
@@ -70,32 +69,46 @@ export class HmIPSwitch extends HmIPGenericDevice {
     this.platform.log.debug(`Created switch ${accessory.context.device.label}`);
 
     const device = accessory.context.device;
-    for (const channel of Object.values(device.functionalChannels)) {
-      if (isSwitchChannel(channel) && !this.channels.has(channel.index)) {
-        let hapService = this.accessory.getServiceById(this.platform.Service.Switch, channel.index.toString());
-        if (!hapService) {
-          const label = !channel.label ? accessory.context.device.label : channel.label;
-          const service = new this.platform.Service.Switch(label, channel.index.toString());
-          hapService = this.accessory.addService(service);
-        }
-        const runtimeChannel: SwitchRuntimeChannel = {
-          ...channel,
-          label: channel.label ?? '',
-          on: channel.on ?? false,
-          hapService,
-        };
-        hapService.getCharacteristic(this.platform.Characteristic.On)
-          .onGet(() => this.handleOnGet(runtimeChannel))
-          .onSet(value => this.handleOnSet(runtimeChannel, value));
-        this.channels.set(channel.index, runtimeChannel);
-        this.platform.log.debug('Added switch channel %d to %s', channel.index, this.accessory.displayName);
+    const switchChannels = Object.values(device.functionalChannels)
+      .filter(isSwitchChannel)
+      .sort((left, right) => left.index - right.index);
+    for (const channel of switchChannels) {
+      if (this.channels.has(channel.index)) {
+        continue;
       }
+      let hapService = this.accessory.getServiceById(this.platform.Service.Switch, channel.index.toString());
+      if (!hapService) {
+        const label = !channel.label ? accessory.context.device.label : channel.label;
+        const service = new this.platform.Service.Switch(label, channel.index.toString());
+        hapService = this.accessory.addService(service);
+      }
+      const runtimeChannel: SwitchRuntimeChannel = {
+        ...channel,
+        on: channel.on ?? false,
+        hapService,
+      };
+      hapService.getCharacteristic(this.platform.Characteristic.On)
+        .onGet(() => this.handleOnGet(runtimeChannel))
+        .onSet(value => this.handleOnSet(runtimeChannel, value));
+      this.channels.set(channel.index, runtimeChannel);
+      this.platform.log.debug('Added switch channel %d to %s', channel.index, this.accessory.displayName);
     }
 
     if (this.channels.size === 0) {
       this.platform.log.warn('No functional channels found for device %s', this.accessory.displayName);
     } else {
-      this.updateDevice(accessory.context.device, platform.groups);
+      this.removeStaleSwitchServices();
+    }
+  }
+
+  private removeStaleSwitchServices(): void {
+    const activeServices = new Set([...this.channels.values()].map(channel => channel.hapService));
+    for (const service of [...this.accessory.services]) {
+      if (service.UUID === this.platform.Service.Switch.UUID && !activeServices.has(service)) {
+        this.accessory.removeService(service);
+        this.platform.log.debug('Removed obsolete switch service %s from %s', service.displayName,
+          this.accessory.displayName);
+      }
     }
   }
 
@@ -123,19 +136,11 @@ export class HmIPSwitch extends HmIPGenericDevice {
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (isSwitchChannel(channel) && channel.functionalChannelType === 'SWITCH_CHANNEL') {
+      if (isSwitchChannel(channel)) {
         const currentChannel = this.channels.get(channel.index);
         //this.platform.log.debug(`Switch update: ${JSON.stringify(channel)}`);
 
         if (currentChannel) {
-
-          if (channel.label !== null && channel.label !== '' && channel.label !== currentChannel.label) {
-            currentChannel.label = channel.label;
-            currentChannel.hapService.displayName = channel.label;
-            currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.Name, currentChannel.label);
-            this.platform.log.debug('Switch label of %s channel %d changed to %s', this.accessory.displayName,
-				   currentChannel.index, currentChannel.label);
-          }
 
           if (channel.on !== null && channel.on !== currentChannel.on) {
             currentChannel.on = channel.on;

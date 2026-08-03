@@ -32,15 +32,15 @@ export class HmIPClimateSensor extends HmIPGenericDevice {
   ) {
     super(platform, accessory);
 
-    this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
-      || this.accessory.addService(this.platform.Service.TemperatureSensor);
-    this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.temperatureService = this.getOrAddService(
+      this.platform.Service.TemperatureSensor,
+      accessory.context.device.label,
+    );
 
-    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
-      || this.accessory.addService(this.platform.Service.HumiditySensor);
-    this.humidityService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
-
-    this.updateDevice(accessory.context.device, platform.groups);
+    this.humidityService = this.getOrAddService(
+      this.platform.Service.HumiditySensor,
+      accessory.context.device.label,
+    );
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({minValue: -100})

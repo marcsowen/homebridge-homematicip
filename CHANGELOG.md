@@ -1,3 +1,21 @@
+## 2.1.0 (2026-08-03)
+
+### Bug fixes
+
+- **Switches**: Expose only actuator output channels as HomeKit switches, preventing the HmIP-PS-2 input channel from appearing as a second, non-functional switch. Obsolete cached switch services are removed automatically.
+- **Motion detectors**: Send illumination changes to the optional HomeKit light-sensor service instead of the motion-sensor service.
+- **Thermostats**: Apply heating-group changes immediately and preserve the initial humidity reported by wall thermostats.
+
+### New devices
+
+- **Switches**: Added further switch-capable and switch-measuring device types supported by the reference Homematic IP client.
+- **Buttons**: Added the HmIP-WRC6-230, wired wall controls, key-ring remotes, eight-button remotes, remote-control module, and doorbell button variants supported by the reference client ([#608](https://github.com/marcsowen/homebridge-homematicip/issues/608)).
+
+### Improvements
+
+- **Dimmers**: Added all-channel support for the HmIPW-DRD3 and consolidated ordinary and DIN-rail multichannel dimmers into one channel-aware implementation.
+- **Accessories**: Initialize adapters only after construction and preserve names customized in HomeKit across all device services.
+
 ## 2.0.1 (2026-08-01)
 
 ### Bug fixes

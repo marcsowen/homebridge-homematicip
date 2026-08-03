@@ -43,9 +43,7 @@ import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
       super(platform, accessory);
   
       this.platform.log.debug(`Created garage door ${accessory.context.device.label}`);
-      this.service = this.accessory.getService(this.platform.Service.GarageDoorOpener)
-        || this.accessory.addService(this.platform.Service.GarageDoorOpener);
-      this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+      this.service = this.getOrAddService(this.platform.Service.GarageDoorOpener, accessory.context.device.label);
   
       this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
         .onGet(() => this.getHmKitCurrentDoorState(this.currentDoorState));
@@ -54,7 +52,6 @@ import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
         .onGet(() => this.targetDoorState)
         .onSet(value => this.handleTargetDoorStateSet(value));
   
-      this.updateDevice(accessory.context.device, platform.groups);
     }
   
     private async handleTargetDoorStateSet(value: CharacteristicValue): Promise<void> {

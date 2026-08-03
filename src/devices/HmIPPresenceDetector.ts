@@ -34,9 +34,7 @@ export class HmIPPresenceDetector extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug('Created PresenceDetector %s', accessory.context.device.label);
-    this.service = this.accessory.getService(this.platform.Service.OccupancySensor)
-      || this.accessory.addService(this.platform.Service.OccupancySensor);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.service = this.getOrAddService(this.platform.Service.OccupancySensor, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
       .onGet(() => this.presenceDetected
@@ -50,7 +48,6 @@ export class HmIPPresenceDetector extends HmIPGenericDevice {
           : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
     }
 
-    this.updateDevice(accessory.context.device, platform.groups);
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

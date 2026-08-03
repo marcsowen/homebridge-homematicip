@@ -3,7 +3,6 @@ import {HmIPButton} from './devices/HmIPButton.js';
 import {HmIPClimateSensor} from './devices/HmIPClimateSensor.js';
 import {HmIPContactSensor} from './devices/HmIPContactSensor.js';
 import {HmIPDimmer} from './devices/HmIPDimmer.js';
-import {HmIPDimmerMultiChannel} from './devices/HmIPDimmerMultiChannel.js';
 import {HmIPDoorLockDrive} from './devices/HmIPDoorLockDrive.js';
 import {HmIPDoorLockSensor} from './devices/HmIPDoorLockSensor.js';
 import {HmIPGarageDoor} from './devices/HmIPGarageDoor.js';
@@ -43,10 +42,20 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['SMOKE_DETECTOR', 'smokeDetector'],
   ['PUSH_BUTTON', 'button'],
   ['PUSH_BUTTON_6', 'button'],
+  ['PUSH_BUTTON_6_LED_SWITCH', 'button'],
   ['PUSH_BUTTON_FLAT', 'button'],
   ['BRAND_PUSH_BUTTON', 'button'],
+  ['DOOR_BELL_BUTTON', 'button'],
+  ['KEY_REMOTE_CONTROL_4', 'button'],
+  ['KEY_REMOTE_CONTROL_KEY_MATIC', 'button'],
+  ['REMOTE_CONTROL_8', 'button'],
+  ['REMOTE_CONTROL_8_MODULE', 'button'],
+  ['WIRED_PUSH_BUTTON_2', 'button'],
+  ['WIRED_PUSH_BUTTON_6', 'button'],
   ['PLUGABLE_SWITCH', 'switch'],
   ['FULL_FLUSH_INPUT_SWITCH', 'switch'],
+  ['CARBON_DIOXIDE_SENSOR', 'switch'],
+  ['MOTION_DETECTOR_SWITCH_OUTDOOR', 'switch'],
   ['BRAND_SWITCH_2', 'switch'],
   ['PRINTED_CIRCUIT_BOARD_SWITCH_BATTERY', 'switch'],
   ['PRINTED_CIRCUIT_BOARD_SWITCH_2', 'switch'],
@@ -54,11 +63,18 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['HEATING_SWITCH_2', 'switch'],
   ['WIRED_SWITCH_8', 'switch'],
   ['WIRED_SWITCH_4', 'switch'],
+  ['WIRED_INPUT_SWITCH_6', 'switch'],
+  ['DIN_RAIL_SWITCH', 'switch'],
   ['DIN_RAIL_SWITCH_4', 'switch'],
+  ['STATUS_BOARD_8', 'switch'],
+  ['MULTI_IO_BOX', 'switch'],
   ['SWITCH_POWER_SUPPLY', 'switch'],
   ['PLUGABLE_SWITCH_MEASURING', 'switchMeasuring'],
   ['BRAND_SWITCH_MEASURING', 'switchMeasuring'],
   ['FULL_FLUSH_SWITCH_MEASURING', 'switchMeasuring'],
+  ['SWITCH_MEASURING_CABLE_INDOOR', 'switchMeasuring'],
+  ['SWITCH_MEASURING_CABLE_OUTDOOR', 'switchMeasuring'],
+  ['USB_SWITCH_MEASURING', 'switchMeasuring'],
   ['TORMATIC_MODULE', 'garageDoor'],
   ['HOERMANN_DRIVES_MODULE', 'garageDoor'],
   ['WALL_MOUNTED_GARAGE_DOOR_CONTROLLER', 'garageDoorController'],
@@ -72,7 +88,7 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['FULL_FLUSH_DIMMER', 'dimmer'],
   ['PLUGGABLE_DIMMER', 'dimmer'],
   ['WIRED_DIMMER_3', 'dimmer'],
-  ['DIN_RAIL_DIMMER_3', 'dimmerMultiChannel'],
+  ['DIN_RAIL_DIMMER_3', 'dimmer'],
   ['DOOR_LOCK_DRIVE', 'doorLockDrive'],
   ['DOOR_LOCK_SENSOR', 'doorLockSensor'],
   ['BRAND_SWITCH_NOTIFICATION_LIGHT', 'switchNotificationLight'],
@@ -100,7 +116,6 @@ export type HmIPDeviceKind =
   | 'motionDetector'
   | 'presenceDetector'
   | 'dimmer'
-  | 'dimmerMultiChannel'
   | 'doorLockDrive'
   | 'doorLockSensor'
   | 'switchNotificationLight'
@@ -123,6 +138,15 @@ export class HmIPDeviceFactory {
 
   public create(device: HmIPDevice, accessory: HmIPPlatformAccessory): HmIPDeviceAdapter | undefined {
     const kind = getHmIPDeviceKind(device);
+    const adapter = this.createAdapter(kind, accessory);
+    adapter?.updateDevice(device, this.platform.groups);
+    return adapter;
+  }
+
+  private createAdapter(
+    kind: HmIPDeviceKind | undefined,
+    accessory: HmIPPlatformAccessory,
+  ): HmIPDeviceAdapter | undefined {
     switch (kind) {
       case 'heatingThermostat': return new HmIPHeatingThermostat(this.platform, accessory);
       case 'wallMountedThermostat':
@@ -145,7 +169,6 @@ export class HmIPDeviceFactory {
       case 'motionDetector': return new HmIPMotionDetector(this.platform, accessory);
       case 'presenceDetector': return new HmIPPresenceDetector(this.platform, accessory);
       case 'dimmer': return new HmIPDimmer(this.platform, accessory);
-      case 'dimmerMultiChannel': return new HmIPDimmerMultiChannel(this.platform, accessory);
       case 'doorLockDrive': return new HmIPDoorLockDrive(this.platform, accessory);
       case 'doorLockSensor': return new HmIPDoorLockSensor(this.platform, accessory);
       case 'switchNotificationLight': return new HmIPSwitchNotificationLight(this.platform, accessory);

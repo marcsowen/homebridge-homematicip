@@ -31,13 +31,14 @@ export class HmIPWeatherSensorPlus extends HmIPWeatherSensor {
     this.withRainSensor = accessory.context.config?.withRainSensor ?? false;
 
     if (this.withRainSensor) {
-      this.rainingOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'Rain')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label} Rain`, 'Rain'));
-      this.rainingOccupancyService.setCharacteristic(this.platform.Characteristic.Name, 'Rain');
+      this.rainingOccupancyService = this.getOrAddService(
+        this.platform.Service.OccupancySensor,
+        `${accessory.context.device.label} Rain`,
+        'Rain',
+      );
     }
 
     this.platform.log.debug(`Created WeatherSensorPlus ${accessory.context.device.label}`);
-    this.updateDevice(accessory.context.device, platform.groups);
 
     this.rainingOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
       .onGet(() => this.raining ? 1 : 0);

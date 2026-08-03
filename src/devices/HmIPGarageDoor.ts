@@ -54,9 +54,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug(`Created garage door ${accessory.context.device.label}`);
-    this.service = this.accessory.getService(this.platform.Service.GarageDoorOpener)
-      || this.accessory.addService(this.platform.Service.GarageDoorOpener);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.service = this.getOrAddService(this.platform.Service.GarageDoorOpener, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
       .onGet(() => this.getHmKitCurrentDoorState(this.currentDoorState));
@@ -71,8 +69,10 @@ export class HmIPGarageDoor extends HmIPGenericDevice {
     const withLightSwitch = this.accessoryConfig?.lightSwitch === true;
 
     if (withLightSwitch) {
-      this.switchService = this.accessory.getService(this.platform.Service.Switch)
-        || this.accessory.addService(this.platform.Service.Switch);
+      this.switchService = this.getOrAddService(
+        this.platform.Service.Switch,
+        `${accessory.context.device.label} Light`,
+      );
 
       this.switchService.getCharacteristic(this.platform.Characteristic.On)
         .onGet(() => this.on)
@@ -85,7 +85,6 @@ export class HmIPGarageDoor extends HmIPGenericDevice {
       }
     }
 
-    this.updateDevice(accessory.context.device, platform.groups);
   }
 
   private async handleTargetDoorStateSet(value: CharacteristicValue): Promise<void> {

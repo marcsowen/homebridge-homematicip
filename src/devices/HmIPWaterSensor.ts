@@ -30,16 +30,13 @@ export class HmIPWaterSensor extends HmIPGenericDevice {
 
     this.platform.log.debug(`Created water sensor ${accessory.context.device.label}`);
 
-    this.waterLevelService = this.accessory.getService(this.platform.Service.LeakSensor)
-      || this.accessory.addService(this.platform.Service.LeakSensor);
-    this.waterLevelService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.waterLevelService = this.getOrAddService(this.platform.Service.LeakSensor, accessory.context.device.label);
 
     this.waterLevelService.getCharacteristic(this.platform.Characteristic.LeakDetected)
       .onGet(() => this.waterlevelDetected
         ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
         : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED);
 
-    this.updateDevice(accessory.context.device, platform.groups);
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

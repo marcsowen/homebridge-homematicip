@@ -45,11 +45,7 @@ export class HmIPSmokeDetector extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug('Created SmokeDetector %s', accessory.context.device.label);
-    this.service = this.accessory.getService(this.platform.Service.SmokeSensor)
-      || this.accessory.addService(this.platform.Service.SmokeSensor);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
-
-    this.updateDevice(accessory.context.device, platform.groups);
+    this.service = this.getOrAddService(this.platform.Service.SmokeSensor, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.SmokeDetected)
       .onGet(() => this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM

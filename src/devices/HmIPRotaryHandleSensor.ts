@@ -34,8 +34,7 @@ export class HmIPRotaryHandleSensor extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug(`Created HmIPRotaryHandleSensor ${accessory.context.device.label}`);
-    this.service = this.accessory.getService(this.platform.Service.Window) || this.accessory.addService(this.platform.Service.Window);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.service = this.getOrAddService(this.platform.Service.Window, accessory.context.device.label);
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
       .onGet(() => this.getWindowPosition());
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
@@ -44,7 +43,6 @@ export class HmIPRotaryHandleSensor extends HmIPGenericDevice {
       .onGet(() => this.getWindowPosition())
       .onSet(value => this.handleWindowTargetPositionSet(value));
 
-    this.updateDevice(accessory.context.device, platform.groups);
   }
 
   private handleWindowTargetPositionSet(value: CharacteristicValue): void {

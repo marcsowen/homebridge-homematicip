@@ -18,6 +18,7 @@ export class HmIPEventRouter {
   ) {}
 
   public handle(stateChange: HmIPStateChange): void {
+    let groupsChanged = false;
     let securityZoneChanged = false;
 
     for (const event of Object.values(stateChange.events)) {
@@ -27,6 +28,7 @@ export class HmIPEventRouter {
           if (event.group) {
             this.log.debug(`${event.pushEventType}: ${event.group.id} ${JSON.stringify(event.group)}`);
             this.state.groups[event.group.id] = event.group;
+            groupsChanged = true;
             securityZoneChanged ||= event.group.type === 'SECURITY_ZONE';
           }
           break;
@@ -35,6 +37,7 @@ export class HmIPEventRouter {
             this.log.debug(`${event.pushEventType}: ${event.group.id}`);
             securityZoneChanged ||= event.group.type === 'SECURITY_ZONE';
             delete this.state.groups[event.group.id];
+            groupsChanged = true;
           }
           break;
         case 'DEVICE_REMOVED':
@@ -105,6 +108,14 @@ export class HmIPEventRouter {
 
     if (securityZoneChanged) {
       this.callbacks.updateSecurityGroups(this.state.groups);
+    }
+    if (groupsChanged) {
+      for (const [deviceId, adapter] of this.devices) {
+        const device = this.state.devices[deviceId];
+        if (device) {
+          adapter.updateDevice(device, this.state.groups);
+        }
+      }
     }
   }
 }

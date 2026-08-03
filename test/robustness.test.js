@@ -288,7 +288,27 @@ test('maps Homematic IP device types to adapters', () => {
 
   assert.equal(getHmIPDeviceKind(device('HEATING_THERMOSTAT')), 'heatingThermostat');
   assert.equal(getHmIPDeviceKind(device('WALL_MOUNTED_THERMOSTAT_PRO')), 'wallMountedThermostat');
-  assert.equal(getHmIPDeviceKind(device('DIN_RAIL_DIMMER_3')), 'dimmerMultiChannel');
+  for (const buttonType of [
+    'PUSH_BUTTON_6_LED_SWITCH',
+    'DOOR_BELL_BUTTON',
+    'KEY_REMOTE_CONTROL_4',
+    'KEY_REMOTE_CONTROL_KEY_MATIC',
+    'REMOTE_CONTROL_8',
+    'REMOTE_CONTROL_8_MODULE',
+    'WIRED_PUSH_BUTTON_2',
+    'WIRED_PUSH_BUTTON_6',
+  ]) {
+    assert.equal(getHmIPDeviceKind(device(buttonType)), 'button');
+  }
+  assert.equal(getHmIPDeviceKind(device('DIN_RAIL_SWITCH')), 'switch');
+  assert.equal(getHmIPDeviceKind(device('STATUS_BOARD_8')), 'switch');
+  assert.equal(getHmIPDeviceKind(device('MOTION_DETECTOR_SWITCH_OUTDOOR')), 'switch');
+  assert.equal(getHmIPDeviceKind(device('USB_SWITCH_MEASURING')), 'switchMeasuring');
+  assert.equal(getHmIPDeviceKind(device('BRAND_DIMMER')), 'dimmer');
+  assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_DIMMER')), 'dimmer');
+  assert.equal(getHmIPDeviceKind(device('PLUGGABLE_DIMMER')), 'dimmer');
+  assert.equal(getHmIPDeviceKind(device('WIRED_DIMMER_3')), 'dimmer');
+  assert.equal(getHmIPDeviceKind(device('DIN_RAIL_DIMMER_3')), 'dimmer');
   assert.equal(getHmIPDeviceKind(device('UNKNOWN_DEVICE')), undefined);
 });
 
@@ -329,4 +349,30 @@ test('routes dynamic devices and preserves channel index zero', () => {
   assert.deepEqual(addedDevices, ['switch1']);
   assert.equal(state.devices.switch1, addedDevice);
   assert.deepEqual(channelEvents, [[0, 'PRESS_SHORT']]);
+});
+
+test('propagates group changes to device adapters', () => {
+  const updates = [];
+  const device = {id: 'thermostat1', type: 'WALL_MOUNTED_THERMOSTAT_PRO'};
+  const state = {
+    devices: {thermostat1: device},
+    groups: {},
+    home: {id: 'home1'},
+  };
+  const devices = new Map([['thermostat1', {
+    accessory: {},
+    hidden: false,
+    updateDevice: (updatedDevice, groups) => updates.push([updatedDevice, {...groups}]),
+  }]]);
+  const router = new HmIPEventRouter(log, state, devices, {
+    addDevice() {},
+    removeDevice() {},
+    updateHome() {},
+    updateSecurityGroups() {},
+  });
+  const group = {id: 'room1', type: 'HEATING', setPointTemperature: 21};
+
+  router.handle({events: {group: {pushEventType: 'GROUP_CHANGED', group}}});
+
+  assert.deepEqual(updates, [[device, {room1: group}]]);
 });

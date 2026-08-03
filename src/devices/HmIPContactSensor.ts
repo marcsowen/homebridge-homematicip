@@ -41,9 +41,7 @@ export class HmIPContactSensor extends HmIPGenericDevice {
 
     this.platform.log.debug('Created HmIPContactSensor %s', accessory.context.device.label);
 
-    this.service = this.accessory.getService(this.platform.Service.ContactSensor) 
-      || this.accessory.addService(this.platform.Service.ContactSensor);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.service = this.getOrAddService(this.platform.Service.ContactSensor, accessory.context.device.label);
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .onGet(() => this.windowState === WindowState.CLOSED
         ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
@@ -56,7 +54,6 @@ export class HmIPContactSensor extends HmIPGenericDevice {
           : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
     }
 
-    this.updateDevice(accessory.context.device, platform.groups);
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

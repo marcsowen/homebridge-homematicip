@@ -91,7 +91,7 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-SCI Contact interface sensor
 - HmIP-SRH Rotary handle switch
 - HmIP-SWSD Smoke detector
-- HmIP-PS Pluggable switch
+- HmIP-PS / HmIP-PS-2 Pluggable switch
 - HmIP-PCBS Switch circuit board - 1 channel
 - HmIP-PCBS-BAT Printed circuit board switch battery
 - HmIP-PCBS2 Switch circuit board - 2x channels
@@ -101,10 +101,19 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIPW-DRS4 Wired switch actuator – 4x channels
 - HmIP-BS2 Brand switch - 2x channels
 - HmIP-DRSI4 Switch actuator for DIN rail mount – 4x channels
+- HmIP-DRSI1 Switch actuator for DIN rail mount – 1 channel
+- ELV-SH-SB8 Status board – 8x channels
+- HmIPW-FIO6 Wired input/output module – 6x channels
+- HmIP-MIOB Multi IO box
 - HmIP-PSM Pluggable switch and meter
 - HmIP-BSM Brand switch and meter
 - HmIP-FSM, HmIP-FSM16 Full flush switch and meter
+- HmIP-PSMCO Switch measuring cable – outdoor
+- ELV-SH-PSMCI Switch measuring cable – indoor
+- HmIP-USBSM USB switch and meter
 - HmIP-FSI16 full flush switch (16A)
+- HmIP-SCTH230 CO₂ sensor with switching output
+- HmIP-SMO230 Outdoor motion detector with switching output
 - HmIP-MOD-TM Garage door module - Tormatic
 - HmIP-MOD-HO Garage door module - Hörmann
 - HmIP-WGC Wall mounted garage door controller
@@ -117,9 +126,9 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-PDT Pluggable dimmer
 - HmIP-BDT Brand dimmer
 - HmIP-FDT Dimming actuator flush-mount
-- HmIPW-DRD3 Wired dimming actuator – 3x channels [1]
-- HmIP-DRDI3 DIN rail dimming actuator (multichannel)
-- HmIP-DLD Door lock drive [2]
+- HmIPW-DRD3 Wired dimming actuator – 3x channels
+- HmIP-DRDI3 DIN rail dimming actuator – 3x channels
+- HmIP-DLD Door lock drive [1]
 - HmIP-DLS Door lock sensor
 - HmIP-BSL Notification light switch
 - HmIP-SWO-B Smart weather sensor - basic
@@ -127,13 +136,17 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-SWO-PR Smart weather sensor - pro
 - HMIP-WRC2 Homematic IP button - 2 channels
 - HMIP-WRC6 Homematic IP button - 6 channels
+- HmIP-WRC6-230 Homematic IP button - 6 channels, 230 V, with switching output
 - HMIP-BRC2 Homematic IP brand button - 2 channels
 - HMIP-WRCC2 Homematic IP flat button - 2 channels
+- HmIPW-WRC2 / HmIPW-WRC6 Homematic IP Wired buttons - 2/6 channels
+- HmIP-KRC4 / HmIP-KRC-K Homematic IP key-ring remote controls - 4 channels
+- HmIP-RC8 / HmIP-MOD-RC8 Homematic IP remote controls - 8 channels
+- HmIP-DBB Homematic IP doorbell button
 - ELV-SH-CTH Smart temperature and humidity sensor
 - ELV-SH-SPS25 Switch power supply
 
-[1] Currently, only first channel is supported.<br>
-[2] Please make sure homebridge-homematicip is added to the list of access control clients in HmIP app settings.
+[1] Please make sure homebridge-homematicip is added to the list of access control clients in HmIP app settings.
 
 ## TODOs
 

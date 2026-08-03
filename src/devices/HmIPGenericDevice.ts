@@ -1,4 +1,4 @@
-import type {Service} from 'homebridge';
+import type {Service, WithUUID} from 'homebridge';
 
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import {
@@ -18,6 +18,10 @@ interface DeviceBaseChannel extends HmIPFunctionalChannel {
     IOptionalFeatureLowBat: boolean;
   };
 }
+
+type NamedServiceConstructor = WithUUID<typeof Service> & {
+  new(displayName: string, subtype?: string): Service;
+};
 
 function isDeviceBaseChannel(channel: HmIPFunctionalChannel): channel is DeviceBaseChannel {
   if (!hasFunctionalChannelType(channel, 'DEVICE_OPERATIONLOCK', 'DEVICE_BASE', 'DEVICE_SABOTAGE')) {
@@ -91,6 +95,20 @@ export abstract class HmIPGenericDevice {
           ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
           : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
     }
+  }
+
+  protected getOrAddService(
+    ServiceType: NamedServiceConstructor,
+    displayName: string,
+    subtype?: string,
+  ): Service {
+    const existingService = subtype === undefined
+      ? this.accessory.getService(ServiceType)
+      : this.accessory.getServiceById(ServiceType, subtype);
+    if (existingService) {
+      return existingService;
+    }
+    return this.accessory.addService(new ServiceType(displayName, subtype));
   }
 
   public updateDevice(hmIPDevice: HmIPDevice, _groups: Readonly<Record<string, HmIPGroup>>) {

@@ -34,11 +34,7 @@ export class HmIPShutter extends HmIPGenericDevice {
   ) {
     super(platform, accessory);
 
-    this.service = this.accessory.getService(this.platform.Service.WindowCovering)
-      || this.accessory.addService(this.platform.Service.WindowCovering);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
-
-    this.updateDevice(accessory.context.device, platform.groups);
+    this.service = this.getOrAddService(this.platform.Service.WindowCovering, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
       .onGet(() => this.shutterLevel);

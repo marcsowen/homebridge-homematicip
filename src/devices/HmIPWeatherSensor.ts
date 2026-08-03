@@ -109,37 +109,46 @@ export class HmIPWeatherSensor extends HmIPGenericDevice {
     this.withSunshineSensor = accessory.context.config?.withSunshineSensor ?? false;
     this.withWindSpeedSensor = accessory.context.config?.withWindSpeedSensor ?? false;
 
-    this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
-      || this.accessory.addService(this.platform.Service.TemperatureSensor);
-    this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.temperatureService = this.getOrAddService(
+      this.platform.Service.TemperatureSensor,
+      accessory.context.device.label,
+    );
 
-    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
-      || this.accessory.addService(this.platform.Service.HumiditySensor);
-    this.humidityService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.humidityService = this.getOrAddService(
+      this.platform.Service.HumiditySensor,
+      accessory.context.device.label,
+    );
 
-    this.lightSensorService = this.accessory.getService(this.platform.Service.LightSensor)
-      || this.accessory.addService(this.platform.Service.LightSensor);
-    this.lightSensorService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.lightSensorService = this.getOrAddService(
+      this.platform.Service.LightSensor,
+      accessory.context.device.label,
+    );
 
     this.weatherService = this.accessory.getService('WeatherService')
       || this.accessory.addService(new platform.api.hap.Service('WeatherService', 'E863F001-079E-48FF-8F27-9C2605A29F52'));
 
     if (this.withStormSensor) {
-      this.stormOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'Storm')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label} Storm`, 'Storm'));
-      this.stormOccupancyService.setCharacteristic(this.platform.Characteristic.Name, `${accessory.context.device.label} Storm`,);
+      this.stormOccupancyService = this.getOrAddService(
+        this.platform.Service.OccupancySensor,
+        `${accessory.context.device.label} Storm`,
+        'Storm',
+      );
     }
 
     if (this.withSunshineSensor) {
-      this.sunshineOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'Sunshine')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label} Sunshine`, 'Sunshine'));
-      this.sunshineOccupancyService.setCharacteristic(this.platform.Characteristic.Name, `${accessory.context.device.label} Sunshine`,);
+      this.sunshineOccupancyService = this.getOrAddService(
+        this.platform.Service.OccupancySensor,
+        `${accessory.context.device.label} Sunshine`,
+        'Sunshine',
+      );
     }
 
     if (this.withWindSpeedSensor) {
-      this.windSpeedOccupancyService = this.accessory.getServiceById(this.platform.Service.OccupancySensor, 'WindSpeed')
-        || this.accessory.addService(new this.platform.Service.OccupancySensor(`${accessory.context.device.label}  WindSpeed`, 'WindSpeed'));
-      this.windSpeedOccupancyService.setCharacteristic(this.platform.Characteristic.Name, `${accessory.context.device.label} WindSpeed`);
+      this.windSpeedOccupancyService = this.getOrAddService(
+        this.platform.Service.OccupancySensor,
+        `${accessory.context.device.label} Wind Speed`,
+        'WindSpeed',
+      );
     }
 
     this.historyService = new this.platform.FakeGatoHistoryService('weather', this.accessory, {
@@ -150,9 +159,7 @@ export class HmIPWeatherSensor extends HmIPGenericDevice {
       length: 1000,
     });
 
-    // update initially
     this.platform.log.debug(`Created WeatherSensor ${accessory.context.device.label}`);
-    this.updateDevice(accessory.context.device, platform.groups);
 
     // register characteristics
     this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)

@@ -125,12 +125,8 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
       length: 1000,
     });
 
-    this.service = this.accessory.getService(this.platform.Service.Thermostat) ||
-      this.accessory.addService(this.platform.Service.Thermostat);
+    this.service = this.getOrAddService(this.platform.Service.Thermostat, accessory.context.device.label);
     this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
-
-    this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState)
       .onGet(() => this.getCurrentHeatingCoolingState());

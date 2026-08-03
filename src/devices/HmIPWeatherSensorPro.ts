@@ -24,7 +24,6 @@ export class HmIPWeatherSensorPro extends HmIPWeatherSensorPlus {
     super(platform, accessory);
 
     this.platform.log.debug(`Created WeatherSensorPro ${accessory.context.device.label}`);
-    this.updateDevice(accessory.context.device, platform.groups);
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.WindDirection)
       .onGet(() => `${this.windDirection}°`);

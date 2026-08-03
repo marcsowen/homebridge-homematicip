@@ -104,8 +104,7 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
 
     /* Create switch service */
     this.platform.log.debug(`Created switch ${accessory.context.device.label}`);
-    this.service = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.service = this.getOrAddService(this.platform.Service.Switch, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
       .onGet(() => this.on)
@@ -219,7 +218,6 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
       this.platform.log.info('Removing light services from %s (config=%s)', accessory.context.device.label, this.simpleSwitch);
     }
 
-    this.updateDevice(accessory.context.device, platform.groups);   
   }
 
 
@@ -388,13 +386,6 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
     if (light.service !== undefined) {
       let onstate = null;
       
-      if (channel.label !== null && channel.label !== '' && light.label !== channel.label) {
-        light.label = channel.label;
-        light.service.displayName = light.label;
-        light.service.updateCharacteristic(this.platform.Characteristic.Name, light.label);
-        this.platform.log.debug('Update light label of %s to %s', this.accessory.displayName, light.label);
-      }
-
       if (channel.dimLevel !== null) {
         const brightness = channel.dimLevel * 100.0;
         if (brightness !== light.brightness) {

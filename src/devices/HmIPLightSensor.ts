@@ -30,11 +30,7 @@ export class HmIPLightSensor extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug('Created light sensor %s', accessory.context.device.label);
-    this.service = this.accessory.getService(this.platform.Service.LightSensor)
-      || this.accessory.addService(this.platform.Service.LightSensor);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
-
-    this.updateDevice(accessory.context.device, platform.groups);
+    this.service = this.getOrAddService(this.platform.Service.LightSensor, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
       .onGet(() => this.averageIllumination);

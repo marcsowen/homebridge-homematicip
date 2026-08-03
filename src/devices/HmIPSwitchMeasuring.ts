@@ -4,17 +4,34 @@ import type {
 } from 'homebridge';
 
 import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
+import {
+  type HmIPDevice,
+  type HmIPFunctionalChannel,
+  type HmIPGroup,
+  hasFunctionalChannelType,
+  isHmIPRecord,
+} from '../HmIPState.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
-interface SwitchMeasuringChannel {
-    functionalChannelType: string;
-    on: boolean;
-    profileMode: string;
-    userDesiredProfileMode: string;
-    energyCounter: number;
-    currentPowerConsumption: number;
+interface SwitchMeasuringChannel extends HmIPFunctionalChannel {
+  functionalChannelType: 'SWITCH_MEASURING_CHANNEL';
+  index: number;
+  on: boolean | null;
+  energyCounter: number | null;
+  currentPowerConsumption: number | null;
+}
+
+function isSwitchMeasuringChannel(channel: HmIPFunctionalChannel): channel is SwitchMeasuringChannel {
+  if (!hasFunctionalChannelType(channel, 'SWITCH_MEASURING_CHANNEL')) {
+    return false;
+  }
+  const candidate: unknown = channel;
+  return isHmIPRecord(candidate)
+    && typeof candidate.index === 'number'
+    && (candidate.on === null || typeof candidate.on === 'boolean')
+    && (candidate.energyCounter === null || typeof candidate.energyCounter === 'number')
+    && (candidate.currentPowerConsumption === null || typeof candidate.currentPowerConsumption === 'number');
 }
 
 /**
@@ -31,6 +48,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice {
   private on = false;
   private energyCounter = 0;
   private currentPowerConsumption = 0;
+  private channelIndex = 1;
 
   constructor(
     platform: HmIPPlatform,
@@ -39,12 +57,9 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug('Created switch (measuring) %s', accessory.context.device.label);
-    this.service = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
+    this.service = this.getOrAddService(this.platform.Service.Switch, accessory.context.device.label);
     this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower);
     this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy);
-
-    this.updateDevice(accessory.context.device, platform.groups);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
       .onGet(() => this.on)
@@ -60,7 +75,7 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice {
   private async handleOnSet(value: CharacteristicValue): Promise<void> {
     this.platform.log.info('Setting switch %s to %s', this.accessory.displayName, value ? 'ON' : 'OFF');
     const body = {
-      channelIndex: 1,
+      channelIndex: this.channelIndex,
       deviceId: this.accessory.context.device.id,
       on: value,
     };
@@ -70,8 +85,9 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice {
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (channel.functionalChannelType === 'SWITCH_MEASURING_CHANNEL') {
-        const switchMeasuringChannel = <SwitchMeasuringChannel>channel;
+      if (isSwitchMeasuringChannel(channel)) {
+        const switchMeasuringChannel = channel;
+        this.channelIndex = switchMeasuringChannel.index;
         this.platform.log.debug('Switch (measuring) update: %s', JSON.stringify(channel));
 
         if (switchMeasuringChannel.on != null && switchMeasuringChannel.on !== this.on) {

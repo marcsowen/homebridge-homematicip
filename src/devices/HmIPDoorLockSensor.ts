@@ -40,11 +40,7 @@ export class HmIPDoorLockSensor extends HmIPGenericDevice {
     super(platform, accessory);
 
     this.platform.log.debug(`Created door lock sensor ${accessory.context.device.label}`);
-    this.service = this.accessory.getService(this.platform.Service.LockMechanism)
-      || this.accessory.addService(this.platform.Service.LockMechanism);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.label);
-
-    this.updateDevice(accessory.context.device, platform.groups);
+    this.service = this.getOrAddService(this.platform.Service.LockMechanism, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
       .onGet(this.handleLockCurrentStateGet.bind(this));
