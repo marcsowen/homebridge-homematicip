@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc@sowen.net>",
@@ -50,6 +50,6 @@
   },
   "dependencies": {
     "fakegato-history": "^0.6.7",
-    "homematicip-cloud-client-ts": "^0.2.0"
+    "homematicip-cloud-client-ts": "^0.2.1"
   }
 }

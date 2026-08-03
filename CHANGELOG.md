@@ -1,3 +1,13 @@
+## 2.4.1 (2026-08-03)
+
+### Bug fixes
+
+- **Home Control Unit**: Accept HCU `PLUGIN_EXTERNAL` records without aborting startup and keep these unsupported plug-in devices hidden from HomeKit.
+- **Diagnostics**: Invalid cloud responses now include field-specific, redacted diagnostics through `homematicip-cloud-client-ts` 0.2.1.
+- **Dependencies**: Require `homematicip-cloud-client-ts` 0.2.1 or newer.
+
+This release does not require any Homebridge configuration changes.
+
 ## 2.4.0 (2026-08-03)
 
 ### Improvements

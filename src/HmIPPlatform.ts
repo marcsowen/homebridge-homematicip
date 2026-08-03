@@ -19,7 +19,7 @@ import {
 import {CustomCharacteristic} from './CustomCharacteristic.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
 import type {HmIPPlatformConfig} from './HmIPConfig.js';
-import {HmIPDeviceFactory, isHmIPControllerDevice} from './HmIPDeviceFactory.js';
+import {HmIPDeviceFactory, isHmIPControllerDevice, isHmIPExternalDevice} from './HmIPDeviceFactory.js';
 import {HmIPEventRouter} from './HmIPEventRouter.js';
 import {HmIPSecuritySystem} from './HmIPSecuritySystem.js';
 import {type HmIPDeviceAdapter, type HmIPPlatformAccessory, isHmIPAccessoryContext} from './HmIPTypes.js';
@@ -255,6 +255,14 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       return undefined;
     }
 
+    if (isHmIPExternalDevice(device)) {
+      const existingDevice = this.deviceMap.get(device.id);
+      if (existingDevice) {
+        this.removeAccessory(device.id, existingDevice);
+      }
+      return undefined;
+    }
+
     const existingDevice = this.deviceMap.get(device.id);
     if (existingDevice) {
       existingDevice.updateDevice(device, this.groups);
@@ -266,7 +274,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     const homebridgeDevice = this.deviceFactory.create(device, hmIPAccessory.accessory);
     if (!homebridgeDevice) {
       this.accessoryRepository.remove(uuid);
-      if (!isHmIPControllerDevice(device) && device.type !== 'EXTERNAL') {
+      if (!isHmIPControllerDevice(device)) {
         this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       }
       return undefined;

@@ -108,6 +108,11 @@ const controllerDeviceTypes = new Set([
   'WIRELESS_ACCESS_POINT_BASIC',
 ]);
 
+const externalDeviceTypes = new Set([
+  'EXTERNAL',
+  'PLUGIN_EXTERNAL',
+]);
+
 export type HmIPDeviceKind =
   | 'heatingThermostat'
   | 'wallMountedThermostat'
@@ -148,6 +153,10 @@ export function getHmIPDeviceKind(device: HmIPDevice): HmIPDeviceKind | undefine
 
 export function isHmIPControllerDevice(device: Pick<HmIPDevice, 'type'>): boolean {
   return controllerDeviceTypes.has(device.type);
+}
+
+export function isHmIPExternalDevice(device: Pick<HmIPDevice, 'type'>): boolean {
+  return externalDeviceTypes.has(device.type);
 }
 
 export class HmIPDeviceFactory {

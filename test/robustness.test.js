@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {HmIPAccessoryRepository} from '../dist/HmIPAccessoryRepository.js';
-import {getHmIPDeviceKind, isHmIPControllerDevice} from '../dist/HmIPDeviceFactory.js';
+import {
+  getHmIPDeviceKind,
+  isHmIPControllerDevice,
+  isHmIPExternalDevice,
+} from '../dist/HmIPDeviceFactory.js';
 import {HmIPEventRouter} from '../dist/HmIPEventRouter.js';
 import {HmIPGenericDevice} from '../dist/devices/HmIPGenericDevice.js';
 
@@ -175,6 +179,12 @@ test('recognizes HAP and HCU controller devices as infrastructure', () => {
     assert.equal(isHmIPControllerDevice({type}), true);
   }
   assert.equal(isHmIPControllerDevice({type: 'PLUGABLE_SWITCH'}), false);
+});
+
+test('recognizes cloud and HCU plugin devices as external', () => {
+  assert.equal(isHmIPExternalDevice({type: 'EXTERNAL'}), true);
+  assert.equal(isHmIPExternalDevice({type: 'PLUGIN_EXTERNAL'}), true);
+  assert.equal(isHmIPExternalDevice({type: 'PLUGABLE_SWITCH'}), false);
 });
 
 test('routes dynamic devices and preserves channel index zero', () => {
