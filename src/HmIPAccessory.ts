@@ -1,5 +1,5 @@
 import type {API, Logger} from 'homebridge';
-import type {IdentifiableDevice} from './HmIPState.js';
+import type {IdentifiableDevice} from 'homematicip-cloud-client-ts';
 import type {HmIPPlatformAccessory} from './HmIPTypes.js';
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings.js';
 

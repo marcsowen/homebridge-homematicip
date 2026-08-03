@@ -1,3 +1,4 @@
+import type {HmIPDevice} from 'homematicip-cloud-client-ts';
 import {HmIPBlind} from './devices/HmIPBlind.js';
 import {HmIPButton} from './devices/HmIPButton.js';
 import {HmIPClimateSensor} from './devices/HmIPClimateSensor.js';
@@ -25,7 +26,6 @@ import {HmIPWeatherSensor} from './devices/HmIPWeatherSensor.js';
 import {HmIPWeatherSensorPlus} from './devices/HmIPWeatherSensorPlus.js';
 import {HmIPWeatherSensorPro} from './devices/HmIPWeatherSensorPro.js';
 import type {HmIPPlatform} from './HmIPPlatform.js';
-import type {HmIPDevice} from './HmIPState.js';
 import type {HmIPDeviceAdapter, HmIPPlatformAccessory} from './HmIPTypes.js';
 
 const deviceKinds = new Map<string, HmIPDeviceKind>([

@@ -1,5 +1,4 @@
 
-import type {HmIPPlatform} from '../HmIPPlatform.js';
 import {
   type HmIPDevice,
   type HmIPFunctionalChannel,
@@ -7,7 +6,8 @@ import {
   type HmIPHeatingGroup,
   hasFunctionalChannelType,
   isHmIPRecord,
-} from '../HmIPState.js';
+} from 'homematicip-cloud-client-ts';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {type HistoryEvent, HmIPHeatingThermostat, type ThermostatChannel} from './HmIPHeatingThermostat.js';
 

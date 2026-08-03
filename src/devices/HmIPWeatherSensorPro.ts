@@ -1,5 +1,5 @@
+import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPWeatherSensorPlus, type WeatherSensorPlusChannel} from './HmIPWeatherSensorPlus.js';
 

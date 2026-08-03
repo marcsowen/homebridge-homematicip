@@ -1,7 +1,6 @@
 import type {Service} from 'homebridge';
-
+import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from 'homematicip-cloud-client-ts';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from '../HmIPState.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 

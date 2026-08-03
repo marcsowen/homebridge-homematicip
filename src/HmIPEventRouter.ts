@@ -1,5 +1,5 @@
 import type {Logger} from 'homebridge';
-import type {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange} from './HmIPState.js';
+import type {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange} from 'homematicip-cloud-client-ts';
 import type {HmIPDeviceAdapter} from './HmIPTypes.js';
 
 export interface HmIPEventRouterCallbacks {

@@ -1,12 +1,11 @@
 import type {CharacteristicValue, Service} from 'homebridge';
-
-import type {HmIPPlatform} from './HmIPPlatform.js';
 import {
   type HmIPGroup,
   type HmIPHome,
   isHmIPSecurityAndAlarmSolution,
   isHmIPSecurityZoneGroup,
-} from './HmIPState.js';
+} from 'homematicip-cloud-client-ts';
+import type {HmIPPlatform} from './HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from './HmIPTypes.js';
 
 const CLASSIC_SECURITY_ZONE_LABELS = {

@@ -5,9 +5,15 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/marcsowen/homebridge-homematicip.svg?style=plastic)](https://github.com/marcsowen/homebridge-homematicip)
 ![GitHub build](https://img.shields.io/github/actions/workflow/status/marcsowen/homebridge-homematicip/main.yml?style=plastic)
 
-## Homematic IP platform plugin for homebridge
+## Bring Homematic IP devices into Apple Home
 
-Uses the unofficial HTTP API and WebSockets for continuous channel updates.
+This Homebridge plugin makes a wide range of Homematic IP devices available in HomeKit and the Apple Home app.
+Supported devices include thermostats, switches, dimmers, shutters and blinds, locks, contact and motion sensors,
+smoke and water detectors, weather sensors, buttons, and security systems.
+
+The plugin discovers supported devices connected to one or more Homematic IP Access Points, creates native HomeKit
+accessories for them, and keeps their state synchronized continuously. Devices can be controlled from Apple Home,
+included in scenes and automations, and used through Siri.
 
 ### Requirements
 
@@ -17,8 +23,29 @@ Uses the unofficial HTTP API and WebSockets for continuous channel updates.
 Older Homebridge and Node.js releases are no longer supported by version 2.x of this plugin.
 Existing `access_point`, `auth_token`, and per-device configuration remains compatible when upgrading from version 1.x.
 
-Add one (or more) Homematic IP Access Points to config.json. There are two configuration
-options that you can set:
+### Installation
+
+If you do not yet have Homebridge, follow the
+[official Homebridge installation documentation](https://github.com/homebridge/homebridge/wiki).
+
+The recommended way to install this plugin is through the Homebridge UI:
+
+1. Open **Plugins** in the Homebridge UI.
+2. Search for `homebridge-homematicip`.
+3. Select **Install**.
+4. Open the plugin settings to configure your Homematic IP Access Point.
+
+The [Homebridge UI project](https://github.com/homebridge/homebridge-config-ui-x) provides additional installation and
+plugin-management documentation.
+
+### Configuration
+
+The Homebridge UI exposes the available platform and per-device settings. You can also configure the plugin manually in
+`config.json`. Add one configuration entry for each Homematic IP Access Point you want to expose.
+
+#### Using an existing auth token
+
+Configure the Access Point ID and authentication token:
 
 ```json
 {
@@ -32,7 +59,10 @@ options that you can set:
 The Access Point ID is printed on the back of your Homematic IP Access Point (HmIP-HAP) and is
 labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 
-### Pairing
+#### Pairing without an auth token
+
+If you do not have an authentication token yet, configure the Access Point ID without `auth_token`. Add `pin` only when
+a PIN is configured in the Homematic IP app:
 
 ```json
 {
@@ -43,17 +73,15 @@ labeled as "SGTIN", e.g. 3014-xxxx-xxxx-xxxx-xxxx-xxxx.
 }
 ```
 
-If you do not have an auth token, leave `auth_token` empty. Add the `pin` property only if a PIN is configured in the app.
 After startup, wait for "Press blue, glowing link button of HmIP Access Point now!", then press the button. Copy the
 generated token from the log into `config.json`, remove `pin`, and restart Homebridge.
 
 A pairing attempt waits for the Access Point button for up to five minutes. It stops earlier when the cloud connection
 fails. Restart Homebridge to begin another pairing attempt.
 
-### Additional config
+#### Additional options
 
-The Homebridge settings UI exposes the available platform and per-device options. See the
-[Wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for additional details.
+See the [plugin wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for additional configuration details.
 
 ### Accessory synchronization
 
@@ -168,6 +196,13 @@ pnpm run lint
 pnpm run build
 pnpm run test
 ```
+
+### Shared client library
+
+Cloud communication, pairing, state models, and response validation are provided by the reusable
+[`homematicip-cloud-client-ts`](https://www.npmjs.com/package/homematicip-cloud-client-ts) package
+([source](https://github.com/marcsowen/homematicip-cloud-client-ts)). It is installed automatically as a runtime
+dependency; users do not need to install or configure it separately.
 
 ## Many thanks to our contributors
 

@@ -14,12 +14,9 @@ importers:
       fakegato-history:
         specifier: ^0.6.7
         version: 0.6.7(supports-color@5.5.0)
-      p-queue:
-        specifier: ^9.3.3
-        version: 9.3.3
-      ws:
-        specifier: ^8.21.1
-        version: 8.21.1
+      homematicip-cloud-client-ts:
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.6
@@ -27,9 +24,6 @@ importers:
       '@types/node':
         specifier: ^24.10.1
         version: 24.13.3
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
       homebridge:
         specifier: ^2.2.1
         version: 2.2.1(supports-color@5.5.0)
@@ -157,9 +151,6 @@ packages:
 
   '@types/node@24.13.3':
     resolution: {integrity: sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==}
-
-  '@types/ws@8.18.1':
-    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     resolution: {integrity: sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==}
@@ -567,6 +558,10 @@ packages:
     resolution: {integrity: sha512-U6VBjxMC4DoVx/v9D0FBTh6eZ2Vkis7DePY4vQlgxWxRNJ9G+Ul31tBy/rj7+k1oVhlihnWRwukWLRQ1ZO+52w==}
     engines: {node: ^22 || ^24}
     hasBin: true
+
+  homematicip-cloud-client-ts@0.1.0:
+    resolution: {integrity: sha512-zO9mFgomvhrMES/eZteCvtg3Z9I638jEsp0Rw/cLaA55Ek2LCuR+RWlzP20Xdypm48iwq0zc4GgNaBbNRH7vMA==}
+    engines: {node: ^22.0.0 || ^24.0.0}
 
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
@@ -1039,10 +1034,6 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
-  '@types/ws@8.18.1':
-    dependencies:
-      '@types/node': 24.13.3
-
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true
 
@@ -1432,6 +1423,14 @@ snapshots:
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
+
+  homematicip-cloud-client-ts@0.1.0:
+    dependencies:
+      p-queue: 9.3.3
+      ws: 8.21.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   https-proxy-agent@7.0.6(supports-color@5.5.0):
     dependencies:

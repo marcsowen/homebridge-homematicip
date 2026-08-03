@@ -9,20 +9,19 @@ import type {
   PlatformAccessory,
   Service,
 } from 'homebridge';
-import {CustomCharacteristic} from './CustomCharacteristic.js';
-import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
-import type {HmIPPlatformConfig} from './HmIPConfig.js';
-import {HmIPConnector} from './HmIPConnector.js';
-import {HmIPDeviceFactory} from './HmIPDeviceFactory.js';
-import {HmIPEventRouter} from './HmIPEventRouter.js';
-import {HmIPSecuritySystem} from './HmIPSecuritySystem.js';
 import {
+  HmIPClient,
   type HmIPDevice,
   type HmIPGroup,
   type HmIPHome,
   type IdentifiableDevice,
-  parseHmIPStateChange,
-} from './HmIPState.js';
+} from 'homematicip-cloud-client-ts';
+import {CustomCharacteristic} from './CustomCharacteristic.js';
+import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
+import type {HmIPPlatformConfig} from './HmIPConfig.js';
+import {HmIPDeviceFactory} from './HmIPDeviceFactory.js';
+import {HmIPEventRouter} from './HmIPEventRouter.js';
+import {HmIPSecuritySystem} from './HmIPSecuritySystem.js';
 import {type HmIPDeviceAdapter, type HmIPPlatformAccessory, isHmIPAccessoryContext} from './HmIPTypes.js';
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from './settings.js';
 
@@ -37,7 +36,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   public readonly Characteristic: typeof Characteristic;
   public readonly FakeGatoHistoryService: typeof fakegato;
 
-  public readonly connector: HmIPConnector;
+  public readonly connector: HmIPClient;
   public groups: Record<string, HmIPGroup> = {};
   private readonly accessoryRepository: HmIPAccessoryRepository;
   private readonly deviceMap = new Map<string, HmIPDeviceAdapter>();
@@ -62,12 +61,14 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     this.accessoryRepository = new HmIPAccessoryRepository(api, log, config.devices);
     this.deviceFactory = new HmIPDeviceFactory(this);
 
-    this.connector = new HmIPConnector(
-      log,
-      config.access_point,
-      config.auth_token,
-      config.pin,
-    );
+    this.connector = new HmIPClient(log, {
+      accessPoint: config.access_point,
+      applicationIdentifier: PLUGIN_NAME,
+      applicationVersion: PLUGIN_VERSION,
+      deviceName: PLUGIN_NAME,
+      ...(config.auth_token === undefined ? {} : {authToken: config.auth_token}),
+      ...(config.pin === undefined ? {} : {pin: config.pin}),
+    });
     this.log.debug('Finished initializing platform:', this.config.name);
     this.api.on('didFinishLaunching', () => {
       void this.start();
@@ -236,22 +237,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     });
 
     // Start websocket immediately and register handlers
-    this.connector.connectWs(data => {
-      let parsedMessage: unknown;
-      try {
-        parsedMessage = JSON.parse(data.toString()) as unknown;
-      } catch (error) {
-        this.log.error('Cannot parse Homematic IP websocket message: %s',
-          error instanceof Error ? error.message : String(error));
-        return;
-      }
-      const parseResult = parseHmIPStateChange(parsedMessage);
-      if (!parseResult.success) {
-        this.log.error('Ignoring malformed Homematic IP websocket message: %s', parseResult.error);
-        return;
-      }
-      eventRouter.handle(parseResult.value);
-    });
+    this.connector.connect(stateChange => eventRouter.handle(stateChange));
     return true;
   }
 

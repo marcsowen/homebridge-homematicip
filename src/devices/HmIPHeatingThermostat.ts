@@ -3,8 +3,6 @@ import {
   type Service,
   ServiceEventTypes,
 } from 'homebridge';
-
-import type {HmIPPlatform} from '../HmIPPlatform.js';
 import {
   type HmIPDevice,
   type HmIPFunctionalChannel,
@@ -13,7 +11,8 @@ import {
   hasFunctionalChannelType,
   isHmIPHeatingGroup,
   isHmIPRecord,
-} from '../HmIPState.js';
+} from 'homematicip-cloud-client-ts';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 

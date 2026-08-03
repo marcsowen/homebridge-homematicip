@@ -1,3 +1,13 @@
+## 2.3.0 (2026-08-03)
+
+### Improvements
+
+- **Client library**: Moved Homematic IP Cloud endpoint discovery, authentication, REST requests, WebSocket handling, state types, and response validation into the reusable [`homematicip-cloud-client-ts`](https://github.com/marcsowen/homematicip-cloud-client-ts) package.
+- **Dependencies**: Replaced the plugin's direct `p-queue`, `ws`, and `@types/ws` dependencies with `homematicip-cloud-client-ts` 0.1.x.
+- **Events**: Homebridge now consumes validated, typed state-change events from the shared client instead of parsing WebSocket payloads itself.
+
+This release does not require any Homebridge configuration changes.
+
 ## 2.2.0 (2026-08-03)
 
 ### New devices

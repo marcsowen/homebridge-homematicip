@@ -1,7 +1,7 @@
 import type fakegato from 'fakegato-history';
 import type {Service} from 'homebridge';
+import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPDevice, HmIPGroup} from '../HmIPState.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 

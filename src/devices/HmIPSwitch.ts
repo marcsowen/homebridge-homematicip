@@ -2,15 +2,14 @@ import type {
   CharacteristicValue,
   Service,
 } from 'homebridge';
-
-import type {HmIPPlatform} from '../HmIPPlatform.js';
 import {
   type HmIPDevice,
   type HmIPFunctionalChannel,
   type HmIPGroup,
   hasFunctionalChannelType,
   isHmIPRecord,
-} from '../HmIPState.js';
+} from 'homematicip-cloud-client-ts';
+import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 

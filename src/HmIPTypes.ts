@@ -1,6 +1,6 @@
 import type {PlatformAccessory} from 'homebridge';
+import type {HmIPDevice, HmIPGroup, IdentifiableDevice} from 'homematicip-cloud-client-ts';
 import type {HmIPDeviceConfig} from './HmIPConfig.js';
-import type {HmIPDevice, HmIPGroup, IdentifiableDevice} from './HmIPState.js';
 
 export type HmIPAccessoryContext<T extends IdentifiableDevice = HmIPDevice> = {
   config?: HmIPDeviceConfig;
