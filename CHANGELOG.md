@@ -1,3 +1,9 @@
+## 2.5.2 (2026-08-04)
+
+### Bug fixes
+
+- **Multi-mode inputs**: Treat inputs without a label, channel role, or group as unassigned even when they carry a non-default action parameter, preventing unused HmIPW-DRI16 channels from appearing in HomeKit ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+
 ## 2.5.1 (2026-08-04)
 
 ### Improvements
@@ -8,8 +14,6 @@
 
 - **Multi-mode inputs**: Hide default inputs that have no label, channel role, group, or configured action while retaining configured contact and button channels, including HmIPW-DRI16 and HmIP-FCI6 inputs ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
 - **Device diagnostics**: Preserve empty private-text fields in redacted dumps while continuing to redact non-empty values, allowing unused channels to be distinguished safely.
-
-This release does not require any Homebridge configuration changes.
 
 ## 2.5.0 (2026-08-04)
 
@@ -30,8 +34,6 @@ This release does not require any Homebridge configuration changes.
 - **Accessories**: Do not register devices for which no functional HomeKit service can be created, preventing empty or battery-only accessories. The warning now includes redacted channel structure metadata for diagnosis without exposing identifiers, labels, or values.
 - **Controllers**: Recognize the HmIPW-DRAP wired access point as an infrastructure device and keep it hidden without an unsupported-device warning.
 
-This release does not require any Homebridge configuration changes.
-
 ## 2.4.1 (2026-08-03)
 
 ### Bug fixes
@@ -40,16 +42,12 @@ This release does not require any Homebridge configuration changes.
 - **Diagnostics**: Invalid cloud responses now include field-specific, redacted diagnostics through `homematicip-cloud-client-ts` 0.2.1.
 - **Dependencies**: Require `homematicip-cloud-client-ts` 0.2.1 or newer.
 
-This release does not require any Homebridge configuration changes.
-
 ## 2.4.0 (2026-08-03)
 
 ### Improvements
 
 - **Home Control Unit**: Added HmIP-HCU1 cloud connectivity and pairing support through `homematicip-cloud-client-ts` 0.2.x ([#575](https://github.com/marcsowen/homebridge-homematicip/issues/575)). The controller itself remains hidden while its compatible devices are exposed to HomeKit.
 - **Dependencies**: Updated `homematicip-cloud-client-ts` from 0.1.x to 0.2.x.
-
-This release does not require any Homebridge configuration changes.
 
 ## 2.3.0 (2026-08-03)
 
@@ -58,8 +56,6 @@ This release does not require any Homebridge configuration changes.
 - **Client library**: Moved Homematic IP Cloud endpoint discovery, authentication, REST requests, WebSocket handling, state types, and response validation into the reusable [`homematicip-cloud-client-ts`](https://github.com/marcsowen/homematicip-cloud-client-ts) package.
 - **Dependencies**: Replaced the plugin's direct `p-queue`, `ws`, and `@types/ws` dependencies with `homematicip-cloud-client-ts` 0.1.x.
 - **Events**: Homebridge now consumes validated, typed state-change events from the shared client instead of parsing WebSocket payloads itself.
-
-This release does not require any Homebridge configuration changes.
 
 ## 2.2.0 (2026-08-03)
 

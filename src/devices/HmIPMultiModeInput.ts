@@ -24,7 +24,6 @@ enum WindowState {
 
 interface MultiModeInputChannel extends HmIPFunctionalChannel {
   functionalChannelType: 'MULTI_MODE_INPUT_CHANNEL';
-  actionParameter?: string | null;
   channelRole?: string | null;
   groups?: unknown[];
   index: number;
@@ -52,8 +51,6 @@ function isMultiModeInputChannel(channel: HmIPFunctionalChannel): channel is Mul
   return isHmIPRecord(candidate)
     && typeof candidate.index === 'number'
     && (candidate.label === null || typeof candidate.label === 'string')
-    && (candidate.actionParameter === undefined || candidate.actionParameter === null
-      || typeof candidate.actionParameter === 'string')
     && (candidate.channelRole === undefined || candidate.channelRole === null
       || typeof candidate.channelRole === 'string')
     && (candidate.groups === undefined || Array.isArray(candidate.groups))
@@ -65,8 +62,7 @@ function isUnassignedInput(channel: MultiModeInputChannel): boolean {
   return !channel.label?.trim()
     && channel.channelRole === null
     && Array.isArray(channel.groups)
-    && channel.groups.length === 0
-    && channel.actionParameter === 'NOT_CUSTOMISABLE';
+    && channel.groups.length === 0;
 }
 
 /**

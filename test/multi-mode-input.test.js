@@ -213,15 +213,16 @@ test('exposes all configured HmIPW-DRI16 inputs using their contact or button mo
     const index = offset + 1;
     const configuredContact = index <= 10;
     const configuredButton = index === 11;
+    const unusedSecurityAction = index === 12;
     return [index, channel(
       index,
       configuredContact ? 'BINARY_BEHAVIOR' : 'KEY_BEHAVIOR',
       configuredContact ? (index === 10 ? 'OPEN' : 'CLOSED') : null,
-      configuredContact ? `Input ${index}` : '',
+      configuredContact || configuredButton ? `Input ${index}` : '',
       configuredContact
         ? {actionParameter: 'NOT_CUSTOMISABLE', channelRole: 'WINDOW_SENSOR', groups: [`group-${index}`]}
         : {
-            actionParameter: configuredButton
+            actionParameter: unusedSecurityAction
               ? 'SECURITY_TOGGLE_INTERNAL_PROTECTION_MODE_SINGLE_ACTION'
               : 'NOT_CUSTOMISABLE',
             channelRole: null,
