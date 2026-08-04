@@ -3,6 +3,7 @@ import type {HmIPDevice, HmIPGroup, IdentifiableDevice} from 'homematicip-cloud-
 import type {HmIPDeviceConfig} from './HmIPConfig.js';
 
 export type HmIPAccessoryContext<T extends IdentifiableDevice = HmIPDevice> = {
+  channelIndex?: number;
   config?: HmIPDeviceConfig;
   device: T;
 };
@@ -11,7 +12,7 @@ export type HmIPPlatformAccessory<T extends IdentifiableDevice = HmIPDevice> =
   PlatformAccessory<HmIPAccessoryContext<T>>;
 
 export interface HmIPDeviceAdapter {
-  readonly accessory: PlatformAccessory;
+  readonly accessories: readonly PlatformAccessory[];
   readonly hasFunctionalServices: boolean;
   readonly hidden: boolean;
   updateDevice(device: HmIPDevice, groups: Readonly<Record<string, HmIPGroup>>): void;

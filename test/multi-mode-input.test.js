@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import {HmIPAccessoryRepository} from '../dist/HmIPAccessoryRepository.js';
 import {HmIPMultiModeInput} from '../dist/devices/HmIPMultiModeInput.js';
+import {HmIPMultiModeInputCollection} from '../dist/devices/HmIPMultiModeInputCollection.js';
 
 const Characteristic = {
   ContactSensorState: {CONTACT_DETECTED: 0, CONTACT_NOT_DETECTED: 1},
@@ -262,4 +264,112 @@ test('updates contact channels independently and reconciles mode changes', () =>
   ]]);
   assert.ok(!accessory.services.includes(contact3));
   assert.ok(accessory.getServiceById(StatelessProgrammableSwitchService, '3'));
+});
+
+test('exposes assigned channels as stable independent accessories on demand', () => {
+  const initialDevice = device({
+    1: channel(1, 'BINARY_BEHAVIOR', 'CLOSED', 'Front door', {
+      channelRole: 'WINDOW_SENSOR',
+      groups: ['front-door'],
+    }),
+    2: channel(2, 'KEY_BEHAVIOR', null, 'Doorbell', {
+      channelRole: 'KEY',
+      groups: ['doorbell'],
+    }),
+    3: channel(3, 'BINARY_BEHAVIOR', 'CLOSED', '', {
+      channelRole: null,
+      groups: [],
+    }),
+  }, 'WIRED_INPUT_16', 'HmIPW-DRI16');
+  const calls = {registered: [], removed: [], updated: []};
+
+  class MockPlatformAccessory {
+    constructor(displayName, UUID) {
+      this.context = {};
+      this.displayName = displayName;
+      this.services = [new MockService('Information', undefined, Service.AccessoryInformation)];
+      this.UUID = UUID;
+    }
+
+    addService(service) {
+      this.services.push(service);
+      return service;
+    }
+
+    getService(service) {
+      return this.services.find(candidate => candidate.UUID === service || candidate.UUID === service.UUID);
+    }
+
+    getServiceById(service, subtype) {
+      return this.services.find(candidate => candidate.UUID === service.UUID && candidate.subtype === subtype);
+    }
+
+    removeService(service) {
+      this.services.splice(this.services.indexOf(service), 1);
+    }
+  }
+
+  const platform = {
+    api: {
+      hap: {
+        Characteristic,
+        HAPStatus: {SERVICE_COMMUNICATION_FAILURE: -70402},
+        HapStatusError: MockHapStatusError,
+        Service,
+        uuid: {generate: value => `uuid-${value}`},
+      },
+      platformAccessory: MockPlatformAccessory,
+      registerPlatformAccessories: (_plugin, _platform, accessories) => calls.registered.push(...accessories),
+      unregisterPlatformAccessories: (_plugin, _platform, accessories) => calls.removed.push(...accessories),
+      updatePlatformAccessories: accessories => calls.updated.push(...accessories),
+    },
+    Characteristic,
+    config: {devices: {fci6: {separateChannels: true}}},
+    groups: {},
+    log: {debug() {}, info() {}, warn() {}},
+    Service,
+  };
+  const repository = new HmIPAccessoryRepository(platform.api, platform.log, platform.config.devices);
+  const collection = new HmIPMultiModeInputCollection(platform, repository, initialDevice);
+
+  assert.equal(collection.accessories.length, 2);
+  assert.deepEqual(collection.accessories.map(accessory => accessory.displayName), ['Front door', 'Doorbell']);
+  assert.deepEqual(collection.accessories.map(accessory => accessory.UUID), [
+    'uuid-fci6:channel:1',
+    'uuid-fci6:channel:2',
+  ]);
+  assert.deepEqual(collection.accessories.map(accessory => accessory.context.channelIndex), [1, 2]);
+  assert.equal(collection.accessories[0].services.filter(service => service.UUID === ContactSensorService.UUID).length, 1);
+  assert.equal(
+    collection.accessories[1].services.filter(service => service.UUID === StatelessProgrammableSwitchService.UUID).length,
+    1,
+  );
+  assert.equal(calls.registered.length, 2);
+  collection.channelEvent(2, 'KEY_PRESS_SHORT');
+  assert.deepEqual(
+    collection.accessories[1]
+      .getServiceById(StatelessProgrammableSwitchService, '2')
+      .getCharacteristic(Characteristic.ProgrammableSwitchEvent).events,
+    [Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS],
+  );
+
+  const updatedDevice = device({
+    1: channel(1, 'BINARY_BEHAVIOR', 'OPEN', 'Front door', {
+      channelRole: 'WINDOW_SENSOR',
+      groups: ['front-door'],
+    }),
+    2: channel(2, 'KEY_BEHAVIOR', null, '', {channelRole: null, groups: []}),
+    4: channel(4, 'BINARY_BEHAVIOR', 'CLOSED', 'Back door', {
+      channelRole: 'WINDOW_SENSOR',
+      groups: ['back-door'],
+    }),
+  }, 'WIRED_INPUT_16', 'HmIPW-DRI16');
+  collection.updateDevice(updatedDevice, {});
+
+  assert.deepEqual(collection.accessories.map(accessory => accessory.UUID), [
+    'uuid-fci6:channel:1',
+    'uuid-fci6:channel:4',
+  ]);
+  assert.deepEqual(calls.removed.map(accessory => accessory.UUID), ['uuid-fci6:channel:2']);
+  assert.equal(calls.registered.length, 3);
 });

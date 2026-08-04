@@ -35,6 +35,12 @@
             "lightSwitch": {"type": "boolean"},
             "openLatch": {"type": "boolean"},
             "pin": {"type": "string"},
+            "separateChannels": {
+              "title": "Expose Channels as Separate Accessories",
+              "description": "Expose each assigned multi-mode input channel as a separate HomeKit accessory so it can be assigned to its own room.",
+              "type": "boolean",
+              "default": false
+            },
             "simpleSwitch": {"type": "boolean"},
             "withRainSensor": {"type": "boolean"},
             "withStormSensor": {"type": "boolean"},

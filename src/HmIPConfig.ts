@@ -7,6 +7,7 @@ export interface HmIPDeviceConfig {
   lightSwitch?: boolean;
   openLatch?: boolean;
   pin?: string;
+  separateChannels?: boolean;
   simpleSwitch?: boolean;
   withRainSensor?: boolean;
   withStormSensor?: boolean;

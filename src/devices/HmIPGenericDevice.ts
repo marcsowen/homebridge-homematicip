@@ -65,7 +65,12 @@ export abstract class HmIPGenericDevice {
       accessory.context.device.oem ?? 'eq-3',
     )
       .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.device.id)
+      .setCharacteristic(
+        this.platform.Characteristic.SerialNumber,
+        accessory.context.channelIndex === undefined
+          ? accessory.context.device.id
+          : `${accessory.context.device.id}-${accessory.context.channelIndex}`,
+      )
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);
 
     const hmIPDevice = accessory.context.device;
@@ -96,6 +101,10 @@ export abstract class HmIPGenericDevice {
           ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
           : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
     }
+  }
+
+  public get accessories(): readonly HmIPPlatformAccessory[] {
+    return [this.accessory];
   }
 
   protected getOrAddService(

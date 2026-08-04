@@ -17,6 +17,7 @@ import {
   type IdentifiableDevice,
 } from 'homematicip-cloud-client-ts';
 import {CustomCharacteristic} from './CustomCharacteristic.js';
+import {HmIPMultiModeInputCollection} from './devices/HmIPMultiModeInputCollection.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
 import type {HmIPPlatformConfig} from './HmIPConfig.js';
 import {
@@ -231,8 +232,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of Object.values(hmIPState.devices)) {
-      const uuid = this.updateAccessory(device);
-      if (uuid) {
+      for (const uuid of this.updateAccessory(device)) {
         activeAccessoryUuids.add(uuid);
       }
     }
@@ -255,9 +255,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     return true;
   }
 
-  private updateAccessory(device: HmIPDevice): string | undefined {
+  private updateAccessory(device: HmIPDevice): readonly string[] {
     if (this.shutdownController.signal.aborted) {
-      return undefined;
+      return [];
     }
 
     if (isHmIPExternalDevice(device)) {
@@ -265,22 +265,33 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       if (existingDevice) {
         this.removeAccessory(device.id, existingDevice);
       }
-      return undefined;
+      return [];
     }
 
     const existingDevice = this.deviceMap.get(device.id);
     if (existingDevice) {
       existingDevice.updateDevice(device, this.groups);
-      return existingDevice.accessory.UUID;
+      return existingDevice.accessories.map(accessory => accessory.UUID);
     }
 
     const uuid = this.api.hap.uuid.generate(device.id);
-    if (getHmIPDeviceKind(device) === undefined) {
+    const deviceKind = getHmIPDeviceKind(device);
+    if (deviceKind === undefined) {
       this.accessoryRepository.remove(uuid);
       if (!isHmIPControllerDevice(device)) {
         this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       }
-      return undefined;
+      return [];
+    }
+
+    const deviceConfig = this.config.devices?.[device.id];
+    if (deviceKind === 'multiModeInput' && deviceConfig?.separateChannels === true) {
+      if (deviceConfig.hide === true) {
+        return [];
+      }
+      const collection = new HmIPMultiModeInputCollection(this, this.accessoryRepository, device);
+      this.deviceMap.set(device.id, collection);
+      return collection.accessories.map(accessory => accessory.UUID);
     }
 
     const hmIPAccessory = this.accessoryRepository.acquire(uuid, device.label, device);
@@ -290,29 +301,32 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       if (!isHmIPControllerDevice(device)) {
         this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       }
-      return undefined;
+      return [];
     }
 
     if (!homebridgeDevice.hasFunctionalServices) {
       homebridgeDevice.dispose();
       this.accessoryRepository.remove(uuid);
-      return undefined;
+      return [];
     }
 
     if (homebridgeDevice.hidden) {
       homebridgeDevice.dispose();
       this.accessoryRepository.remove(uuid);
-      return undefined;
+      return [];
     }
 
     this.deviceMap.set(device.id, homebridgeDevice);
     this.accessoryRepository.register(hmIPAccessory);
-    return uuid;
+    return [uuid];
   }
 
   private removeAccessory(deviceId: string, adapter: HmIPDeviceAdapter): void {
+    const accessories = [...adapter.accessories];
     adapter.dispose();
-    this.accessoryRepository.remove(adapter.accessory.UUID);
+    for (const accessory of accessories) {
+      this.accessoryRepository.remove(accessory.UUID);
+    }
     this.deviceMap.delete(deviceId);
   }
 

@@ -1,3 +1,9 @@
+## 2.6.0 (2026-08-04)
+
+### Improvements
+
+- **Multi-mode inputs**: Added the per-device `separateChannels` option, which exposes each assigned HmIPW-DRI16 or HmIP-FCI6 input as an independent HomeKit accessory so it can be assigned to its own Apple Home room ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+
 ## 2.5.2 (2026-08-04)
 
 ### Bug fixes

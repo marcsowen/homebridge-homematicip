@@ -40,6 +40,11 @@ interface RuntimeChannel {
   lastEvent?: string;
 }
 
+export interface HmIPMultiModeInputChannelDescriptor {
+  index: number;
+  label: string;
+}
+
 const inputModes: ReadonlySet<unknown> = new Set(Object.values(MultiModeInputMode));
 const windowStates: ReadonlySet<unknown> = new Set(Object.values(WindowState));
 
@@ -65,6 +70,17 @@ function isUnassignedInput(channel: MultiModeInputChannel): boolean {
     && channel.groups.length === 0;
 }
 
+export function getAssignedMultiModeInputChannels(device: HmIPDevice): HmIPMultiModeInputChannelDescriptor[] {
+  return Object.values(device.functionalChannels)
+    .filter(isMultiModeInputChannel)
+    .filter(channel => !isUnassignedInput(channel))
+    .sort((left, right) => left.index - right.index)
+    .map(channel => ({
+      index: channel.index,
+      label: channel.label?.trim() || `${device.label} ${channel.index}`,
+    }));
+}
+
 /**
  * Homematic IP configurable multichannel inputs.
  *
@@ -85,6 +101,8 @@ export class HmIPMultiModeInput extends HmIPGenericDevice {
     const inputChannels = Object.values(device.functionalChannels)
       .filter(isMultiModeInputChannel)
       .filter(channel => !isUnassignedInput(channel))
+      .filter(channel => this.accessory.context.channelIndex === undefined
+        || channel.index === this.accessory.context.channelIndex)
       .sort((left, right) => left.index - right.index);
     const currentIndexes = new Set(inputChannels.map(channel => channel.index));
 
