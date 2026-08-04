@@ -26,6 +26,11 @@ test('redacts device records while preserving implementation-relevant structure 
         authorized: true,
         authToken: 'must-never-appear',
       },
+      2: {
+        functionalChannelType: 'MULTI_MODE_INPUT_CHANNEL',
+        index: 2,
+        label: '',
+      },
     },
   });
 
@@ -46,5 +51,6 @@ test('redacts device records while preserving implementation-relevant structure 
     authorized: true,
     authToken: '<redacted-secret>',
   });
+  assert.equal(redacted.functionalChannels[2].label, '');
   assert.doesNotMatch(JSON.stringify(redacted), /device-secret|home-secret|group-secret|Back garden|Vegetable beds|must-never-appear/);
 });

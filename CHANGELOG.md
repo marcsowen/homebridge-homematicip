@@ -1,3 +1,12 @@
+## 2.5.1 (2026-08-04)
+
+### Bug fixes
+
+- **Multi-mode inputs**: Hide default inputs that have no label, channel role, group, or configured action while retaining configured contact and button channels, including HmIPW-DRI16 and HmIP-FCI6 inputs ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+- **Device diagnostics**: Preserve empty private-text fields in redacted dumps while continuing to redact non-empty values, allowing unused channels to be distinguished safely.
+
+This release does not require any Homebridge configuration changes.
+
 ## 2.5.0 (2026-08-04)
 
 ### New devices

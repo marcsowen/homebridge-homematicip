@@ -15,7 +15,7 @@ class DeviceRecordRedactor {
       return '<redacted-secret>';
     }
     if (key && PRIVATE_TEXT_KEY.test(key)) {
-      return '<redacted>';
+      return value === '' || value === null ? value : '<redacted>';
     }
     if (key && PRIVATE_VALUE_KEY.test(key)) {
       return '<redacted>';

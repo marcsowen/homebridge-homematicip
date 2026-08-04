@@ -24,6 +24,9 @@ enum WindowState {
 
 interface MultiModeInputChannel extends HmIPFunctionalChannel {
   functionalChannelType: 'MULTI_MODE_INPUT_CHANNEL';
+  actionParameter?: string | null;
+  channelRole?: string | null;
+  groups?: unknown[];
   index: number;
   label: string | null;
   multiModeInputMode: MultiModeInputMode;
@@ -49,8 +52,21 @@ function isMultiModeInputChannel(channel: HmIPFunctionalChannel): channel is Mul
   return isHmIPRecord(candidate)
     && typeof candidate.index === 'number'
     && (candidate.label === null || typeof candidate.label === 'string')
+    && (candidate.actionParameter === undefined || candidate.actionParameter === null
+      || typeof candidate.actionParameter === 'string')
+    && (candidate.channelRole === undefined || candidate.channelRole === null
+      || typeof candidate.channelRole === 'string')
+    && (candidate.groups === undefined || Array.isArray(candidate.groups))
     && inputModes.has(candidate.multiModeInputMode)
     && (candidate.windowState === null || windowStates.has(candidate.windowState));
+}
+
+function isUnassignedInput(channel: MultiModeInputChannel): boolean {
+  return !channel.label?.trim()
+    && channel.channelRole === null
+    && Array.isArray(channel.groups)
+    && channel.groups.length === 0
+    && channel.actionParameter === 'NOT_CUSTOMISABLE';
 }
 
 /**
@@ -72,6 +88,7 @@ export class HmIPMultiModeInput extends HmIPGenericDevice {
   private syncChannels(device: HmIPDevice): void {
     const inputChannels = Object.values(device.functionalChannels)
       .filter(isMultiModeInputChannel)
+      .filter(channel => !isUnassignedInput(channel))
       .sort((left, right) => left.index - right.index);
     const currentIndexes = new Set(inputChannels.map(channel => channel.index));
 

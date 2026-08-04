@@ -80,13 +80,14 @@ class MockHapStatusError extends Error {
   }
 }
 
-function channel(index, multiModeInputMode, windowState, label = '') {
+function channel(index, multiModeInputMode, windowState, label = '', overrides = {}) {
   return {
     functionalChannelType: 'MULTI_MODE_INPUT_CHANNEL',
     index,
     label,
     multiModeInputMode,
     windowState,
+    ...overrides,
   };
 }
 
@@ -188,21 +189,53 @@ test('exposes independently configured HmIP-FCI6 channels', () => {
   );
 });
 
+test('hides unassigned inputs on every multi-mode input device', () => {
+  const {accessory, adapter} = createAdapter(device({
+    1: channel(1, 'BINARY_BEHAVIOR', 'CLOSED', 'Door', {
+      actionParameter: 'NOT_CUSTOMISABLE',
+      channelRole: 'WINDOW_SENSOR',
+      groups: ['group-1'],
+    }),
+    2: channel(2, 'KEY_BEHAVIOR', 'CLOSED', '', {
+      actionParameter: 'NOT_CUSTOMISABLE',
+      channelRole: null,
+      groups: [],
+    }),
+  }));
+
+  assert.equal(adapter.hasFunctionalServices, true);
+  assert.ok(accessory.getServiceById(ContactSensorService, '1'));
+  assert.equal(accessory.getServiceById(StatelessProgrammableSwitchService, '2'), undefined);
+});
+
 test('exposes all configured HmIPW-DRI16 inputs using their contact or button mode', () => {
   const channels = Object.fromEntries(Array.from({length: 16}, (_, offset) => {
     const index = offset + 1;
+    const configuredContact = index <= 10;
+    const configuredButton = index === 11;
     return [index, channel(
       index,
-      index <= 10 ? 'BINARY_BEHAVIOR' : 'KEY_BEHAVIOR',
-      index <= 10 ? (index === 10 ? 'OPEN' : 'CLOSED') : null,
-      `Input ${index}`,
+      configuredContact ? 'BINARY_BEHAVIOR' : 'KEY_BEHAVIOR',
+      configuredContact ? (index === 10 ? 'OPEN' : 'CLOSED') : null,
+      configuredContact ? `Input ${index}` : '',
+      configuredContact
+        ? {actionParameter: 'NOT_CUSTOMISABLE', channelRole: 'WINDOW_SENSOR', groups: [`group-${index}`]}
+        : {
+            actionParameter: configuredButton
+              ? 'SECURITY_TOGGLE_INTERNAL_PROTECTION_MODE_SINGLE_ACTION'
+              : 'NOT_CUSTOMISABLE',
+            channelRole: null,
+            groups: [],
+          },
     )];
   }));
   const {accessory, adapter} = createAdapter(device(channels, 'WIRED_INPUT_16', 'HmIPW-DRI16'));
 
   assert.equal(adapter.hasFunctionalServices, true);
   assert.equal(accessory.services.filter(service => service.UUID === ContactSensorService.UUID).length, 10);
-  assert.equal(accessory.services.filter(service => service.UUID === StatelessProgrammableSwitchService.UUID).length, 6);
+  assert.equal(accessory.services.filter(service => service.UUID === StatelessProgrammableSwitchService.UUID).length, 1);
+  assert.ok(accessory.getServiceById(StatelessProgrammableSwitchService, '11'));
+  assert.equal(accessory.getServiceById(StatelessProgrammableSwitchService, '12'), undefined);
   assert.equal(
     accessory.getServiceById(ContactSensorService, '10')
       .getCharacteristic(Characteristic.ContactSensorState).getter(),
