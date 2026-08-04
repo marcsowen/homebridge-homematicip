@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 
@@ -39,6 +40,7 @@ function isDeviceBaseChannel(channel: HmIPFunctionalChannel): channel is DeviceB
  */
 export abstract class HmIPGenericDevice {
 
+  public hasFunctionalServices = true;
   public hidden = false;
   protected unreach = false;
   protected lowBat = false;
@@ -107,7 +109,31 @@ export abstract class HmIPGenericDevice {
     if (existingService) {
       return existingService;
     }
-    return this.accessory.addService(new ServiceType(displayName, subtype));
+    return this.accessory.addService(new ServiceType(sanitizeHomeKitName(displayName), subtype));
+  }
+
+  protected rejectMissingFunctionalServices(expectedChannels: string): void {
+    this.hasFunctionalServices = false;
+    const device = this.accessory.context.device;
+    const channelStructure = Object.values(device.functionalChannels).map(channel => {
+      const candidate: unknown = channel;
+      if (!isHmIPRecord(candidate)) {
+        return {type: 'INVALID', index: 'INVALID', fields: []};
+      }
+      return {
+        type: typeof candidate.functionalChannelType === 'string' ? candidate.functionalChannelType : 'MISSING',
+        index: typeof candidate.index === 'number' ? candidate.index : 'MISSING',
+        fields: Object.keys(candidate).sort(),
+      };
+    });
+    this.platform.log.warn(
+      'No functional services created for Homematic IP model %s (device type %s); expected %s. '
+      + 'Redacted channel structure: %s',
+      device.modelType,
+      device.type,
+      expectedChannels,
+      JSON.stringify(channelStructure),
+    );
   }
 
   public updateDevice(hmIPDevice: HmIPDevice, _groups: Readonly<Record<string, HmIPGroup>>) {

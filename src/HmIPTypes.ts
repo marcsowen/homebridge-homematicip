@@ -12,6 +12,7 @@ export type HmIPPlatformAccessory<T extends IdentifiableDevice = HmIPDevice> =
 
 export interface HmIPDeviceAdapter {
   readonly accessory: PlatformAccessory;
+  readonly hasFunctionalServices: boolean;
   readonly hidden: boolean;
   updateDevice(device: HmIPDevice, groups: Readonly<Record<string, HmIPGroup>>): void;
   channelEvent?(channelId: number, channelEventType: string): void;

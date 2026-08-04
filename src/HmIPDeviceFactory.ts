@@ -20,7 +20,9 @@ import {HmIPSmokeDetector} from './devices/HmIPSmokeDetector.js';
 import {HmIPSwitch} from './devices/HmIPSwitch.js';
 import {HmIPSwitchMeasuring} from './devices/HmIPSwitchMeasuring.js';
 import {HmIPSwitchNotificationLight} from './devices/HmIPSwitchNotificationLight.js';
+import {HmIPUniversalLight} from './devices/HmIPUniversalLight.js';
 import {HmIPWallMountedThermostat} from './devices/HmIPWallMountedThermostat.js';
+import {HmIPWateringActuator} from './devices/HmIPWateringActuator.js';
 import {HmIPWaterSensor} from './devices/HmIPWaterSensor.js';
 import {HmIPWeatherSensor} from './devices/HmIPWeatherSensor.js';
 import {HmIPWeatherSensorPlus} from './devices/HmIPWeatherSensorPlus.js';
@@ -43,6 +45,7 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['SHUTTER_CONTACT_OPTICAL_PLUS', 'contactSensor'],
   ['FULL_FLUSH_CONTACT_INTERFACE', 'contactSensor'],
   ['FULL_FLUSH_CONTACT_INTERFACE_6', 'multiModeInput'],
+  ['WIRED_INPUT_16', 'multiModeInput'],
   ['ROTARY_HANDLE_SENSOR', 'rotaryHandleSensor'],
   ['SMOKE_DETECTOR', 'smokeDetector'],
   ['PUSH_BUTTON', 'button'],
@@ -84,6 +87,7 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['HOERMANN_DRIVES_MODULE', 'garageDoor'],
   ['WALL_MOUNTED_GARAGE_DOOR_CONTROLLER', 'garageDoorController'],
   ['WATER_SENSOR', 'waterSensor'],
+  ['WATERING_ACTUATOR', 'wateringActuator'],
   ['LIGHT_SENSOR', 'lightSensor'],
   ['MOTION_DETECTOR_INDOOR', 'motionDetector'],
   ['MOTION_DETECTOR_OUTDOOR', 'motionDetector'],
@@ -94,6 +98,7 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['PLUGGABLE_DIMMER', 'dimmer'],
   ['WIRED_DIMMER_3', 'dimmer'],
   ['DIN_RAIL_DIMMER_3', 'dimmer'],
+  ['RGBW_DIMMER', 'universalLight'],
   ['DOOR_LOCK_DRIVE', 'doorLockDrive'],
   ['DOOR_LOCK_SENSOR', 'doorLockSensor'],
   ['BRAND_SWITCH_NOTIFICATION_LIGHT', 'switchNotificationLight'],
@@ -105,6 +110,7 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
 const controllerDeviceTypes = new Set([
   'ACCESS_POINT',
   'HOME_CONTROL_ACCESS_POINT',
+  'WIRED_DIN_RAIL_ACCESS_POINT',
   'WIRELESS_ACCESS_POINT_BASIC',
 ]);
 
@@ -129,6 +135,7 @@ export type HmIPDeviceKind =
   | 'garageDoor'
   | 'garageDoorController'
   | 'waterSensor'
+  | 'wateringActuator'
   | 'lightSensor'
   | 'motionDetector'
   | 'multiModeInput'
@@ -137,6 +144,7 @@ export type HmIPDeviceKind =
   | 'doorLockDrive'
   | 'doorLockSensor'
   | 'switchNotificationLight'
+  | 'universalLight'
   | 'weatherSensor'
   | 'weatherSensorPlus'
   | 'weatherSensorPro';
@@ -192,6 +200,7 @@ export class HmIPDeviceFactory {
       case 'garageDoor': return new HmIPGarageDoor(this.platform, accessory);
       case 'garageDoorController': return new HmIPGarageDoorController(this.platform, accessory);
       case 'waterSensor': return new HmIPWaterSensor(this.platform, accessory);
+      case 'wateringActuator': return new HmIPWateringActuator(this.platform, accessory);
       case 'lightSensor': return new HmIPLightSensor(this.platform, accessory);
       case 'motionDetector': return new HmIPMotionDetector(this.platform, accessory);
       case 'multiModeInput': return new HmIPMultiModeInput(this.platform, accessory);
@@ -200,6 +209,7 @@ export class HmIPDeviceFactory {
       case 'doorLockDrive': return new HmIPDoorLockDrive(this.platform, accessory);
       case 'doorLockSensor': return new HmIPDoorLockSensor(this.platform, accessory);
       case 'switchNotificationLight': return new HmIPSwitchNotificationLight(this.platform, accessory);
+      case 'universalLight': return new HmIPUniversalLight(this.platform, accessory);
       case 'weatherSensor': return new HmIPWeatherSensor(this.platform, accessory);
       case 'weatherSensorPlus': return new HmIPWeatherSensorPlus(this.platform, accessory);
       case 'weatherSensorPro': return new HmIPWeatherSensorPro(this.platform, accessory);

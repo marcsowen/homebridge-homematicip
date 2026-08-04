@@ -9,14 +9,15 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
 
 interface SwitchChannel extends HmIPFunctionalChannel {
-  functionalChannelType: 'SWITCH_CHANNEL';
-  label: string | null;
-  on: boolean | null;
+  functionalChannelType: 'SWITCH_CHANNEL' | 'MULTI_MODE_INPUT_SWITCH_CHANNEL';
+  label?: string | null;
+  on?: boolean | null;
   index: number;
 }
 
@@ -27,14 +28,17 @@ interface SwitchRuntimeChannel {
   hapService: Service;
 }
 
-function isSwitchChannel(channel: HmIPFunctionalChannel): channel is SwitchChannel {
-  if (!hasFunctionalChannelType(channel, 'SWITCH_CHANNEL')) {
+function isSwitchChannel(channel: HmIPFunctionalChannel, deviceType: string): channel is SwitchChannel {
+  const isActuatorChannel = hasFunctionalChannelType(channel, 'SWITCH_CHANNEL')
+    || (deviceType === 'FULL_FLUSH_INPUT_SWITCH'
+      && hasFunctionalChannelType(channel, 'MULTI_MODE_INPUT_SWITCH_CHANNEL'));
+  if (!isActuatorChannel) {
     return false;
   }
   const candidate: unknown = channel;
   return isHmIPRecord(candidate)
-    && (candidate.label === null || typeof candidate.label === 'string')
-    && (candidate.on === null || typeof candidate.on === 'boolean')
+    && (candidate.label === undefined || candidate.label === null || typeof candidate.label === 'string')
+    && (candidate.on === undefined || candidate.on === null || typeof candidate.on === 'boolean')
     && typeof candidate.index === 'number';
 }
 
@@ -69,7 +73,7 @@ export class HmIPSwitch extends HmIPGenericDevice {
 
     const device = accessory.context.device;
     const switchChannels = Object.values(device.functionalChannels)
-      .filter(isSwitchChannel)
+      .filter(channel => isSwitchChannel(channel, device.type))
       .sort((left, right) => left.index - right.index);
     for (const channel of switchChannels) {
       if (this.channels.has(channel.index)) {
@@ -78,7 +82,7 @@ export class HmIPSwitch extends HmIPGenericDevice {
       let hapService = this.accessory.getServiceById(this.platform.Service.Switch, channel.index.toString());
       if (!hapService) {
         const label = !channel.label ? accessory.context.device.label : channel.label;
-        const service = new this.platform.Service.Switch(label, channel.index.toString());
+        const service = new this.platform.Service.Switch(sanitizeHomeKitName(label), channel.index.toString());
         hapService = this.accessory.addService(service);
       }
       const runtimeChannel: SwitchRuntimeChannel = {
@@ -94,7 +98,10 @@ export class HmIPSwitch extends HmIPGenericDevice {
     }
 
     if (this.channels.size === 0) {
-      this.platform.log.warn('No functional channels found for device %s', this.accessory.displayName);
+      const expectedChannelType = device.type === 'FULL_FLUSH_INPUT_SWITCH'
+        ? 'MULTI_MODE_INPUT_SWITCH_CHANNEL'
+        : 'SWITCH_CHANNEL';
+      this.rejectMissingFunctionalServices(`${expectedChannelType} with numeric index and optional boolean/null on`);
     } else {
       this.removeStaleSwitchServices();
     }
@@ -135,13 +142,13 @@ export class HmIPSwitch extends HmIPGenericDevice {
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
     super.updateDevice(hmIPDevice, groups);
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (isSwitchChannel(channel)) {
+      if (isSwitchChannel(channel, hmIPDevice.type)) {
         const currentChannel = this.channels.get(channel.index);
         //this.platform.log.debug(`Switch update: ${JSON.stringify(channel)}`);
 
         if (currentChannel) {
 
-          if (channel.on !== null && channel.on !== currentChannel.on) {
+          if (typeof channel.on === 'boolean' && channel.on !== currentChannel.on) {
             currentChannel.on = channel.on;
             currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.On, currentChannel.on);
             this.platform.log.debug('Switch state of %s channel %d changed to %s', this.accessory.displayName,

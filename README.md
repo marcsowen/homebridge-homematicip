@@ -93,6 +93,25 @@ Cached accessories that no longer exist are removed during startup.
 Firmware revisions are updated in Homebridge when Homematic IP reports a change. Renaming a device in the Homematic IP
 app does not overwrite an accessory name customized in Apple Home.
 
+### Sharing a redacted device record
+
+When requesting support for a new device, open the terminal in the Homebridge UI and run:
+
+```shell
+./node_modules/.bin/homebridge-homematicip-dump --device HmIP-WSM
+```
+
+Replace `HmIP-WSM` with the model or device type to inspect, then copy the resulting JSON from the terminal. To save it
+inside the Homebridge storage directory instead, append `> device-record.json` to the command.
+
+The command uses the existing Homematic IP authentication and automatically finds the configuration in standard Linux,
+Docker, and user-scoped Homebridge installations. Pass `--config <path>` to override detection, or
+`--platform-name <name>` when the file contains multiple Homematic IP platforms. Use `--all` instead of `--device` only
+when records for the complete installation are needed.
+
+The generated JSON removes authentication data, controller and device identifiers, group and room identifiers, and
+user-assigned names and labels. It retains device types, channel structure, feature flags, and state values required to
+implement and test a device adapter. Review the file before attaching it to a public issue.
 
 ## Currently supported devices
 
@@ -124,6 +143,7 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-SWDM / HMIP-SWDM-B2 Door / window Contact - magnetic
 - HmIP-SCI Contact interface sensor
 - HmIP-FCI1 / HmIP-FCI6 Contact interfaces - flush-mount, 1/6 channels
+- HmIPW-DRI16 Wired input module - 16 channels
 - HmIP-SRH Rotary handle switch
 - HmIP-SWSD Smoke detector
 - HmIP-PS / HmIP-PS-2 Pluggable switch
@@ -153,6 +173,7 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-MOD-HO Garage door module - Hörmann
 - HmIP-WGC Wall mounted garage door controller
 - HmIP-SWD Water sensor
+- HmIP-WSM / ELV-SH-WSM Watering actuator
 - HmIP-SLO Light sensor outdoor
 - HmIP-SMI Motion detector with brightness sensor - indoor
 - HmIP-SMO-A Motion detector with brightness sensor - outdoor
@@ -163,6 +184,7 @@ app does not overwrite an accessory name customized in Apple Home.
 - HmIP-FDT Dimming actuator flush-mount
 - HmIPW-DRD3 Wired dimming actuator – 3x channels
 - HmIP-DRDI3 DIN rail dimming actuator – 3x channels
+- HmIP-RGBW RGBW controller
 - HmIP-DLD Door lock drive [1]
 - HmIP-DLS Door lock sensor
 - HmIP-BSL Notification light switch

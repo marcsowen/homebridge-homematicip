@@ -8,6 +8,7 @@ import {
 } from '../dist/HmIPDeviceFactory.js';
 import {HmIPEventRouter} from '../dist/HmIPEventRouter.js';
 import {HmIPGenericDevice} from '../dist/devices/HmIPGenericDevice.js';
+import {sanitizeHomeKitName} from '../dist/HmIPName.js';
 
 const log = {
   debug() {},
@@ -23,7 +24,12 @@ class MockPlatformAccessory {
   constructor(displayName, UUID) {
     this.context = {};
     this.displayName = displayName;
+    this.services = [];
     this.UUID = UUID;
+  }
+
+  getService(service) {
+    return this.services.find(candidate => candidate.UUID === service || candidate.UUID === service.UUID);
   }
 }
 
@@ -31,6 +37,10 @@ function createAccessoryApi() {
   const calls = {registered: [], removed: [], updated: []};
   return {
     api: {
+      hap: {
+        Characteristic: {Name: 'Name'},
+        Service: {AccessoryInformation: 'AccessoryInformation'},
+      },
       platformAccessory: MockPlatformAccessory,
       registerPlatformAccessories: (_plugin, _platform, accessories) => calls.registered.push(...accessories),
       unregisterPlatformAccessories: (_plugin, _platform, accessories) => calls.removed.push(...accessories),
@@ -54,6 +64,38 @@ test('repository reuses newly registered accessories as cached entries', () => {
   assert.equal(repository.size, 1);
   assert.deepEqual(calls.registered, [first.accessory]);
   assert.deepEqual(calls.updated, [first.accessory]);
+});
+
+test('sanitizes new HomeKit names without changing valid Unicode names', () => {
+  assert.equal(sanitizeHomeKitName('Fußbodenheizungsaktor – 12-fach '), 'Fußbodenheizungsaktor - 12-fach');
+  assert.equal(sanitizeHomeKitName('Wandtaster – 6-fach Flur Eingang'), 'Wandtaster - 6-fach Flur Eingang');
+  assert.equal(sanitizeHomeKitName('Küche & Flur'), 'Küche & Flur');
+  assert.equal(sanitizeHomeKitName(' – '), 'Homematic IP Device');
+
+  const {api} = createAccessoryApi();
+  const repository = new HmIPAccessoryRepository(api, log);
+  const accessory = repository.acquire('uuid1', 'Wassersensor Wasserleitungen ', {id: 'device1'}).accessory;
+  assert.equal(accessory.displayName, 'Wassersensor Wasserleitungen');
+});
+
+test('repairs invalid cached names while preserving valid customized names', () => {
+  const {api} = createAccessoryApi();
+  const repository = new HmIPAccessoryRepository(api, log);
+  const restored = new MockPlatformAccessory('Wandtaster – Eingang ', 'uuid1');
+  restored.context.device = {id: 'device1', label: 'Original HmIP name'};
+  const serviceUpdates = [];
+  restored.services.push({
+    UUID: 'Switch',
+    displayName: 'Eigener gültiger Name',
+    updateCharacteristic: (...args) => serviceUpdates.push(args),
+  });
+  repository.restore(restored);
+
+  repository.acquire('uuid1', 'Ignored HmIP name', {id: 'device1', label: 'Ignored HmIP name'});
+
+  assert.equal(restored.displayName, 'Wandtaster - Eingang');
+  assert.equal(restored.services[0].displayName, 'Eigener gültiger Name');
+  assert.deepEqual(serviceUpdates, []);
 });
 
 test('repository reconciliation unregisters and forgets stale accessories', () => {
@@ -149,6 +191,7 @@ test('maps Homematic IP device types to adapters', () => {
   assert.equal(getHmIPDeviceKind(device('WALL_MOUNTED_THERMOSTAT_PRO')), 'wallMountedThermostat');
   assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_CONTACT_INTERFACE')), 'contactSensor');
   assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_CONTACT_INTERFACE_6')), 'multiModeInput');
+  assert.equal(getHmIPDeviceKind(device('WIRED_INPUT_16')), 'multiModeInput');
   assert.equal(getHmIPDeviceKind(device('BLIND_MODULE')), 'shading');
   for (const buttonType of [
     'PUSH_BUTTON_6_LED_SWITCH',
@@ -166,6 +209,8 @@ test('maps Homematic IP device types to adapters', () => {
   assert.equal(getHmIPDeviceKind(device('STATUS_BOARD_8')), 'switch');
   assert.equal(getHmIPDeviceKind(device('MOTION_DETECTOR_SWITCH_OUTDOOR')), 'switch');
   assert.equal(getHmIPDeviceKind(device('USB_SWITCH_MEASURING')), 'switchMeasuring');
+  assert.equal(getHmIPDeviceKind(device('WATERING_ACTUATOR')), 'wateringActuator');
+  assert.equal(getHmIPDeviceKind(device('RGBW_DIMMER')), 'universalLight');
   assert.equal(getHmIPDeviceKind(device('BRAND_DIMMER')), 'dimmer');
   assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_DIMMER')), 'dimmer');
   assert.equal(getHmIPDeviceKind(device('PLUGGABLE_DIMMER')), 'dimmer');
@@ -174,8 +219,13 @@ test('maps Homematic IP device types to adapters', () => {
   assert.equal(getHmIPDeviceKind(device('UNKNOWN_DEVICE')), undefined);
 });
 
-test('recognizes HAP and HCU controller devices as infrastructure', () => {
-  for (const type of ['HOME_CONTROL_ACCESS_POINT', 'ACCESS_POINT', 'WIRELESS_ACCESS_POINT_BASIC']) {
+test('recognizes HAP, HCU, and wired access point controller devices as infrastructure', () => {
+  for (const type of [
+    'HOME_CONTROL_ACCESS_POINT',
+    'ACCESS_POINT',
+    'WIRED_DIN_RAIL_ACCESS_POINT',
+    'WIRELESS_ACCESS_POINT_BASIC',
+  ]) {
     assert.equal(isHmIPControllerDevice({type}), true);
   }
   assert.equal(isHmIPControllerDevice({type: 'PLUGABLE_SWITCH'}), false);

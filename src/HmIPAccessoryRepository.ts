@@ -2,6 +2,7 @@ import type {API, Logger} from 'homebridge';
 import type {IdentifiableDevice} from 'homematicip-cloud-client-ts';
 import {HmIPAccessory} from './HmIPAccessory.js';
 import type {HmIPDeviceConfig} from './HmIPConfig.js';
+import {sanitizeHomeKitName} from './HmIPName.js';
 import type {HmIPPlatformAccessory} from './HmIPTypes.js';
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings.js';
 
@@ -39,7 +40,11 @@ export class HmIPAccessoryRepository {
     const entry = this.entries.get(uuid);
     const accessory = entry
       ? entry.accessory as HmIPPlatformAccessory<T>
-      : new this.api.platformAccessory<HmIPPlatformAccessory<T>['context']>(displayName, uuid);
+      : new this.api.platformAccessory<HmIPPlatformAccessory<T>['context']>(sanitizeHomeKitName(displayName), uuid);
+
+    if (entry) {
+      this.repairInvalidNames(accessory);
+    }
 
     if (!entry) {
       this.entries.set(uuid, {
@@ -64,6 +69,23 @@ export class HmIPAccessoryRepository {
     }
 
     return new HmIPAccessory(this.api, this.log, accessory, entry?.persisted === true);
+  }
+
+  private repairInvalidNames<T extends IdentifiableDevice>(accessory: HmIPPlatformAccessory<T>): void {
+    const safeAccessoryName = sanitizeHomeKitName(accessory.displayName);
+    if (safeAccessoryName !== accessory.displayName) {
+      accessory.displayName = safeAccessoryName;
+      accessory.getService(this.api.hap.Service.AccessoryInformation)
+        ?.updateCharacteristic(this.api.hap.Characteristic.Name, safeAccessoryName);
+    }
+
+    for (const service of accessory.services) {
+      const safeServiceName = sanitizeHomeKitName(service.displayName, safeAccessoryName);
+      if (safeServiceName !== service.displayName) {
+        service.displayName = safeServiceName;
+        service.updateCharacteristic(this.api.hap.Characteristic.Name, safeServiceName);
+      }
+    }
   }
 
   public register(accessory: HmIPAccessory): void {

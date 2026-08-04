@@ -19,7 +19,12 @@ import {
 import {CustomCharacteristic} from './CustomCharacteristic.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
 import type {HmIPPlatformConfig} from './HmIPConfig.js';
-import {HmIPDeviceFactory, isHmIPControllerDevice, isHmIPExternalDevice} from './HmIPDeviceFactory.js';
+import {
+  getHmIPDeviceKind,
+  HmIPDeviceFactory,
+  isHmIPControllerDevice,
+  isHmIPExternalDevice,
+} from './HmIPDeviceFactory.js';
 import {HmIPEventRouter} from './HmIPEventRouter.js';
 import {HmIPSecuritySystem} from './HmIPSecuritySystem.js';
 import {type HmIPDeviceAdapter, type HmIPPlatformAccessory, isHmIPAccessoryContext} from './HmIPTypes.js';
@@ -270,6 +275,14 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     }
 
     const uuid = this.api.hap.uuid.generate(device.id);
+    if (getHmIPDeviceKind(device) === undefined) {
+      this.accessoryRepository.remove(uuid);
+      if (!isHmIPControllerDevice(device)) {
+        this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
+      }
+      return undefined;
+    }
+
     const hmIPAccessory = this.accessoryRepository.acquire(uuid, device.label, device);
     const homebridgeDevice = this.deviceFactory.create(device, hmIPAccessory.accessory);
     if (!homebridgeDevice) {
@@ -277,6 +290,12 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       if (!isHmIPControllerDevice(device)) {
         this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
       }
+      return undefined;
+    }
+
+    if (!homebridgeDevice.hasFunctionalServices) {
+      homebridgeDevice.dispose();
+      this.accessoryRepository.remove(uuid);
       return undefined;
     }
 

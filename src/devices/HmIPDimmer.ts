@@ -9,6 +9,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -17,7 +18,7 @@ type DimmerChannelType = 'DIMMER_CHANNEL' | 'MULTI_MODE_INPUT_DIMMER_CHANNEL';
 
 interface DimmerChannel extends HmIPFunctionalChannel {
   functionalChannelType: DimmerChannelType;
-  dimLevel: number | null;
+  dimLevel?: number | null;
   index: number;
   label?: string | null;
 }
@@ -34,7 +35,7 @@ function isDimmerChannel(channel: HmIPFunctionalChannel): channel is DimmerChann
   }
   const candidate: unknown = channel;
   return isHmIPRecord(candidate)
-    && (candidate.dimLevel === null || typeof candidate.dimLevel === 'number')
+    && (candidate.dimLevel === undefined || candidate.dimLevel === null || typeof candidate.dimLevel === 'number')
     && typeof candidate.index === 'number'
     && (candidate.label === undefined || candidate.label === null || typeof candidate.label === 'string');
 }
@@ -95,7 +96,7 @@ export class HmIPDimmer extends HmIPGenericDevice {
       if (!hapService) {
         const label = this.channelLabel(channel, dimmerChannels.length);
         hapService = this.accessory.addService(
-          new this.platform.Service.Lightbulb(label, channel.index.toString()),
+          new this.platform.Service.Lightbulb(sanitizeHomeKitName(label), channel.index.toString()),
         );
       }
 
@@ -115,7 +116,7 @@ export class HmIPDimmer extends HmIPGenericDevice {
     }
 
     if (this.channels.size === 0) {
-      this.platform.log.warn('No functional dimmer channels found for device %s', this.accessory.displayName);
+      this.rejectMissingFunctionalServices(`${channelType} with numeric index and optional number/null dimLevel`);
     } else {
       this.removeStaleLightbulbServices();
     }
@@ -172,7 +173,8 @@ export class HmIPDimmer extends HmIPGenericDevice {
     super.updateDevice(hmIPDevice, groups);
     const channelType = expectedChannelType(hmIPDevice.type);
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (!isDimmerChannel(channel) || channel.functionalChannelType !== channelType || channel.dimLevel === null) {
+      if (!isDimmerChannel(channel) || channel.functionalChannelType !== channelType
+        || typeof channel.dimLevel !== 'number') {
         continue;
       }
 

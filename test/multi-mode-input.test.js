@@ -90,13 +90,13 @@ function channel(index, multiModeInputMode, windowState, label = '') {
   };
 }
 
-function device(functionalChannels) {
+function device(functionalChannels, type = 'FULL_FLUSH_CONTACT_INTERFACE_6', modelType = 'HmIP-FCI6') {
   return {
     id: 'fci6',
-    type: 'FULL_FLUSH_CONTACT_INTERFACE_6',
+    type,
     label: 'Inputs',
     oem: 'eq-3',
-    modelType: 'HmIP-FCI6',
+    modelType,
     firmwareVersion: '1.0.0',
     permanentlyReachable: false,
     lastStatusUpdate: 0,
@@ -105,13 +105,12 @@ function device(functionalChannels) {
   };
 }
 
-function createAdapter() {
-  const initialDevice = device({
+function createAdapter(initialDevice = device({
     1: channel(1, 'BINARY_BEHAVIOR', 'CLOSED', 'Door'),
     2: channel(2, 'KEY_BEHAVIOR', null, 'Button'),
     3: channel(3, 'SWITCH_BEHAVIOR', 'OPEN', 'Window'),
     4: channel(4, 'BINARY_BEHAVIOR', null, 'Unknown'),
-  });
+  })) {
   const informationService = new MockService('Information', undefined, Service.AccessoryInformation);
   const staleContact = new ContactSensorService('Stale contact', '5');
   const staleButton = new StatelessProgrammableSwitchService('Stale button', '6');
@@ -186,6 +185,28 @@ test('exposes independently configured HmIP-FCI6 channels', () => {
   assert.deepEqual(
     button2.getCharacteristic(Characteristic.ProgrammableSwitchEvent).events,
     [Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS, Characteristic.ProgrammableSwitchEvent.LONG_PRESS],
+  );
+});
+
+test('exposes all configured HmIPW-DRI16 inputs using their contact or button mode', () => {
+  const channels = Object.fromEntries(Array.from({length: 16}, (_, offset) => {
+    const index = offset + 1;
+    return [index, channel(
+      index,
+      index <= 10 ? 'BINARY_BEHAVIOR' : 'KEY_BEHAVIOR',
+      index <= 10 ? (index === 10 ? 'OPEN' : 'CLOSED') : null,
+      `Input ${index}`,
+    )];
+  }));
+  const {accessory, adapter} = createAdapter(device(channels, 'WIRED_INPUT_16', 'HmIPW-DRI16'));
+
+  assert.equal(adapter.hasFunctionalServices, true);
+  assert.equal(accessory.services.filter(service => service.UUID === ContactSensorService.UUID).length, 10);
+  assert.equal(accessory.services.filter(service => service.UUID === StatelessProgrammableSwitchService.UUID).length, 6);
+  assert.equal(
+    accessory.getServiceById(ContactSensorService, '10')
+      .getCharacteristic(Characteristic.ContactSensorState).getter(),
+    Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
   );
 });
 

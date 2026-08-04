@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc@sowen.net>",
@@ -21,6 +21,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "bin": {
+    "homebridge-homematicip-dump": "dist/cli/dumpDevices.js"
+  },
   "files": [
     "dist",
     "config.schema.json",

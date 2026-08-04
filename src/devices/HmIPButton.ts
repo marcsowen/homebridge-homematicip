@@ -9,6 +9,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -29,7 +30,7 @@ interface SwitchChannel extends HmIPFunctionalChannel {
   functionalChannelType: 'SWITCH_CHANNEL';
   index: number;
   label?: string | null;
-  on: boolean | null;
+  on?: boolean | null;
 }
 
 interface SwitchRuntimeChannel {
@@ -56,7 +57,7 @@ function isSwitchChannel(channel: HmIPFunctionalChannel): channel is SwitchChann
   return isHmIPRecord(candidate)
     && typeof candidate.index === 'number'
     && (candidate.label === undefined || candidate.label === null || typeof candidate.label === 'string')
-    && (candidate.on === null || typeof candidate.on === 'boolean');
+    && (candidate.on === undefined || candidate.on === null || typeof candidate.on === 'boolean');
 }
 
 /**
@@ -81,8 +82,10 @@ export class HmIPButton extends HmIPGenericDevice {
     this.addButtonChannels(device);
     this.addSwitchChannels(device);
 
-    if (this.buttonChannels.size === 0) {
-      this.platform.log.warn('No functional button channels found for device %s', this.accessory.displayName);
+    if (this.buttonChannels.size === 0 && this.switchChannels.size === 0) {
+      this.rejectMissingFunctionalServices('SINGLE_KEY_CHANNEL or SWITCH_CHANNEL with numeric index');
+    } else if (this.buttonChannels.size === 0) {
+      this.platform.log.debug('No button channels found for actuator device %s', this.accessory.displayName);
     } else {
       this.removeStaleServices(this.platform.Service.StatelessProgrammableSwitch.UUID,
         new Set([...this.buttonChannels.values()].map(channel => channel.hapService)));
@@ -107,7 +110,7 @@ export class HmIPButton extends HmIPGenericDevice {
       if (!hapService) {
         const label = channel.label?.trim() || `Button ${channel.index}`;
         hapService = this.accessory.addService(
-          new this.platform.Service.StatelessProgrammableSwitch(label, subtype),
+          new this.platform.Service.StatelessProgrammableSwitch(sanitizeHomeKitName(label), subtype),
         );
       }
       hapService.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex, channel.index);
@@ -129,7 +132,7 @@ export class HmIPButton extends HmIPGenericDevice {
       let hapService = this.accessory.getServiceById(this.platform.Service.Switch, subtype);
       if (!hapService) {
         const label = channel.label?.trim() || `${device.label} Switch`;
-        hapService = this.accessory.addService(new this.platform.Service.Switch(label, subtype));
+        hapService = this.accessory.addService(new this.platform.Service.Switch(sanitizeHomeKitName(label), subtype));
       }
       const runtimeChannel: SwitchRuntimeChannel = {
         hapService,
@@ -165,7 +168,7 @@ export class HmIPButton extends HmIPGenericDevice {
   public override updateDevice(hmIPDevice: HmIPDevice, groups: Readonly<Record<string, HmIPGroup>>): void {
     super.updateDevice(hmIPDevice, groups);
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (!isSwitchChannel(channel) || channel.on === null) {
+      if (!isSwitchChannel(channel) || typeof channel.on !== 'boolean') {
         continue;
       }
       const currentChannel = this.switchChannels.get(channel.index);

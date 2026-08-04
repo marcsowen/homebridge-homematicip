@@ -3,6 +3,7 @@ import type {
   Service,
 } from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -119,7 +120,10 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
       if (channel?.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
         const notificationChannel = channel as NotificationLightChannel;
         if (!this.button1Led) {
-          this.button1Led = new this.platform.Service.Lightbulb(notificationChannel.label, 'Button1');
+          this.button1Led = new this.platform.Service.Lightbulb(
+            sanitizeHomeKitName(notificationChannel.label),
+            'Button1',
+          );
           if (this.button1Led) {
             this.button1Led = this.accessory.addService(this.button1Led);
           } else {
@@ -140,7 +144,10 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
       if (channel?.functionalChannelType === 'NOTIFICATION_LIGHT_CHANNEL') {
         const notificationChannel = channel as NotificationLightChannel;
         if (!this.button2Led) {
-          this.button2Led = new this.platform.Service.Lightbulb(notificationChannel.label, 'Button2');
+          this.button2Led = new this.platform.Service.Lightbulb(
+            sanitizeHomeKitName(notificationChannel.label),
+            'Button2',
+          );
           if (this.button2Led) {
             this.button2Led = this.accessory.addService(this.button2Led);
           } else {

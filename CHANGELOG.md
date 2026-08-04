@@ -1,3 +1,24 @@
+## 2.5.0 (2026-08-04)
+
+### New devices
+
+- **Wired inputs and lighting**: Added HmIPW-DRI16 support for independently configured contact/button inputs and HmIP-RGBW support for configured dim-only, tunable-white, and hue/saturation light outputs ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+- **Watering actuators**: Added HmIP-WSM and ELV-SH-WSM support as native HomeKit irrigation valves, including timed watering, live activity state, battery status, and valve, water, frost, overheating, and undervoltage fault reporting ([#611](https://github.com/marcsowen/homebridge-homematicip/issues/611)).
+
+### Improvements
+
+- **Device diagnostics**: Added `homebridge-homematicip-dump`, a standalone command that retrieves device records using the existing Homebridge configuration and redacts authentication data, stable identifiers, names, and labels before they are shared for new-device support.
+
+### Bug fixes
+
+- **HmIP-FSI16**: Recognize its `MULTI_MODE_INPUT_SWITCH_CHANNEL` as the controllable switch output while continuing to hide input-only channels on other switch devices ([#575](https://github.com/marcsowen/homebridge-homematicip/issues/575)).
+- **HomeKit names**: Sanitize Homematic IP accessory and service names according to HAP requirements, including replacing unsupported dash characters and removing trailing whitespace. Invalid cached names are repaired without changing valid names customized in Apple Home.
+- **Home Control Unit channels**: Accept switch and dimmer channels when the HCU omits optional labels or initial state values ([#575](https://github.com/marcsowen/homebridge-homematicip/issues/575)).
+- **Accessories**: Do not register devices for which no functional HomeKit service can be created, preventing empty or battery-only accessories. The warning now includes redacted channel structure metadata for diagnosis without exposing identifiers, labels, or values.
+- **Controllers**: Recognize the HmIPW-DRAP wired access point as an infrastructure device and keep it hidden without an unsupported-device warning.
+
+This release does not require any Homebridge configuration changes.
+
 ## 2.4.1 (2026-08-03)
 
 ### Bug fixes
