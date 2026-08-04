@@ -1,5 +1,9 @@
 ## 2.5.1 (2026-08-04)
 
+### Improvements
+
+- **Tooling**: Updated the pinned pnpm release from 11.18.0 to 11.20.0.
+
 ### Bug fixes
 
 - **Multi-mode inputs**: Hide default inputs that have no label, channel role, group, or configured action while retaining configured contact and button channels, including HmIPW-DRI16 and HmIP-FCI6 inputs ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
