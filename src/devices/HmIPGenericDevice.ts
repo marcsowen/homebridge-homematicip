@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {getDeviceConfig} from '../HmIPConfig.js';
 import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
@@ -57,7 +58,7 @@ export abstract class HmIPGenericDevice {
     public readonly accessory: HmIPPlatformAccessory,
   ) {
 
-    this.accessoryConfig = platform.config.devices?.[accessory.context.device.id];
+    this.accessoryConfig = getDeviceConfig(platform.config.devices, accessory.context.device.id);
     this.hidden = this.accessoryConfig?.hide === true;
 
     this.accessory.getService(this.platform.Service.AccessoryInformation)?.setCharacteristic(

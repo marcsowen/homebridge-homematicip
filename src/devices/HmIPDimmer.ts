@@ -29,6 +29,11 @@ interface DimmerRuntimeChannel {
   hapService: Service;
 }
 
+export interface HmIPDimmerChannelDescriptor {
+  index: number;
+  label: string;
+}
+
 function isDimmerChannel(channel: HmIPFunctionalChannel): channel is DimmerChannel {
   if (!hasFunctionalChannelType(channel, 'DIMMER_CHANNEL', 'MULTI_MODE_INPUT_DIMMER_CHANNEL')) {
     return false;
@@ -47,6 +52,30 @@ function expectedChannelType(deviceType: string): DimmerChannelType {
   return deviceType === 'DIN_RAIL_DIMMER_3'
     ? 'MULTI_MODE_INPUT_DIMMER_CHANNEL'
     : 'DIMMER_CHANNEL';
+}
+
+function getDimmerChannels(device: HmIPDevice): DimmerChannel[] {
+  const channelType = expectedChannelType(device.type);
+  return Object.values(device.functionalChannels)
+    .filter(isDimmerChannel)
+    .filter(channel => channel.functionalChannelType === channelType)
+    .sort((left, right) => left.index - right.index);
+}
+
+function getChannelLabel(device: HmIPDevice, channel: DimmerChannel, channelCount: number): string {
+  const label = channel.label?.trim();
+  if (label) {
+    return label;
+  }
+  return channelCount === 1 ? device.label : `${device.label} ${channel.index}`;
+}
+
+export function getHmIPDimmerChannels(device: HmIPDevice): HmIPDimmerChannelDescriptor[] {
+  const channels = getDimmerChannels(device);
+  return channels.map(channel => ({
+    index: channel.index,
+    label: getChannelLabel(device, channel, channels.length),
+  }));
 }
 
 function toBrightness(dimLevel: number): number {
@@ -75,10 +104,9 @@ export class HmIPDimmer extends HmIPGenericDevice {
 
     const device = accessory.context.device;
     const channelType = expectedChannelType(device.type);
-    const dimmerChannels = Object.values(device.functionalChannels)
-      .filter(isDimmerChannel)
-      .filter(channel => channel.functionalChannelType === channelType)
-      .sort((left, right) => left.index - right.index);
+    const dimmerChannels = getDimmerChannels(device)
+      .filter(channel => this.accessory.context.channelIndex === undefined
+        || channel.index === this.accessory.context.channelIndex);
     const legacyService = this.accessory.services.find(service =>
       service.UUID === this.platform.Service.Lightbulb.UUID && service.subtype === undefined);
 
@@ -123,13 +151,10 @@ export class HmIPDimmer extends HmIPGenericDevice {
   }
 
   private channelLabel(channel: DimmerChannel, channelCount: number): string {
-    const label = channel.label?.trim();
-    if (label) {
-      return label;
+    if (this.accessory.context.channelIndex !== undefined) {
+      return this.accessory.displayName;
     }
-    return channelCount === 1
-      ? this.accessory.context.device.label
-      : `${this.accessory.context.device.label} ${channel.index}`;
+    return getChannelLabel(this.accessory.context.device, channel, channelCount);
   }
 
   private removeStaleLightbulbServices(): void {

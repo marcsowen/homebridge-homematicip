@@ -5,6 +5,7 @@ import {
   isHmIPSecurityAndAlarmSolution,
   isHmIPSecurityZoneGroup,
 } from 'homematicip-cloud-client-ts';
+import {getDeviceConfig} from './HmIPConfig.js';
 import type {HmIPPlatform} from './HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from './HmIPTypes.js';
 
@@ -51,7 +52,8 @@ export class HmIPSecuritySystem {
     protected platform: HmIPPlatform,
     protected accessory: HmIPPlatformAccessory<HmIPHome>,
   ) {
-    this.hidden = platform.config.devices?.HOME_SECURITY_SYSTEM?.hide === true;
+    this.hidden = platform.config.hideSecuritySystem === true
+      || getDeviceConfig(platform.config.devices, 'HOME_SECURITY_SYSTEM')?.hide === true;
 
     this.platform.log.debug('Created security system');
     const home = accessory.context.device;

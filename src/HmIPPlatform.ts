@@ -17,9 +17,11 @@ import {
   type IdentifiableDevice,
 } from 'homematicip-cloud-client-ts';
 import {CustomCharacteristic} from './CustomCharacteristic.js';
+import {getHmIPDimmerChannels} from './devices/HmIPDimmer.js';
+import {HmIPDimmerCollection} from './devices/HmIPDimmerCollection.js';
 import {HmIPMultiModeInputCollection} from './devices/HmIPMultiModeInputCollection.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
-import type {HmIPPlatformConfig} from './HmIPConfig.js';
+import {getDeviceConfig, type HmIPPlatformConfig} from './HmIPConfig.js';
 import {
   getHmIPDeviceKind,
   HmIPDeviceFactory,
@@ -284,12 +286,15 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
       return [];
     }
 
-    const deviceConfig = this.config.devices?.[device.id];
-    if (deviceKind === 'multiModeInput' && deviceConfig?.separateChannels === true) {
+    const deviceConfig = getDeviceConfig(this.config.devices, device.id);
+    if (deviceConfig?.separateChannels === true && (deviceKind === 'multiModeInput'
+      || (deviceKind === 'dimmer' && getHmIPDimmerChannels(device).length > 1))) {
       if (deviceConfig.hide === true) {
         return [];
       }
-      const collection = new HmIPMultiModeInputCollection(this, this.accessoryRepository, device);
+      const collection = deviceKind === 'multiModeInput'
+        ? new HmIPMultiModeInputCollection(this, this.accessoryRepository, device)
+        : new HmIPDimmerCollection(this, this.accessoryRepository, device);
       this.deviceMap.set(device.id, collection);
       return collection.accessories.map(accessory => accessory.UUID);
     }

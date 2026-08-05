@@ -15,9 +15,26 @@ export interface HmIPDeviceConfig {
   withWindSpeedSensor?: boolean;
 }
 
+export interface HmIPDeviceConfigEntry extends HmIPDeviceConfig {
+  id: string;
+}
+
+export type HmIPDeviceConfigs = Record<string, HmIPDeviceConfig> | HmIPDeviceConfigEntry[];
+
 export interface HmIPPlatformConfig extends PlatformConfig {
   access_point: string;
   auth_token?: string;
+  hideSecuritySystem?: boolean;
   pin?: string;
-  devices?: Record<string, HmIPDeviceConfig>;
+  devices?: HmIPDeviceConfigs;
+}
+
+export function getDeviceConfig(
+  devices: HmIPDeviceConfigs | undefined,
+  deviceId: string,
+): HmIPDeviceConfig | undefined {
+  if (Array.isArray(devices)) {
+    return devices.find(device => device.id === deviceId);
+  }
+  return devices?.[deviceId];
 }

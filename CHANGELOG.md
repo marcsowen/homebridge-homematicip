@@ -1,3 +1,10 @@
+## 2.7.0 (2026-08-05)
+
+### Improvements
+
+- **Configuration UI**: Per-device options can now be added in the Homebridge UI, and the option to hide the Home Security System is always visible. Existing object-based per-device configuration remains supported ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+- **Multichannel dimmers**: The `separateChannels` option now exposes HmIPW-DRD3 and HmIP-DRDI3 outputs as independent HomeKit accessories so each output can be assigned to its own room ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+
 ## 2.6.0 (2026-08-04)
 
 ### Improvements

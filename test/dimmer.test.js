@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import {HmIPAccessoryRepository} from '../dist/HmIPAccessoryRepository.js';
 import {HmIPDimmer} from '../dist/devices/HmIPDimmer.js';
+import {HmIPDimmerCollection} from '../dist/devices/HmIPDimmerCollection.js';
 
 const Characteristic = {
   Brightness: 'Brightness',
@@ -64,14 +66,8 @@ function dimmerChannel(functionalChannelType, index, dimLevel = 0, label = '') {
   return {functionalChannelType, index, dimLevel, label};
 }
 
-function createDimmer(type, functionalChannels, {legacyService} = {}) {
-  const commands = [];
-  const informationService = new MockService('Information', undefined, Service.AccessoryInformation);
-  const services = [informationService];
-  if (legacyService) {
-    services.push(legacyService);
-  }
-  const device = {
+function dimmerDevice(type, functionalChannels) {
+  return {
     id: 'dimmer1',
     type,
     label: 'Dimmer',
@@ -83,6 +79,16 @@ function createDimmer(type, functionalChannels, {legacyService} = {}) {
     homeId: 'home1',
     functionalChannels,
   };
+}
+
+function createDimmer(type, functionalChannels, {legacyService} = {}) {
+  const commands = [];
+  const informationService = new MockService('Information', undefined, Service.AccessoryInformation);
+  const services = [informationService];
+  if (legacyService) {
+    services.push(legacyService);
+  }
+  const device = dimmerDevice(type, functionalChannels);
   const accessory = {
     context: {device},
     displayName: 'Dimmer',
@@ -122,6 +128,69 @@ function createDimmer(type, functionalChannels, {legacyService} = {}) {
 
   const adapter = new HmIPDimmer(platform, accessory);
   return {accessory, adapter, commands, device};
+}
+
+function createDimmerCollection(device) {
+  const calls = {registered: [], removed: [], updated: []};
+  const commands = [];
+
+  class MockPlatformAccessory {
+    constructor(displayName, UUID) {
+      this.context = {};
+      this.displayName = displayName;
+      this.services = [new MockService('Information', undefined, Service.AccessoryInformation)];
+      this.UUID = UUID;
+    }
+
+    addService(service) {
+      this.services.push(service);
+      return service;
+    }
+
+    getService(service) {
+      return this.services.find(candidate => candidate.UUID === service || candidate.UUID === service.UUID);
+    }
+
+    getServiceById(service, subtype) {
+      return this.services.find(candidate => candidate.UUID === service.UUID && candidate.subtype === subtype);
+    }
+
+    removeService(service) {
+      this.services.splice(this.services.indexOf(service), 1);
+    }
+  }
+
+  const api = {
+    hap: {
+      Service,
+      uuid: {generate: value => `uuid-${value}`},
+    },
+    platformAccessory: MockPlatformAccessory,
+    registerPlatformAccessories: (_plugin, _platform, accessories) => calls.registered.push(...accessories),
+    unregisterPlatformAccessories: (_plugin, _platform, accessories) => calls.removed.push(...accessories),
+    updatePlatformAccessories: accessories => calls.updated.push(...accessories),
+  };
+  const platform = {
+    api,
+    Characteristic,
+    config: {devices: [{id: device.id, separateChannels: true}]},
+    connector: {
+      async command(...args) {
+        commands.push(args);
+      },
+    },
+    groups: {},
+    log: {
+      debug() {},
+      info() {},
+      warn() {},
+    },
+    Service,
+  };
+  const repository = new HmIPAccessoryRepository(api, platform.log, platform.config.devices);
+  const collection = new HmIPDimmerCollection(platform, repository, device);
+
+  return {calls, collection, commands};
 }
 
 test('exposes all HmIPW-DRD3 output channels and uses their actual indexes', async () => {
@@ -180,4 +249,67 @@ test('updates each dimmer channel independently', () => {
     [Characteristic.On, true],
     [Characteristic.Brightness, 42],
   ]);
+});
+
+test('exposes HmIPW-DRD3 channels as stable independent accessories on demand', async () => {
+  const device = dimmerDevice('WIRED_DIMMER_3', {
+    1: dimmerChannel('DIMMER_CHANNEL', 1, 0.1),
+    2: dimmerChannel('DIMMER_CHANNEL', 2, 0.2, 'Dining room'),
+    3: dimmerChannel('DIMMER_CHANNEL', 3, 0.3),
+    4: dimmerChannel('MULTI_MODE_INPUT_DIMMER_CHANNEL', 4),
+  });
+  const {calls, collection, commands} = createDimmerCollection(device);
+
+  assert.deepEqual(collection.accessories.map(accessory => accessory.displayName), [
+    'Dimmer 1',
+    'Dining room',
+    'Dimmer 3',
+  ]);
+  assert.deepEqual(collection.accessories.map(accessory => accessory.UUID), [
+    'uuid-dimmer1:channel:1',
+    'uuid-dimmer1:channel:2',
+    'uuid-dimmer1:channel:3',
+  ]);
+  assert.deepEqual(collection.accessories.map(accessory => accessory.context.channelIndex), [1, 2, 3]);
+  assert.deepEqual(collection.accessories.map(accessory =>
+    accessory.services.filter(service => service.UUID === MockLightbulbService.UUID).length), [1, 1, 1]);
+  assert.equal(calls.registered.length, 3);
+
+  const secondLight = collection.accessories[1].getServiceById(MockLightbulbService, '2');
+  await secondLight.setters.get(Characteristic.Brightness)(55);
+  assert.deepEqual(commands, [[
+    'device/control/setDimLevel',
+    {channelIndex: 2, deviceId: 'dimmer1', dimLevel: 0.55},
+  ]]);
+
+  collection.updateDevice({
+    ...device,
+    functionalChannels: {
+      1: dimmerChannel('DIMMER_CHANNEL', 1, 0.1),
+      2: dimmerChannel('DIMMER_CHANNEL', 2, 0.42, 'Dining room'),
+    },
+  }, {});
+
+  assert.deepEqual(secondLight.updates, [
+    [Characteristic.Brightness, 42],
+  ]);
+  assert.deepEqual(collection.accessories.map(accessory => accessory.UUID), [
+    'uuid-dimmer1:channel:1',
+    'uuid-dimmer1:channel:2',
+  ]);
+  assert.deepEqual(calls.removed.map(accessory => accessory.UUID), ['uuid-dimmer1:channel:3']);
+});
+
+test('exposes HmIP-DRDI3 multi-mode dimmer outputs as independent accessories', () => {
+  const device = dimmerDevice('DIN_RAIL_DIMMER_3', {
+    0: dimmerChannel('DIMMER_CHANNEL', 0),
+    1: dimmerChannel('MULTI_MODE_INPUT_DIMMER_CHANNEL', 1, 0.1),
+    2: dimmerChannel('MULTI_MODE_INPUT_DIMMER_CHANNEL', 2, 0.2),
+    3: dimmerChannel('MULTI_MODE_INPUT_DIMMER_CHANNEL', 3, 0.3),
+  });
+  const {collection} = createDimmerCollection(device);
+
+  assert.deepEqual(collection.accessories.map(accessory => accessory.context.channelIndex), [1, 2, 3]);
+  assert.deepEqual(collection.accessories.map(accessory =>
+    accessory.services.filter(service => service.UUID === MockLightbulbService.UUID).length), [1, 1, 1]);
 });

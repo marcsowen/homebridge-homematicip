@@ -1,7 +1,7 @@
 import type {API, Logger} from 'homebridge';
 import type {IdentifiableDevice} from 'homematicip-cloud-client-ts';
 import {HmIPAccessory} from './HmIPAccessory.js';
-import type {HmIPDeviceConfig} from './HmIPConfig.js';
+import {getDeviceConfig, type HmIPDeviceConfigs} from './HmIPConfig.js';
 import {sanitizeHomeKitName} from './HmIPName.js';
 import type {HmIPPlatformAccessory} from './HmIPTypes.js';
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings.js';
@@ -21,7 +21,7 @@ export class HmIPAccessoryRepository {
   public constructor(
     private readonly api: API,
     private readonly log: Logger,
-    private readonly deviceConfigs: Readonly<Record<string, HmIPDeviceConfig>> | undefined,
+    private readonly deviceConfigs: HmIPDeviceConfigs | undefined,
   ) {}
 
   public restore(accessory: HmIPPlatformAccessory<IdentifiableDevice>): boolean {
@@ -61,7 +61,7 @@ export class HmIPAccessoryRepository {
       && hasLabel(existingContext) && hasLabel(context)
       ? {...context, label: existingContext.label}
       : context;
-    const deviceConfig = this.deviceConfigs?.[context.id];
+    const deviceConfig = getDeviceConfig(this.deviceConfigs, context.id);
     if (deviceConfig) {
       accessory.context.config = deviceConfig;
     } else {

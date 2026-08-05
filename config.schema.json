@@ -23,30 +23,99 @@
         "title": "Pairing PIN",
         "type": "string"
       },
+      "hideSecuritySystem": {
+        "title": "Hide Home Security System",
+        "description": "Do not expose the Homematic IP security system in HomeKit.",
+        "type": "boolean",
+        "default": false
+      },
       "devices": {
         "title": "Per-device Options",
-        "type": "object",
-        "additionalProperties": {
+        "description": "Add a device using its Homematic IP device ID, then select the options to apply to it. Device-specific options are ignored for other device types.",
+        "type": "array",
+        "items": {
+          "title": "Device",
           "type": "object",
           "properties": {
-            "hide": {"type": "boolean"},
-            "asClimateSensor": {"type": "boolean"},
-            "lightSensor": {"type": "boolean"},
-            "lightSwitch": {"type": "boolean"},
-            "openLatch": {"type": "boolean"},
-            "pin": {"type": "string"},
-            "separateChannels": {
-              "title": "Expose Channels as Separate Accessories",
-              "description": "Expose each assigned multi-mode input channel as a separate HomeKit accessory so it can be assigned to its own room.",
+            "id": {
+              "title": "SGTIN / Serial Number",
+              "description": "The device identifier shown as SGTIN in the Homematic IP app and as Serial Number in the Apple Home app.",
+              "type": "string",
+              "required": true
+            },
+            "hide": {
+              "title": "Hide Device",
+              "description": "Applies to all devices. Remove this device and its services from HomeKit.",
               "type": "boolean",
               "default": false
             },
-            "simpleSwitch": {"type": "boolean"},
-            "withRainSensor": {"type": "boolean"},
-            "withStormSensor": {"type": "boolean"},
-            "withSunshineSensor": {"type": "boolean"},
-            "withWindSpeedSensor": {"type": "boolean"}
-          }
+            "asClimateSensor": {
+              "title": "Expose as Climate Sensor",
+              "description": "Wall thermostats only (for example HmIP-WTH, HmIP-WTH-2, HmIP-WTH-B, HmIP-BWTH, HmIP-STH and HmIP-STHD). Hide the temperature controls and expose only the climate sensor functions.",
+              "type": "boolean",
+              "default": false
+            },
+            "lightSensor": {
+              "title": "Expose Light Sensor",
+              "description": "Motion detectors only (HmIP-SMI, HmIP-SMO-A and HmIP-SMI55). Add their brightness measurement as a HomeKit light sensor.",
+              "type": "boolean",
+              "default": false
+            },
+            "lightSwitch": {
+              "title": "Expose Light Switch",
+              "description": "Garage door modules only (HmIP-MOD-TM and HmIP-MOD-HO). Add a HomeKit switch for the module's optional light output.",
+              "type": "boolean",
+              "default": false
+            },
+            "openLatch": {
+              "title": "Open Latch when Unlocking",
+              "description": "HmIP-DLD door lock drive only. Pull the latch after unlocking so the door opens completely.",
+              "type": "boolean",
+              "default": false
+            },
+            "pin": {
+              "title": "Authorization PIN",
+              "description": "HmIP-DLD door lock drive only. Enter the optional PIN assigned in the Homematic IP app under Settings / Access Authorizations.",
+              "type": "string"
+            },
+            "separateChannels": {
+              "title": "Expose Channels as Separate Accessories",
+              "description": "Multi-mode inputs (HmIPW-DRI16 and HmIP-FCI6) and multichannel dimmers (HmIPW-DRD3 and HmIP-DRDI3) only. Expose each assigned input or dimmer output as a separate HomeKit accessory so it can be assigned to its own room.",
+              "type": "boolean",
+              "default": false
+            },
+            "simpleSwitch": {
+              "title": "Expose as Simple Switch",
+              "description": "HmIP-BSL notification light switch only. Expose the switch without the two top and bottom light services.",
+              "type": "boolean",
+              "default": false
+            },
+            "withRainSensor": {
+              "title": "Expose Rain Sensor",
+              "description": "Weather sensors with rain detection only (HmIP-SWO-PL and HmIP-SWO-PR). Add an occupancy-style HomeKit sensor that indicates rain.",
+              "type": "boolean",
+              "default": false
+            },
+            "withStormSensor": {
+              "title": "Expose Storm Sensor",
+              "description": "HmIP-SWO-B, HmIP-SWO-PL and HmIP-SWO-PR weather sensors only. Add an occupancy-style HomeKit sensor that indicates a storm.",
+              "type": "boolean",
+              "default": false
+            },
+            "withSunshineSensor": {
+              "title": "Expose Sunshine Sensor",
+              "description": "HmIP-SWO-B, HmIP-SWO-PL and HmIP-SWO-PR weather sensors only. Add an occupancy-style HomeKit sensor that indicates sunshine.",
+              "type": "boolean",
+              "default": false
+            },
+            "withWindSpeedSensor": {
+              "title": "Expose Wind Speed Sensor",
+              "description": "HmIP-SWO-B, HmIP-SWO-PL and HmIP-SWO-PR weather sensors only. Add an occupancy-style HomeKit sensor that indicates elevated wind speed.",
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": ["id"]
         }
       }
     },
@@ -57,6 +126,7 @@
     "access_point",
     "auth_token",
     "pin",
+    "hideSecuritySystem",
     "devices"
   ]
 }

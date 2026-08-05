@@ -27,7 +27,7 @@ const Service = {
   SecuritySystem: 'SecuritySystem',
 };
 
-function createSecuritySystem() {
+function createSecuritySystem(config = {}) {
   const getters = new Map();
   const setters = new Map();
   const commands = [];
@@ -70,7 +70,7 @@ function createSecuritySystem() {
   const platform = {
     Characteristic,
     Service,
-    config: {},
+    config,
     connector: {
       async command(...args) {
         commands.push(args);
@@ -89,6 +89,16 @@ function createSecuritySystem() {
     setTargetState: setters.get(Characteristic.SecuritySystemTargetState),
   };
 }
+
+test('supports the visible security-system toggle and the legacy device option', () => {
+  assert.equal(createSecuritySystem({hideSecuritySystem: true}).securitySystem.hidden, true);
+  assert.equal(createSecuritySystem({
+    devices: {HOME_SECURITY_SYSTEM: {hide: true}},
+  }).securitySystem.hidden, true);
+  assert.equal(createSecuritySystem({
+    devices: [{id: 'HOME_SECURITY_SYSTEM', hide: true}],
+  }).securitySystem.hidden, true);
+});
 
 test('uses request-based security zone labels reported by the installation', async () => {
   const {commands, getTargetState, securitySystem, setTargetState} = createSecuritySystem();
