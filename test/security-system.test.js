@@ -90,11 +90,8 @@ function createSecuritySystem(config = {}) {
   };
 }
 
-test('supports the visible security-system toggle and the legacy device option', () => {
+test('supports the visible security-system toggle and per-device option', () => {
   assert.equal(createSecuritySystem({hideSecuritySystem: true}).securitySystem.hidden, true);
-  assert.equal(createSecuritySystem({
-    devices: {HOME_SECURITY_SYSTEM: {hide: true}},
-  }).securitySystem.hidden, true);
   assert.equal(createSecuritySystem({
     devices: [{id: 'HOME_SECURITY_SYSTEM', hide: true}],
   }).securitySystem.hidden, true);

@@ -12,7 +12,8 @@
         "default": "HomematicIP"
       },
       "access_point": {
-        "title": "Access Point / HCU ID",
+        "title": "Access Point SGTIN / HCU ID",
+        "description": "The SGTIN of the Homematic IP Access Point or the ID of the Home Control Unit.",
         "type": "string",
         "required": true
       },
@@ -34,15 +35,20 @@
         "title": "Per-device Options",
         "description": "Add a device using its Homematic IP device ID, then select the options to apply to it. Device-specific options are ignored for other device types.",
         "type": "array",
+        "x-schema-form": {
+          "type": "tabarray",
+          "listItems": 0
+        },
         "items": {
           "title": "Device",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "title": "SGTIN / Serial Number",
               "description": "The device identifier shown as SGTIN in the Homematic IP app and as Serial Number in the Apple Home app.",
               "type": "string",
-              "required": true
+              "minLength": 1
             },
             "hide": {
               "title": "Hide Device",
@@ -115,18 +121,12 @@
               "type": "boolean",
               "default": false
             }
-          }
+          },
+          "required": ["id"]
         }
       }
     },
     "required": ["access_point"]
   },
-  "layout": [
-    "name",
-    "access_point",
-    "auth_token",
-    "pin",
-    "hideSecuritySystem",
-    "devices"
-  ]
+  "layout": ["*"]
 }

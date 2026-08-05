@@ -218,7 +218,7 @@ test('motion illumination updates the optional light service', () => {
   const motionService = new MotionSensorService('Motion');
   const lightService = new LightSensorService('Light', 'LightSensor');
   const accessory = createAccessory(device, [motionService, lightService]);
-  const platform = createPlatform({devices: {device1: {lightSensor: true}}});
+  const platform = createPlatform({devices: [{id: 'device1', lightSensor: true}]});
   const adapter = new HmIPMotionDetector(platform, accessory);
 
   adapter.updateDevice(device, {});

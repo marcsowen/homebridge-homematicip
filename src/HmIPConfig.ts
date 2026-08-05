@@ -19,7 +19,7 @@ export interface HmIPDeviceConfigEntry extends HmIPDeviceConfig {
   id: string;
 }
 
-export type HmIPDeviceConfigs = Record<string, HmIPDeviceConfig> | HmIPDeviceConfigEntry[];
+export type HmIPDeviceConfigs = HmIPDeviceConfigEntry[];
 
 export interface HmIPPlatformConfig extends PlatformConfig {
   access_point: string;
@@ -33,8 +33,14 @@ export function getDeviceConfig(
   devices: HmIPDeviceConfigs | undefined,
   deviceId: string,
 ): HmIPDeviceConfig | undefined {
-  if (Array.isArray(devices)) {
-    return devices.find(device => device.id === deviceId);
+  const entry = devices?.find(device => device.id === deviceId);
+  if (!entry) {
+    return undefined;
   }
-  return devices?.[deviceId];
+  const {id: _id, ...deviceConfig} = entry;
+  return deviceConfig;
+}
+
+export function hasLegacyDeviceConfig(devices: unknown): boolean {
+  return devices !== undefined && !Array.isArray(devices);
 }

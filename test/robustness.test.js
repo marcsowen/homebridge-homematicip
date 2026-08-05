@@ -52,7 +52,7 @@ function createAccessoryApi() {
 
 test('repository reuses newly registered accessories as cached entries', () => {
   const {api, calls} = createAccessoryApi();
-  const repository = new HmIPAccessoryRepository(api, log, {device1: {hide: true}});
+  const repository = new HmIPAccessoryRepository(api, log, [{id: 'device1', hide: true}]);
   const first = repository.acquire('uuid1', 'Switch', {id: 'device1'});
 
   repository.register(first);

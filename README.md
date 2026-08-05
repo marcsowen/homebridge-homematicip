@@ -21,7 +21,7 @@ from Apple Home, included in scenes and automations, and used through Siri.
 - Node.js 22 or 24
 
 Older Homebridge and Node.js releases are no longer supported by version 2.x of this plugin.
-Existing `access_point`, `auth_token`, and per-device configuration remains compatible when upgrading from version 1.x.
+Existing `access_point` and `auth_token` configuration remains compatible when upgrading from version 1.x.
 
 ### Installation
 
@@ -42,6 +42,11 @@ plugin-management documentation.
 
 The Homebridge UI exposes the available platform and per-device settings. You can also configure the plugin manually in
 `config.json`. Add one configuration entry for each Homematic IP Access Point or Home Control Unit you want to expose.
+
+> **Breaking change in version 2.8.0:** The legacy `devices` object keyed by SGTIN is no longer supported. Convert it to
+> the new `devices` array before starting version 2.8.0. An affected platform will remain offline until it is migrated.
+> Do not save its graphical plugin settings before conversion because the old per-device options could be discarded. Follow the
+> [migration instructions in the wiki](https://github.com/marcsowen/homebridge-homematicip/wiki/Migrating-old-config-json-format).
 
 #### Using an existing auth token
 

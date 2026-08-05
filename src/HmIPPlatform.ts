@@ -21,7 +21,7 @@ import {getHmIPDimmerChannels} from './devices/HmIPDimmer.js';
 import {HmIPDimmerCollection} from './devices/HmIPDimmerCollection.js';
 import {HmIPMultiModeInputCollection} from './devices/HmIPMultiModeInputCollection.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
-import {getDeviceConfig, type HmIPPlatformConfig} from './HmIPConfig.js';
+import {getDeviceConfig, type HmIPPlatformConfig, hasLegacyDeviceConfig} from './HmIPConfig.js';
 import {
   getHmIPDeviceKind,
   HmIPDeviceFactory,
@@ -51,6 +51,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   private readonly deviceMap = new Map<string, HmIPDeviceAdapter>();
   private readonly deviceFactory: HmIPDeviceFactory;
   private readonly shutdownController = new AbortController();
+  private readonly validDeviceConfig: boolean;
   private lifecycleState: PlatformLifecycleState = 'idle';
   public customCharacteristic: CustomCharacteristic;
 
@@ -67,7 +68,19 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     this.Characteristic = this.api.hap.Characteristic;
     this.FakeGatoHistoryService = fakegato(this.api);
     this.customCharacteristic = new CustomCharacteristic(api);
-    this.accessoryRepository = new HmIPAccessoryRepository(api, log, config.devices);
+    this.validDeviceConfig = !hasLegacyDeviceConfig(config.devices);
+    if (!this.validDeviceConfig) {
+      this.log.error(
+        'Legacy per-device configuration detected: "devices" must be an array in version 2.8.0. '
+        + 'This platform will not start until the configuration is migrated. See '
+        + 'https://github.com/marcsowen/homebridge-homematicip/wiki/Migrating-old-config-json-format.',
+      );
+    }
+    this.accessoryRepository = new HmIPAccessoryRepository(
+      api,
+      log,
+      this.validDeviceConfig ? config.devices : undefined,
+    );
     this.deviceFactory = new HmIPDeviceFactory(this);
 
     this.connector = new HmIPClient(log, {
@@ -103,6 +116,10 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   }
 
   private async start(): Promise<void> {
+    if (!this.validDeviceConfig) {
+      this.lifecycleState = 'stopped';
+      return;
+    }
     if (this.lifecycleState !== 'idle') {
       this.log.debug('Ignoring platform start while lifecycle state is %s.', this.lifecycleState);
       return;

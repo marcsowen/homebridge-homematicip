@@ -324,7 +324,7 @@ test('exposes assigned channels as stable independent accessories on demand', ()
       updatePlatformAccessories: accessories => calls.updated.push(...accessories),
     },
     Characteristic,
-    config: {devices: {fci6: {separateChannels: true}}},
+    config: {devices: [{id: 'fci6', separateChannels: true}]},
     groups: {},
     log: {debug() {}, info() {}, warn() {}},
     Service,

@@ -1,3 +1,17 @@
+## 2.8.0 (2026-08-05)
+
+### Breaking changes
+
+- **Per-device configuration**: The legacy `devices` object keyed by SGTIN is no longer supported. Convert it to the new `devices` array before starting version 2.8.0. Platforms with an object-based `devices` value remain offline and log a link to the migration instructions, giving users a chance to convert their options before using the new graphical editor ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+
+### Improvements
+
+- **Configuration validation**: Require a non-empty SGTIN or serial number for every per-device entry and reject unknown per-device option names.
+
+### Bug fixes
+
+- **Configuration UI**: Render per-device options as an explicit addable tab list and do not create an invisible initial device entry, fixing both the missing per-device add button and validation failures when no per-device options are configured ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+
 ## 2.7.1 (2026-08-05)
 
 ### Bug fixes
