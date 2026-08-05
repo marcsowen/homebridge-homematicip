@@ -2,6 +2,7 @@
   "pluginAlias": "HomematicIP",
   "pluginType": "platform",
   "singular": false,
+  "fixArrays": true,
   "schema": {
     "type": "object",
     "properties": {
@@ -114,8 +115,7 @@
               "type": "boolean",
               "default": false
             }
-          },
-          "required": ["id"]
+          }
         }
       }
     },

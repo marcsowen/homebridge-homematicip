@@ -1,3 +1,9 @@
+## 2.7.1 (2026-08-05)
+
+### Bug fixes
+
+- **Configuration UI**: Fixed validation of an empty per-device options list and enabled Homebridge UI's nested-array compatibility so the control for adding a per-device configuration is rendered ([#612](https://github.com/marcsowen/homebridge-homematicip/issues/612)).
+
 ## 2.7.0 (2026-08-05)
 
 ### Improvements
