@@ -26,7 +26,7 @@ importers:
         version: 26.2.0
       homebridge:
         specifier: ^2.3.1
-        version: 2.3.1(supports-color@5.5.0)
+        version: 2.4.0(supports-color@5.5.0)
       nodemon:
         specifier: ^3.1.14
         version: 3.1.14
@@ -96,16 +96,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@homebridge/ciao@1.3.11':
-    resolution: {integrity: sha512-XQDO0w1X3Vbhf3qWX8Gbb/BIaHbWzG4VlZReehKe2+1dFE9ddYYgeW5YFRbWNET/02eVq8IE30w7IWXBqnhf5Q==}
+  '@homebridge/ciao@1.3.12':
+    resolution: {integrity: sha512-84/0u0kqKy4qcKupIDaTtbkmk+3qFDuMzxTC0NPfVlHcUT+jHGdP+QCqwEw94/GJxRezDeBLwxaclkBZgCdeUg==}
     hasBin: true
 
-  '@homebridge/dbus-native@0.7.8':
-    resolution: {integrity: sha512-ZXcJzhA2Z3pYsSdQKcDZqELaJHzb5CXALlVHQRg+PHcXqx5xvL83ZPq8HdHCeavxS3pph6d85+zamCb1UFQa5A==}
+  '@homebridge/dbus-native@0.7.9':
+    resolution: {integrity: sha512-PFOeWyXfH2eoM4o6Zmj9PzCUDlrrbtrbAJVzHYXpXK5rh/dz84Ygu79WHKK3DWW2/oXieYPV6up+i1izSPbc3g==}
     hasBin: true
 
-  '@homebridge/hap-nodejs@2.2.0':
-    resolution: {integrity: sha512-AOx7zlGDI2xIihXjTMf5DqkbIaN8/njAVWhN9GSy0tjUvUYtkq1L3sdTOxzAVIg/XKVFSWDp82UZ6e8IEBr9Rw==}
+  '@homebridge/hap-nodejs@2.2.2':
+    resolution: {integrity: sha512-drTJSn63wGn5R6sDLmgjJdIW7G1awn1CxEEW1Jn+t3oCTMGSlk7lBZjGYbOpeL6acjiBqXNdo79NWcXn7s4CnQ==}
     engines: {node: ^22 || ^24 || ^26}
 
   '@isaacs/cliui@8.0.2':
@@ -310,8 +310,8 @@ packages:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
 
-  bonjour-hap@3.10.4:
-    resolution: {integrity: sha512-300Ay6OMOeE0TGVimI1UuPMbmagMPcA8qR4c77YWY8M6cs7Skedu6Bhx5pcMQi1K1HUUdzTv3Rs4GD/OWxgdEw==}
+  bonjour-hap@3.10.5:
+    resolution: {integrity: sha512-8E81oIQF0pjlDNVAKcAGwPYYG9BKD42Q8Fi7eJ/vYxEwyL/M8YpjM4gnFC1QTmagWI3jzbw7jPI0q2C1qWfQLQ==}
 
   brace-expansion@5.0.9:
     resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
@@ -554,8 +554,8 @@ packages:
     engines: {node: '>=14.0.0'}
     hasBin: true
 
-  homebridge@2.3.1:
-    resolution: {integrity: sha512-oRnuQx07Ht7ImyyT12L6Dq0LW3I6c6lQ0VgCI43GnxGGHmmTCsIcNLTQgr9E89zrAqAYbgI+Kui0wb7mvYvPIQ==}
+  homebridge@2.4.0:
+    resolution: {integrity: sha512-yAc/jGC04h6LqcZTiO6aubzKmCulWGIdYUx3lj8r/aJQbAL5EZta9aX71LWnko3bChhTaD7sS7LLJ5Hqu4DbVA==}
     engines: {node: ^22 || ^24 || ^26}
     hasBin: true
 
@@ -918,7 +918,7 @@ snapshots:
   '@biomejs/cli-win32-x64@2.5.8':
     optional: true
 
-  '@homebridge/ciao@1.3.11(supports-color@5.5.0)':
+  '@homebridge/ciao@1.3.12(supports-color@5.5.0)':
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       fast-deep-equal: 3.1.3
@@ -927,7 +927,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@homebridge/dbus-native@0.7.8':
+  '@homebridge/dbus-native@0.7.9':
     dependencies:
       event-stream: 4.0.1
       hexy: 0.4.0
@@ -936,11 +936,11 @@ snapshots:
       safe-buffer: 5.2.1
       xml2js: 0.6.2
 
-  '@homebridge/hap-nodejs@2.2.0(supports-color@5.5.0)':
+  '@homebridge/hap-nodejs@2.2.2(supports-color@5.5.0)':
     dependencies:
-      '@homebridge/ciao': 1.3.11(supports-color@5.5.0)
-      '@homebridge/dbus-native': 0.7.8
-      bonjour-hap: 3.10.4
+      '@homebridge/ciao': 1.3.12(supports-color@5.5.0)
+      '@homebridge/dbus-native': 0.7.9
+      bonjour-hap: 3.10.5
       debug: 4.4.3(supports-color@5.5.0)
       fast-srp-hap: 2.0.4
       futoin-hkdf: 1.5.3
@@ -1103,7 +1103,7 @@ snapshots:
 
   binary-extensions@2.3.0: {}
 
-  bonjour-hap@3.10.4:
+  bonjour-hap@3.10.5:
     dependencies:
       fast-deep-equal: 3.1.3
       multicast-dns: 7.2.5
@@ -1395,9 +1395,9 @@ snapshots:
 
   hexy@0.4.0: {}
 
-  homebridge@2.3.1(supports-color@5.5.0):
+  homebridge@2.4.0(supports-color@5.5.0):
     dependencies:
-      '@homebridge/hap-nodejs': 2.2.0(supports-color@5.5.0)
+      '@homebridge/hap-nodejs': 2.2.2(supports-color@5.5.0)
       '@matter/main': 0.17.9
       chalk: 6.0.0
       commander: 15.0.0
