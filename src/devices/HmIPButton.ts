@@ -116,7 +116,7 @@ export class HmIPButton extends HmIPGenericDevice {
       let hapService = this.accessory.getServiceById(this.platform.Service.StatelessProgrammableSwitch, subtype);
       if (!hapService) {
         const label = channel.label?.trim()
-          || (channel.channelRole === 'DOOR_BELL_INPUT' ? device.label : `Button ${channel.index}`);
+          || (channel.channelRole === 'DOOR_BELL_INPUT' ? device.label : `${device.label} Button ${channel.index}`);
         hapService = this.accessory.addService(
           new this.platform.Service.StatelessProgrammableSwitch(sanitizeHomeKitName(label), subtype),
         );
@@ -188,6 +188,14 @@ export class HmIPButton extends HmIPGenericDevice {
   }
 
   public channelEvent(channelId: number, channelEventType: string): void {
+    if (this.buttonChannels.size === 2) {
+      if (channelId === 1) {
+        channelId = 2;
+      } else if (channelId === 2) {
+        channelId = 1;
+      }
+    }
+
     const channel = this.buttonChannels.get(channelId);
     if (!channel) {
       return;
