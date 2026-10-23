@@ -18,6 +18,7 @@ interface PresenceDetectionChannel {
  * HomematicIP presence detector
  *
  * HmIP-SPI (Presence Sensor - indoor)
+ * HmIPW-SPI (Wired Presence Sensor - indoor)
  *
  */
 export class HmIPPresenceDetector extends HmIPGenericDevice {

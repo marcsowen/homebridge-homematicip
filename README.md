@@ -185,6 +185,7 @@ implement and test a device adapter. Review the file before attaching it to a pu
 - HmIP-SMO-A Motion detector with brightness sensor - outdoor
 - HmIP-SMI55 Motion detector with brightness sensor and remote control - 2-button
 - HmIP-SPI Presence sensor - indoor
+- HmIPW-SPI Wired presence sensor - indoor
 - HmIP-SRD Rain sensor
 - HmIP-PDT Pluggable dimmer
 - HmIP-BDT Brand dimmer
@@ -239,8 +240,8 @@ dependency; users do not need to install or configure it separately.
 
 ## Many thanks to our contributors
 
-- @coreGreenberet for reverse-engineering and implementation of the first HomematicIP-API client using Python
-  (https://github.com/coreGreenberet/homematicip-rest-api)
+- @coreGreenberet for originally reverse-engineering and implementing the Homematic IP API client in Python, now
+  maintained and further developed by @hahn-th (https://github.com/hahn-th/homematicip-rest-api)
 - @dmalch for adding fakegato-history support (https://github.com/simont77/fakegato-history)
 - @smhex for HmIP-DLS, HmIP-BSL, HmIP-DRDI3, ELV-SH-CTH and ELV-SH-SPS25 support
 - @ohueter for thermostat/climate sensor config option

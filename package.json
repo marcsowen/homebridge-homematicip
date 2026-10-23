@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "2.9.0",
+  "version": "2.10.0",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc@sowen.net>",
@@ -31,7 +31,7 @@
     "LICENSE",
     "README.md"
   ],
-  "packageManager": "pnpm@11.24.0",
+  "packageManager": "pnpm@12.15.0",
   "scripts": {
     "lint": "biome check src",
     "test": "pnpm run build && node --test test/*.test.js",
@@ -44,8 +44,8 @@
     "homebridge": "^2.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.11",
-    "@types/node": "^26.4.0",
+    "@biomejs/biome": "^2.6.2",
+    "@types/node": "^26.6.5",
     "homebridge": "^2.4.0",
     "nodemon": "^3.1.14",
     "rimraf": "^6.1.3",

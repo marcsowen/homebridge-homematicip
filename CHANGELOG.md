@@ -1,3 +1,11 @@
+## 2.10.0 (2026-10-23)
+
+### Improvements
+
+- **HmIPW-SPI**: Added wired presence sensor support as a HomeKit occupancy sensor ([#632](https://github.com/marcsowen/homebridge-homematicip/issues/632)).
+- **Dependencies**: Updated Biome to 2.6.2 and the Node.js type definitions to 26.6.5, and refreshed transitive dependencies.
+- **Tooling**: Updated pnpm to 12.15.0 and its GitHub Actions setup action to 6.1.0.
+
 ## 2.9.0 (2026-08-28)
 
 ### Improvements

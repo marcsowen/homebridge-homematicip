@@ -97,6 +97,7 @@ const deviceKinds = new Map<string, HmIPDeviceKind>([
   ['MOTION_DETECTOR_OUTDOOR', 'motionDetector'],
   ['MOTION_DETECTOR_PUSH_BUTTON', 'motionDetector'],
   ['PRESENCE_DETECTOR_INDOOR', 'presenceDetector'],
+  ['WIRED_PRESENCE_DETECTOR_INDOOR', 'presenceDetector'],
   ['RAIN_SENSOR', 'rainSensor'],
   ['BRAND_DIMMER', 'dimmer'],
   ['FULL_FLUSH_DIMMER', 'dimmer'],

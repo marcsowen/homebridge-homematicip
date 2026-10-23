@@ -18,6 +18,7 @@ const Characteristic = {
   Manufacturer: 'Manufacturer',
   Model: 'Model',
   MotionDetected: 'MotionDetected',
+  OccupancyDetected: {OCCUPANCY_DETECTED: 1, OCCUPANCY_NOT_DETECTED: 0},
   SerialNumber: 'SerialNumber',
   StatusLowBattery: {},
   StatusTampered: {NOT_TAMPERED: 0, TAMPERED: 1},
@@ -98,6 +99,7 @@ const ContactSensorService = serviceClass('ContactSensor');
 const HumiditySensorService = serviceClass('HumiditySensor');
 const LightSensorService = serviceClass('LightSensor');
 const MotionSensorService = serviceClass('MotionSensor');
+const OccupancySensorService = serviceClass('OccupancySensor');
 const TemperatureSensorService = serviceClass('TemperatureSensor');
 const ThermostatService = serviceClass('Thermostat');
 const Service = {
@@ -107,6 +109,7 @@ const Service = {
   HumiditySensor: HumiditySensorService,
   LightSensor: LightSensorService,
   MotionSensor: MotionSensorService,
+  OccupancySensor: OccupancySensorService,
   TemperatureSensor: TemperatureSensorService,
   Thermostat: ThermostatService,
 };
@@ -174,6 +177,65 @@ function baseDevice(overrides) {
     functionalChannels: {},
     ...overrides,
   };
+}
+
+for (const [modelType, type] of [
+  ['HmIPW-SPI', 'WIRED_PRESENCE_DETECTOR_INDOOR'],
+  ['HmIP-SPI', 'PRESENCE_DETECTOR_INDOOR'],
+]) {
+  test(`factory exposes ${modelType} occupancy and propagates presence changes`, () => {
+    // Channel layout and fields follow the reference cloud HmIPW-SPI record.
+    const device = baseDevice({
+      modelType,
+      type,
+      functionalChannels: {
+        0: {
+          functionalChannelType: 'DEVICE_BASE',
+          index: 0,
+          unreach: false,
+          lowBat: null,
+          supportedOptionalFeatures: {IOptionalFeatureLowBat: false},
+        },
+        1: {
+          functionalChannelType: 'PRESENCE_DETECTION_CHANNEL',
+          index: 1,
+          presenceDetected: true,
+          currentIllumination: 0,
+          illumination: 50.53,
+          motionBufferActive: false,
+          motionDetectionSendInterval: 'SECONDS_60',
+          numberOfBrightnessMeasurements: 7,
+        },
+      },
+    });
+    const accessory = createAccessory(device);
+    const adapter = new HmIPDeviceFactory(createPlatform()).create(device, accessory);
+    const service = accessory.getService(OccupancySensorService);
+    const occupancy = Characteristic.OccupancyDetected;
+
+    assert.ok(adapter);
+    assert.ok(service);
+    assert.equal(service.getCharacteristic(occupancy).getter(), occupancy.OCCUPANCY_DETECTED);
+    assert.equal(accessory.getService(BatteryService), undefined);
+    assert.equal(service.characteristics.has(Characteristic.StatusTampered), false);
+
+    for (const presenceDetected of [false, true]) {
+      adapter.updateDevice({
+        ...device,
+        functionalChannels: {
+          ...device.functionalChannels,
+          1: {...device.functionalChannels[1], presenceDetected},
+        },
+      }, {});
+      assert.equal(service.getCharacteristic(occupancy).getter(),
+        presenceDetected ? occupancy.OCCUPANCY_DETECTED : occupancy.OCCUPANCY_NOT_DETECTED);
+    }
+    assert.deepEqual(service.updates, [
+      [occupancy, occupancy.OCCUPANCY_DETECTED],
+      [occupancy, occupancy.OCCUPANCY_NOT_DETECTED],
+      [occupancy, occupancy.OCCUPANCY_DETECTED],
+    ]);
+  });
 }
 
 test('factory initializes wall thermostat state after subclass construction', () => {
