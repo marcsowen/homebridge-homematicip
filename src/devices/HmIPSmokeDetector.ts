@@ -1,5 +1,6 @@
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -47,9 +48,9 @@ export class HmIPSmokeDetector extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.SmokeSensor, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.SmokeDetected)
-      .onGet(() => this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
+      .onGet(connectedGet(this.platform, () => this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
       ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
-      : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED);
+      : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED));
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

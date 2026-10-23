@@ -154,3 +154,15 @@ test('keeps using classic security zone labels when reported by the installation
     2,
   ]]);
 });
+
+test('clears security zone state when zones disappear from the refreshed snapshot', () => {
+  const {securitySystem, getTargetState, getContactState} = createSecuritySystem();
+  securitySystem.updateGroups({
+    external: {active: true, id: 'external', label: 'EXTERNAL', type: 'SECURITY_ZONE', windowState: 'OPEN'},
+    internal: {active: true, id: 'internal', label: 'INTERNAL', type: 'SECURITY_ZONE'},
+  });
+  assert.equal(getTargetState(), Characteristic.SecuritySystemTargetState.AWAY_ARM);
+  securitySystem.updateGroups({});
+  assert.equal(getTargetState(), Characteristic.SecuritySystemTargetState.DISARM);
+  assert.equal(getContactState(), Characteristic.ContactSensorState.CONTACT_DETECTED);
+});

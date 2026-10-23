@@ -1,5 +1,6 @@
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPWeatherSensor, type WeatherSensorChannel} from './HmIPWeatherSensor.js';
@@ -41,13 +42,13 @@ export class HmIPWeatherSensorPlus extends HmIPWeatherSensor {
     this.platform.log.debug(`Created WeatherSensorPlus ${accessory.context.device.label}`);
 
     this.rainingOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .onGet(() => this.raining ? 1 : 0);
+      .onGet(connectedGet(this.platform, () => this.raining ? 1 : 0));
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.RainBool)
-      .onGet(() => this.raining);
+      .onGet(connectedGet(this.platform, () => this.raining));
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.RainDay)
-      .onGet(() => this.todayRainCounter);
+      .onGet(connectedGet(this.platform, () => this.todayRainCounter));
 
   }
 

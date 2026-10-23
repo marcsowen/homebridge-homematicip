@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -141,19 +142,19 @@ export class HmIPUniversalLight extends HmIPGenericDevice {
 
   private bindCharacteristics(channel: RuntimeChannel): void {
     channel.hapService.getCharacteristic(this.platform.Characteristic.On)
-      .onGet(() => channel.on)
-      .onSet(value => this.setOn(channel, value));
+      .onGet(connectedGet(this.platform, () => channel.on))
+      .onSet(connectedSet(this.platform, value => this.setOn(channel, value)));
     channel.hapService.getCharacteristic(this.platform.Characteristic.Brightness)
-      .onGet(() => toBrightness(channel.dimLevel))
-      .onSet(value => this.setBrightness(channel, value));
+      .onGet(connectedGet(this.platform, () => toBrightness(channel.dimLevel)))
+      .onSet(connectedSet(this.platform, value => this.setBrightness(channel, value)));
 
     if (channel.supportsHueSaturation) {
       channel.hapService.getCharacteristic(this.platform.Characteristic.Hue)
-        .onGet(() => channel.hue)
-        .onSet(value => this.setHue(channel, value));
+        .onGet(connectedGet(this.platform, () => channel.hue))
+        .onSet(connectedSet(this.platform, value => this.setHue(channel, value)));
       channel.hapService.getCharacteristic(this.platform.Characteristic.Saturation)
-        .onGet(() => channel.saturationLevel * 100)
-        .onSet(value => this.setSaturation(channel, value));
+        .onGet(connectedGet(this.platform, () => channel.saturationLevel * 100))
+        .onSet(connectedSet(this.platform, value => this.setSaturation(channel, value)));
     }
 
     if (channel.supportsColorTemperature) {
@@ -161,8 +162,8 @@ export class HmIPUniversalLight extends HmIPGenericDevice {
       const maximumMired = kelvinToMired(channel.minimalColorTemperature);
       channel.hapService.getCharacteristic(this.platform.Characteristic.ColorTemperature)
         .setProps({minValue: minimumMired, maxValue: maximumMired})
-        .onGet(() => kelvinToMired(channel.colorTemperature))
-        .onSet(value => this.setColorTemperature(channel, value));
+        .onGet(connectedGet(this.platform, () => kelvinToMired(channel.colorTemperature)))
+        .onSet(connectedSet(this.platform, value => this.setColorTemperature(channel, value)));
     }
   }
 

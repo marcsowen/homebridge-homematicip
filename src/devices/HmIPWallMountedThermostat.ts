@@ -1,4 +1,3 @@
-
 import {
   type HmIPDevice,
   type HmIPFunctionalChannel,
@@ -7,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {type HistoryEvent, HmIPHeatingThermostat, type ThermostatChannel} from './HmIPHeatingThermostat.js';
@@ -72,7 +72,7 @@ export class HmIPWallMountedThermostat extends HmIPHeatingThermostat {
     super(platform, accessory);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .onGet(() => this.humidity);
+      .onGet(connectedGet(this.platform, () => this.humidity));
   }
 
   override updateDevice(hmIPDevice: HmIPDevice, groups: { [p: string]: HmIPGroup }) {

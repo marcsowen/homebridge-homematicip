@@ -9,6 +9,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
@@ -122,22 +123,22 @@ export class HmIPBlind extends HmIPGenericDevice {
         supportsSlats: channel.blindModeActive !== false,
       };
       service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
-        .onGet(() => HmIPBlind.shutterHmIPToHomeKit(runtimeChannel.shutterLevel));
+        .onGet(connectedGet(this.platform, () => HmIPBlind.shutterHmIPToHomeKit(runtimeChannel.shutterLevel)));
       service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-        .onGet(() => HmIPBlind.shutterHmIPToHomeKit(runtimeChannel.targetShutterLevel))
-        .onSet(value => this.handleTargetPositionSet(runtimeChannel, value));
+        .onGet(connectedGet(this.platform, () => HmIPBlind.shutterHmIPToHomeKit(runtimeChannel.targetShutterLevel)))
+        .onSet(connectedSet(this.platform, value => this.handleTargetPositionSet(runtimeChannel, value)));
       service.getCharacteristic(this.platform.Characteristic.PositionState)
-        .onGet(() => runtimeChannel.processing
+        .onGet(connectedGet(this.platform, () => runtimeChannel.processing
           ? this.platform.Characteristic.PositionState.DECREASING
-          : this.platform.Characteristic.PositionState.STOPPED);
+          : this.platform.Characteristic.PositionState.STOPPED));
       service.getCharacteristic(this.platform.Characteristic.HoldPosition)
-        .onSet(value => this.handleHoldPositionSet(runtimeChannel, value));
+        .onSet(connectedSet(this.platform, value => this.handleHoldPositionSet(runtimeChannel, value)));
       if (runtimeChannel.supportsSlats) {
         service.getCharacteristic(this.platform.Characteristic.CurrentHorizontalTiltAngle)
-          .onGet(() => HmIPBlind.slatsHmIPToHomeKit(runtimeChannel.slatsLevel));
+          .onGet(connectedGet(this.platform, () => HmIPBlind.slatsHmIPToHomeKit(runtimeChannel.slatsLevel)));
         service.getCharacteristic(this.platform.Characteristic.TargetHorizontalTiltAngle)
-          .onGet(() => HmIPBlind.slatsHmIPToHomeKit(runtimeChannel.slatsLevel))
-          .onSet(value => this.handleTargetHorizontalTiltAngleSet(runtimeChannel, value));
+          .onGet(connectedGet(this.platform, () => HmIPBlind.slatsHmIPToHomeKit(runtimeChannel.slatsLevel)))
+          .onSet(connectedSet(this.platform, value => this.handleTargetHorizontalTiltAngleSet(runtimeChannel, value)));
       } else {
         this.removeSlatCharacteristics(service);
       }

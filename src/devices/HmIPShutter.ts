@@ -3,6 +3,7 @@ import type {
   Service,
 } from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -36,19 +37,19 @@ export class HmIPShutter extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.WindowCovering, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
-      .onGet(() => this.shutterLevel);
+      .onGet(connectedGet(this.platform, () => this.shutterLevel));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-      .onGet(() => this.shutterLevel)
-      .onSet(value => this.handleTargetPositionSet(value));
+      .onGet(connectedGet(this.platform, () => this.shutterLevel))
+      .onSet(connectedSet(this.platform, value => this.handleTargetPositionSet(value)));
 
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
-      .onGet(() => this.processing
+      .onGet(connectedGet(this.platform, () => this.processing
         ? this.platform.Characteristic.PositionState.DECREASING
-        : this.platform.Characteristic.PositionState.STOPPED);
+        : this.platform.Characteristic.PositionState.STOPPED));
 
     this.service.getCharacteristic(this.platform.Characteristic.HoldPosition)
-      .onSet(value => this.handleHoldPositionSet(value));
+      .onSet(connectedSet(this.platform, value => this.handleHoldPositionSet(value)));
   }
 
   private async handleTargetPositionSet(value: CharacteristicValue): Promise<void> {

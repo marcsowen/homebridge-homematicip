@@ -2,6 +2,7 @@ import type {
   Service,
 } from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -42,10 +43,10 @@ export class HmIPDoorLockSensor extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.LockMechanism, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .onGet(this.handleLockCurrentStateGet.bind(this));
+      .onGet(connectedGet(this.platform, this.handleLockCurrentStateGet.bind(this)));
 
     this.service.getCharacteristic(this.platform.Characteristic.LockTargetState)
-      .onGet(this.handleLockTargetStateGet.bind(this));
+      .onGet(connectedGet(this.platform, this.handleLockTargetStateGet.bind(this)));
   }
 
   handleLockCurrentStateGet() {

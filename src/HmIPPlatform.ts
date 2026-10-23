@@ -14,6 +14,7 @@ import {
   type HmIPDevice,
   type HmIPGroup,
   type HmIPHome,
+  type HmIPState,
   type IdentifiableDevice,
 } from 'homematicip-cloud-client-ts';
 import {CustomCharacteristic} from './CustomCharacteristic.js';
@@ -22,6 +23,7 @@ import {HmIPDimmerCollection} from './devices/HmIPDimmerCollection.js';
 import {HmIPMultiModeInputCollection} from './devices/HmIPMultiModeInputCollection.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
 import {getDeviceConfig, type HmIPPlatformConfig, hasLegacyDeviceConfig} from './HmIPConfig.js';
+import {HmIPConnection} from './HmIPConnection.js';
 import {
   getHmIPDeviceKind,
   HmIPDeviceFactory,
@@ -47,6 +49,9 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
   public readonly connector: HmIPClient;
   public groups: Record<string, HmIPGroup> = {};
+  public connectionReady = false;
+  private connection: HmIPConnection | undefined;
+  private eventRouter: HmIPEventRouter | undefined;
   private readonly accessoryRepository: HmIPAccessoryRepository;
   private readonly deviceMap = new Map<string, HmIPDeviceAdapter>();
   private readonly deviceFactory: HmIPDeviceFactory;
@@ -242,36 +247,39 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     if (stateResponse === false) {
       return false;
     }
-    const hmIPState = stateResponse;
+    this.applySnapshot(stateResponse);
+    this.connection = new HmIPConnection(
+      this.log,
+      signal => this.connector.getCurrentState(signal),
+      state => this.applySnapshot(state),
+      change => this.eventRouter?.handle(change),
+      ready => { this.connectionReady = ready; },
+    );
+    this.connector.connect(
+      change => this.connection?.change(change),
+      event => this.connection?.connection(event),
+    );
+    return true;
+  }
 
-    this.groups = hmIPState.groups;
-    // this.setHome(hmIPState.home);
-
+  private applySnapshot(state: HmIPState): void {
+    this.groups = state.groups;
+    for (const [id, adapter] of this.deviceMap) {
+      if (!state.devices[id]) this.removeAccessory(id, adapter);
+    }
     const activeAccessoryUuids = new Set<string>();
-
-    // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of Object.values(hmIPState.devices)) {
-      for (const uuid of this.updateAccessory(device)) {
-        activeAccessoryUuids.add(uuid);
-      }
+    for (const device of Object.values(state.devices)) {
+      for (const uuid of this.updateAccessory(device)) activeAccessoryUuids.add(uuid);
     }
-
-    const securitySystemUuid = this.updateSecuritySystem(hmIPState.home);
-    if (securitySystemUuid) {
-      activeAccessoryUuids.add(securitySystemUuid);
-    }
+    const securitySystemUuid = this.updateSecuritySystem(state.home);
+    if (securitySystemUuid) activeAccessoryUuids.add(securitySystemUuid);
     this.accessoryRepository.reconcile(activeAccessoryUuids);
-
-    const eventRouter = new HmIPEventRouter(this.log, hmIPState, this.deviceMap, {
+    this.eventRouter = new HmIPEventRouter(this.log, state, this.deviceMap, {
       addDevice: device => this.updateAccessory(device),
       removeDevice: (deviceId, adapter) => this.removeAccessory(deviceId, adapter),
       updateHome: home => this.securitySystem?.updateHome(home),
       updateSecurityGroups: groups => this.securitySystem?.updateGroups(groups),
     });
-
-    // Start websocket immediately and register handlers
-    this.connector.connect(stateChange => eventRouter.handle(stateChange));
-    return true;
   }
 
   private updateAccessory(device: HmIPDevice): readonly string[] {
@@ -359,6 +367,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     this.lifecycleState = 'stopping';
     this.log.debug('Executed shutdown callback');
     this.shutdownController.abort();
+    this.connection?.stop();
     this.connector.shutdown();
     for (const adapter of this.deviceMap.values()) {
       adapter.dispose();

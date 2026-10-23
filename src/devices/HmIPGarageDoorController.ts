@@ -3,6 +3,7 @@ import type {
       Service,
   } from 'homebridge';
   import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
   import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
   import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -45,11 +46,11 @@ import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
       this.service = this.getOrAddService(this.platform.Service.GarageDoorOpener, accessory.context.device.label);
   
       this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
-        .onGet(() => this.getHmKitCurrentDoorState(this.currentDoorState));
+        .onGet(connectedGet(this.platform, () => this.getHmKitCurrentDoorState(this.currentDoorState)));
   
       this.service.getCharacteristic(this.platform.Characteristic.TargetDoorState)
-        .onGet(() => this.targetDoorState)
-        .onSet(value => this.handleTargetDoorStateSet(value));
+        .onGet(connectedGet(this.platform, () => this.targetDoorState))
+        .onSet(connectedSet(this.platform, value => this.handleTargetDoorStateSet(value)));
   
     }
   

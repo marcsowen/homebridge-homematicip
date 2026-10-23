@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -155,7 +156,7 @@ export class HmIPMultiModeInput extends HmIPGenericDevice {
     const service = this.getOrAddService(this.platform.Service.ContactSensor, label, channel.index.toString());
     this.setServiceLabelIndex(service, channel.index);
     service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .onGet(() => this.getContactState(runtimeChannel));
+      .onGet(connectedGet(this.platform, () => this.getContactState(runtimeChannel)));
     runtimeChannel.contactService = service;
   }
 

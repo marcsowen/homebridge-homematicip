@@ -1,5 +1,6 @@
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -45,13 +46,13 @@ export class HmIPMotionDetector extends HmIPGenericDevice {
     );
 
     this.motionSensorService.getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .onGet(() => this.motionDetected);
+      .onGet(connectedGet(this.platform, () => this.motionDetected));
 
     if (this.featureSabotage) {
       this.motionSensorService.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .onGet(() => this.sabotage
+        .onGet(connectedGet(this.platform, () => this.sabotage
           ? this.platform.Characteristic.StatusTampered.TAMPERED
-          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
+          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED));
     }
 
     this.addLightSensor = this.accessoryConfig?.lightSensor === true;
@@ -64,7 +65,7 @@ export class HmIPMotionDetector extends HmIPGenericDevice {
       );
 
       this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-        .onGet(() => Math.max(1, this.lightLevel));
+        .onGet(connectedGet(this.platform, () => Math.max(1, this.lightLevel)));
 
     } else {
       const lightSensorService = this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');

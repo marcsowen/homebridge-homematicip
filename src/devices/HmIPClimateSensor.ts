@@ -1,5 +1,6 @@
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -43,10 +44,10 @@ export class HmIPClimateSensor extends HmIPGenericDevice {
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({minValue: -100})
-      .onGet(() => this.actualTemperature);
+      .onGet(connectedGet(this.platform, () => this.actualTemperature));
 
     this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .onGet(() => this.humidity);
+      .onGet(connectedGet(this.platform, () => this.humidity));
   }
 
 

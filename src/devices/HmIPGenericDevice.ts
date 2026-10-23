@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import {getDeviceConfig} from '../HmIPConfig.js';
 import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
@@ -98,9 +99,9 @@ export abstract class HmIPGenericDevice {
       this.batteryService = this.accessory.getService(this.platform.Service.Battery)
         || this.accessory.addService(this.platform.Service.Battery);
       this.batteryService?.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-        .onGet(() => this.lowBat
+        .onGet(connectedGet(this.platform, () => this.lowBat
           ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-          : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
+          : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL));
     }
   }
 

@@ -1,3 +1,10 @@
+## 2.11.0 (2026-10-23)
+
+### Fixes
+
+- **Connection recovery**: Refresh devices, groups, and security state after connecting or reconnecting, merge updates received during refresh, and retry failed refreshes. HomeKit reads and commands report a communication failure until the state is synchronized.
+- **Cloud logging**: Update homematicip-cloud-client-ts to 0.3.0, which omits cloud response bodies and malformed JSON payload fragments from logs to protect authentication tokens and home data.
+
 ## 2.10.0 (2026-10-23)
 
 ### Improvements

@@ -1,5 +1,6 @@
 import type {CharacteristicValue, Service, WithUUID} from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -40,17 +41,17 @@ export class HmIPRotaryHandleSensor extends HmIPGenericDevice {
       this.removeService(this.platform.Service.Window);
       this.service = this.getOrAddService(this.platform.Service.ContactSensor, accessory.context.device.label);
       this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-        .onGet(() => this.getContactSensorState());
+        .onGet(connectedGet(this.platform, () => this.getContactSensorState()));
     } else {
       this.removeService(this.platform.Service.ContactSensor);
       this.service = this.getOrAddService(this.platform.Service.Window, accessory.context.device.label);
       this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
-        .onGet(() => this.getWindowPosition());
+        .onGet(connectedGet(this.platform, () => this.getWindowPosition()));
       this.service.getCharacteristic(this.platform.Characteristic.PositionState)
-        .onGet(() => this.platform.Characteristic.PositionState.STOPPED);
+        .onGet(connectedGet(this.platform, () => this.platform.Characteristic.PositionState.STOPPED));
       this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-        .onGet(() => this.getWindowPosition())
-        .onSet(value => this.handleWindowTargetPositionSet(value));
+        .onGet(connectedGet(this.platform, () => this.getWindowPosition()))
+        .onSet(connectedSet(this.platform, value => this.handleWindowTargetPositionSet(value)));
     }
 
   }

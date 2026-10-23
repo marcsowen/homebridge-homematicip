@@ -1,5 +1,6 @@
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -32,7 +33,7 @@ export class HmIPLightSensor extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.LightSensor, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-      .onGet(() => this.averageIllumination);
+      .onGet(connectedGet(this.platform, () => this.averageIllumination));
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

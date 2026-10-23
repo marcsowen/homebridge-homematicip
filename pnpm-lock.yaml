@@ -170,8 +170,8 @@ importers:
         specifier: ^0.6.7
         version: 0.6.7(supports-color@5.5.0)
       homematicip-cloud-client-ts:
-        specifier: ^0.2.1
-        version: 0.2.1
+        specifier: ^0.3.0
+        version: 0.3.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.6.2
@@ -657,8 +657,8 @@ packages:
     engines: {node: ^22 || ^24 || ^26}
     hasBin: true
 
-  homematicip-cloud-client-ts@0.2.1:
-    resolution: {integrity: sha512-Ad2yGQKjSIyFKYWOiB2VyeOWT7bfn4qYv2OJxQAZiaHhwmzrJMEdeOj0MHGibqyuCbUDR5901VuN1/I5yZMvhg==}
+  homematicip-cloud-client-ts@0.3.0:
+    resolution: {integrity: sha512-rLviWknlIlMInj2qStg+jyW6tSupfngwPvBqE3pVKVFCK+VvSjl9rg1krUSXaJ5axISMIRR6XxW/qvmt5UudAg==}
     engines: {node: ^22.0.0 || ^24.0.0}
 
   https-proxy-agent@7.0.6:
@@ -1354,7 +1354,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  homematicip-cloud-client-ts@0.2.1:
+  homematicip-cloud-client-ts@0.3.0:
     dependencies:
       p-queue: 9.3.5
       ws: 8.22.0

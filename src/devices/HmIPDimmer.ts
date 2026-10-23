@@ -9,6 +9,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
@@ -148,11 +149,11 @@ export class HmIPDimmer extends HmIPGenericDevice {
         requestedDimLevelAt: 0,
       };
       hapService.getCharacteristic(this.platform.Characteristic.On)
-        .onGet(() => runtimeChannel.dimLevel > 0)
-        .onSet(value => this.handleOnSet(runtimeChannel, value));
+        .onGet(connectedGet(this.platform, () => runtimeChannel.dimLevel > 0))
+        .onSet(connectedSet(this.platform, value => this.handleOnSet(runtimeChannel, value)));
       hapService.getCharacteristic(this.platform.Characteristic.Brightness)
-        .onGet(() => toBrightness(runtimeChannel.dimLevel))
-        .onSet(value => this.handleBrightnessSet(runtimeChannel, value));
+        .onGet(connectedGet(this.platform, () => toBrightness(runtimeChannel.dimLevel)))
+        .onSet(connectedSet(this.platform, value => this.handleBrightnessSet(runtimeChannel, value)));
       this.channels.set(channel.index, runtimeChannel);
       this.platform.log.debug('Added dimmer channel %d to %s', channel.index, this.accessory.displayName);
     }

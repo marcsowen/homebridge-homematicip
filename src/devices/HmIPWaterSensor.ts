@@ -1,5 +1,6 @@
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -32,9 +33,9 @@ export class HmIPWaterSensor extends HmIPGenericDevice {
     this.waterLevelService = this.getOrAddService(this.platform.Service.LeakSensor, accessory.context.device.label);
 
     this.waterLevelService.getCharacteristic(this.platform.Characteristic.LeakDetected)
-      .onGet(() => this.waterlevelDetected
+      .onGet(connectedGet(this.platform, () => this.waterlevelDetected
         ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
-        : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED);
+        : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED));
 
   }
 

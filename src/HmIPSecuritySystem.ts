@@ -6,6 +6,7 @@ import {
   isHmIPSecurityAndAlarmSolution,
   isHmIPSecurityZoneGroup,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from './HmIPAvailability.js';
 import {getDeviceConfig} from './HmIPConfig.js';
 import type {HmIPPlatform} from './HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from './HmIPTypes.js';
@@ -85,15 +86,15 @@ export class HmIPSecuritySystem {
     this.updateHome(home);
 
     this.service.getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-      .onGet(() => this.getSecuritySystemCurrentState());
+      .onGet(connectedGet(this.platform, () => this.getSecuritySystemCurrentState()));
 
     this.service.getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
-      .onGet(() => this.getSecuritySystemTargetState())
-      .onSet(value => this.handleTargetStateSet(value));
+      .onGet(connectedGet(this.platform, () => this.getSecuritySystemTargetState()))
+      .onSet(connectedSet(this.platform, value => this.handleTargetStateSet(value)));
 
     this.service.addOptionalCharacteristic(this.platform.Characteristic.ContactSensorState);
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .onGet(() => this.getContactSensorState());
+      .onGet(connectedGet(this.platform, () => this.getContactSensorState()));
 
   }
 
@@ -159,34 +160,16 @@ export class HmIPSecuritySystem {
       );
     }
 
-    let stateChanged = false;
-    let windowStateChanged = false;
-
-    for (const group of securityZoneGroups) {
-      const active = group.active ?? false;
-      if (group.label === securityZoneLabels.internal) {
-        if (active !== this.internalZoneActive) {
-          this.internalZoneActive = active;
-          this.platform.log.info('Security system activation status for internal zone changed to %s', this.internalZoneActive);
-          stateChanged = true;
-        }
-      } else if (group.label === securityZoneLabels.external) {
-        if (active !== this.externalZoneActive) {
-          this.externalZoneActive = active;
-          this.platform.log.info('Security system activation status for external zone changed to %s', this.externalZoneActive);
-          stateChanged = true;
-        }
-        const windowState = getWindowState(group);
-        if (windowState !== undefined && windowState !== this.externalWindowState) {
-          this.externalWindowState = windowState;
-          this.platform.log.info(
-            'Security system window state for external zone changed to %s',
-            this.externalWindowState,
-          );
-          windowStateChanged = true;
-        }
-      }
-    }
+    const internalZone = securityZoneGroups.find(group => group.label === securityZoneLabels.internal);
+    const externalZone = securityZoneGroups.find(group => group.label === securityZoneLabels.external);
+    const internalActive = internalZone?.active ?? false;
+    const externalActive = externalZone?.active ?? false;
+    const windowState = externalZone ? getWindowState(externalZone) ?? 'CLOSED' : 'CLOSED';
+    const stateChanged = internalActive !== this.internalZoneActive || externalActive !== this.externalZoneActive;
+    const windowStateChanged = windowState !== this.externalWindowState;
+    this.internalZoneActive = internalActive;
+    this.externalZoneActive = externalActive;
+    this.externalWindowState = windowState;
 
     if (stateChanged) {
       this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());

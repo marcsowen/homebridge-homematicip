@@ -1,5 +1,6 @@
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -37,15 +38,15 @@ export class HmIPPresenceDetector extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.OccupancySensor, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .onGet(() => this.presenceDetected
+      .onGet(connectedGet(this.platform, () => this.presenceDetected
         ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED));
 
     if (this.featureSabotage) {
       this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .onGet(() => this.sabotage
+        .onGet(connectedGet(this.platform, () => this.sabotage
           ? this.platform.Characteristic.StatusTampered.TAMPERED
-          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
+          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED));
     }
 
   }

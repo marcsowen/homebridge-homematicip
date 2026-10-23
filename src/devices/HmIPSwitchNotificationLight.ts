@@ -3,6 +3,7 @@ import type {
   Service,
 } from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
@@ -107,8 +108,8 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.Switch, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
-      .onGet(() => this.on)
-      .onSet(value => this.handleOnSet(value));
+      .onGet(connectedGet(this.platform, () => this.on))
+      .onSet(connectedSet(this.platform, value => this.handleOnSet(value)));
 
     this.simpleSwitch = this.accessoryConfig?.simpleSwitch === true;
 
@@ -166,50 +167,50 @@ export class HmIPSwitchNotificationLight extends HmIPGenericDevice {
 
       /* Bind handlers for top light */
       this.button1Led.getCharacteristic(this.platform.Characteristic.On)
-        .onGet(() => this.buttonLedOnGet(this.topLight))
-        .onSet(value => this.buttonLedOnSet(this.topLight, Boolean(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedOnGet(this.topLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedOnSet(this.topLight, Boolean(value))));
       
       this.button1Led.getCharacteristic(this.platform.Characteristic.Brightness)
-        .onGet(() => this.buttonLedBrightnessGet(this.topLight))
-        .onSet(value => this.buttonLedBrightnessSet(this.topLight, Number(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedBrightnessGet(this.topLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedBrightnessSet(this.topLight, Number(value))));
 
       this.button1Led.getCharacteristic(this.platform.Characteristic.Hue)
-        .onGet(() => this.buttonLedHueGet(this.topLight))
-        .onSet(value => this.buttonLedHueSet(this.topLight, Number(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedHueGet(this.topLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedHueSet(this.topLight, Number(value))));
 
       this.button1Led.getCharacteristic(this.platform.Characteristic.Saturation)
-        .onGet(() => this.buttonLedSaturationGet(this.topLight))
-        .onSet(value => this.buttonLedSaturationSet(this.topLight, Number(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedSaturationGet(this.topLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedSaturationSet(this.topLight, Number(value))));
 
       if (this.topLight.hasOpticalSignal) {
         this.button1Led.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal);
         this.button1Led.getCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal)
-          .onGet(() => this.buttonLedOpticalSignalGet(this.topLight))
-          .onSet(value => this.buttonLedOpticalSignalSet(this.topLight, String(value)));
+          .onGet(connectedGet(this.platform, () => this.buttonLedOpticalSignalGet(this.topLight)))
+          .onSet(connectedSet(this.platform, value => this.buttonLedOpticalSignalSet(this.topLight, String(value))));
       }
 
       /* Bind handlers for bottom light */
       this.button2Led.getCharacteristic(this.platform.Characteristic.On)
-        .onGet(() => this.buttonLedOnGet(this.bottomLight))
-        .onSet(value => this.buttonLedOnSet(this.bottomLight, Boolean(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedOnGet(this.bottomLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedOnSet(this.bottomLight, Boolean(value))));
       
       this.button2Led.getCharacteristic(this.platform.Characteristic.Brightness)
-        .onGet(() => this.buttonLedBrightnessGet(this.bottomLight))
-        .onSet(value => this.buttonLedBrightnessSet(this.bottomLight, Number(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedBrightnessGet(this.bottomLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedBrightnessSet(this.bottomLight, Number(value))));
 
       this.button2Led.getCharacteristic(this.platform.Characteristic.Hue)
-        .onGet(() => this.buttonLedHueGet(this.bottomLight))
-        .onSet(value => this.buttonLedHueSet(this.bottomLight, Number(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedHueGet(this.bottomLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedHueSet(this.bottomLight, Number(value))));
 
       this.button2Led.getCharacteristic(this.platform.Characteristic.Saturation)
-        .onGet(() => this.buttonLedSaturationGet(this.bottomLight))
-        .onSet(value => this.buttonLedSaturationSet(this.bottomLight, Number(value)));
+        .onGet(connectedGet(this.platform, () => this.buttonLedSaturationGet(this.bottomLight)))
+        .onSet(connectedSet(this.platform, value => this.buttonLedSaturationSet(this.bottomLight, Number(value))));
 
       if (this.bottomLight.hasOpticalSignal) {
         this.button2Led.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal);
         this.button2Led.getCharacteristic(this.platform.customCharacteristic.characteristic.OpticalSignal)
-          .onGet(() => this.buttonLedOpticalSignalGet(this.bottomLight))
-          .onSet(value => this.buttonLedOpticalSignalSet(this.bottomLight, String(value)));
+          .onGet(connectedGet(this.platform, () => this.buttonLedOpticalSignalGet(this.bottomLight)))
+          .onSet(connectedSet(this.platform, value => this.buttonLedOpticalSignalSet(this.bottomLight, String(value))));
       }
     
     } else{

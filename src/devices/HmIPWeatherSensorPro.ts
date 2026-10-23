@@ -1,4 +1,5 @@
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPWeatherSensorPlus, type WeatherSensorPlusChannel} from './HmIPWeatherSensorPlus.js';
@@ -26,7 +27,7 @@ export class HmIPWeatherSensorPro extends HmIPWeatherSensorPlus {
     this.platform.log.debug(`Created WeatherSensorPro ${accessory.context.device.label}`);
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.WindDirection)
-      .onGet(() => `${this.windDirection}°`);
+      .onGet(connectedGet(this.platform, () => `${this.windDirection}°`));
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -54,7 +55,7 @@ export class HmIPRainSensor extends HmIPGenericDevice {
       accessory.context.device.label,
     );
     this.rainService.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .onGet(() => this.getOccupancyState());
+      .onGet(connectedGet(this.platform, () => this.getOccupancyState()));
 
     this.platform.log.debug(`Created rain sensor ${accessory.context.device.label}`);
   }

@@ -9,6 +9,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -61,14 +62,14 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice {
     this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy);
 
     this.service.getCharacteristic(this.platform.Characteristic.On)
-      .onGet(() => this.on)
-      .onSet(value => this.handleOnSet(value));
+      .onGet(connectedGet(this.platform, () => this.on))
+      .onSet(connectedSet(this.platform, value => this.handleOnSet(value)));
 
     this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ElectricPower)
-      .onGet(() => this.currentPowerConsumption);
+      .onGet(connectedGet(this.platform, () => this.currentPowerConsumption));
 
     this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ElectricalEnergy)
-      .onGet(() => this.energyCounter);
+      .onGet(connectedGet(this.platform, () => this.energyCounter));
   }
 
   private async handleOnSet(value: CharacteristicValue): Promise<void> {

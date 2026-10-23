@@ -9,6 +9,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
@@ -105,8 +106,8 @@ export class HmIPSwitch extends HmIPGenericDevice {
         hapService,
       };
       hapService.getCharacteristic(this.platform.Characteristic.On)
-        .onGet(() => this.handleOnGet(runtimeChannel))
-        .onSet(value => this.handleOnSet(runtimeChannel, value));
+        .onGet(connectedGet(this.platform, () => this.handleOnGet(runtimeChannel)))
+        .onSet(connectedSet(this.platform, value => this.handleOnSet(runtimeChannel, value)));
       this.channels.set(channel.index, runtimeChannel);
       this.platform.log.debug('Added switch channel %d to %s', channel.index, this.accessory.displayName);
     }

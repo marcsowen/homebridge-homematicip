@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -89,25 +90,25 @@ export class HmIPWateringActuator extends HmIPGenericDevice {
     this.service.addOptionalCharacteristic(this.platform.Characteristic.StatusFault);
 
     this.service.getCharacteristic(this.platform.Characteristic.Active)
-      .onGet(() => this.wateringActive
+      .onGet(connectedGet(this.platform, () => this.wateringActive
         ? this.platform.Characteristic.Active.ACTIVE
-        : this.platform.Characteristic.Active.INACTIVE)
-      .onSet(value => this.handleActiveSet(value));
+        : this.platform.Characteristic.Active.INACTIVE))
+      .onSet(connectedSet(this.platform, value => this.handleActiveSet(value)));
     this.service.getCharacteristic(this.platform.Characteristic.InUse)
-      .onGet(() => this.wateringActive
+      .onGet(connectedGet(this.platform, () => this.wateringActive
         ? this.platform.Characteristic.InUse.IN_USE
-        : this.platform.Characteristic.InUse.NOT_IN_USE);
+        : this.platform.Characteristic.InUse.NOT_IN_USE));
     this.service.getCharacteristic(this.platform.Characteristic.SetDuration)
-      .onGet(() => this.wateringOnTime)
-      .onSet(value => {
+      .onGet(connectedGet(this.platform, () => this.wateringOnTime))
+      .onSet(connectedSet(this.platform, value => {
         this.wateringOnTime = normalizeDuration(Number(value));
-      });
+      }));
     this.service.getCharacteristic(this.platform.Characteristic.RemainingDuration)
-      .onGet(() => this.remainingDuration());
+      .onGet(connectedGet(this.platform, () => this.remainingDuration()));
     this.service.getCharacteristic(this.platform.Characteristic.StatusFault)
-      .onGet(() => this.statusFault
+      .onGet(connectedGet(this.platform, () => this.statusFault
         ? this.platform.Characteristic.StatusFault.GENERAL_FAULT
-        : this.platform.Characteristic.StatusFault.NO_FAULT);
+        : this.platform.Characteristic.StatusFault.NO_FAULT));
   }
 
   private async handleActiveSet(value: CharacteristicValue): Promise<void> {

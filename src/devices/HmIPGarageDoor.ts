@@ -3,6 +3,7 @@ import type {
   Service,
 } from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -56,14 +57,14 @@ export class HmIPGarageDoor extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.GarageDoorOpener, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
-      .onGet(() => this.getHmKitCurrentDoorState(this.currentDoorState));
+      .onGet(connectedGet(this.platform, () => this.getHmKitCurrentDoorState(this.currentDoorState)));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetDoorState)
-      .onGet(() => this.targetDoorState)
-      .onSet(value => this.handleTargetDoorStateSet(value));
+      .onGet(connectedGet(this.platform, () => this.targetDoorState))
+      .onSet(connectedSet(this.platform, value => this.handleTargetDoorStateSet(value)));
 
     this.service.getCharacteristic(this.platform.Characteristic.ObstructionDetected)
-      .onGet(() => false);
+      .onGet(connectedGet(this.platform, () => false));
 
     const withLightSwitch = this.accessoryConfig?.lightSwitch === true;
 
@@ -74,8 +75,8 @@ export class HmIPGarageDoor extends HmIPGenericDevice {
       );
 
       this.switchService.getCharacteristic(this.platform.Characteristic.On)
-        .onGet(() => this.on)
-        .onSet(value => this.handleOnSet(value));
+        .onGet(connectedGet(this.platform, () => this.on))
+        .onSet(connectedSet(this.platform, value => this.handleOnSet(value)));
     } else {
       const switchService = this.accessory.getService(this.platform.Service.Switch);
       if (switchService !== undefined) {

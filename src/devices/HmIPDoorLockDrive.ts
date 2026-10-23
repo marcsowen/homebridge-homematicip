@@ -3,6 +3,7 @@ import type {
   Service,
 } from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -63,11 +64,11 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice {
     this.service = this.getOrAddService(this.platform.Service.LockMechanism, accessory.context.device.label);
 
     this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .onGet(this.handleLockCurrentStateGet.bind(this));
+      .onGet(connectedGet(this.platform, this.handleLockCurrentStateGet.bind(this)));
 
     this.service.getCharacteristic(this.platform.Characteristic.LockTargetState)
-      .onGet(this.handleLockTargetStateGet.bind(this))
-      .onSet(this.handleLockTargetStateSet.bind(this));
+      .onGet(connectedGet(this.platform, this.handleLockTargetStateGet.bind(this)))
+      .onSet(connectedSet(this.platform, this.handleLockTargetStateSet.bind(this)));
   }
 
   handleLockCurrentStateGet() {

@@ -95,6 +95,10 @@ See the [plugin wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) 
 Devices added to or removed from the Homematic IP installation are reflected in Homebridge while the plugin is running.
 Cached accessories that no longer exist are removed during startup.
 
+After a connection interruption, the plugin refreshes device, group, and security state and reconciles devices added or
+removed while offline. HomeKit reads and commands report a communication failure until a fresh state is available.
+Failed refreshes are retried automatically. Button presses that occurred while disconnected cannot be recovered.
+
 Firmware revisions are updated in Homebridge when Homematic IP reports a change. Renaming a device in the Homematic IP
 app does not overwrite an accessory name customized in Apple Home.
 

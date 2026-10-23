@@ -12,6 +12,7 @@ import {
   isHmIPHeatingGroup,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -130,11 +131,11 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
     this.service.addOptionalCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState)
-      .onGet(() => this.getCurrentHeatingCoolingState());
+      .onGet(connectedGet(this.platform, () => this.getCurrentHeatingCoolingState()));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
-      .onGet(() => this.getTargetHeatingCoolingState())
-      .onSet(value => this.handleTargetHeatingCoolingStateSet(value))
+      .onGet(connectedGet(this.platform, () => this.getTargetHeatingCoolingState()))
+      .onSet(connectedSet(this.platform, value => this.handleTargetHeatingCoolingStateSet(value)))
       .setProps({
         validValues: [
           this.platform.Characteristic.TargetHeatingCoolingState.OFF,
@@ -144,11 +145,11 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
       });
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
-      .onGet(() => this.actualTemperature);
+      .onGet(connectedGet(this.platform, () => this.actualTemperature));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetTemperature)
-      .onGet(() => this.setPointTemperature)
-      .onSet(value => this.handleTargetTemperatureSet(value))
+      .onGet(connectedGet(this.platform, () => this.setPointTemperature))
+      .onSet(connectedSet(this.platform, value => this.handleTargetTemperatureSet(value)))
       .setProps({
         minValue: this.minTemperature,
         maxValue: this.maxTemperature,
@@ -156,11 +157,11 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
       });
 
     this.service.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
-      .onGet(() => this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS)
-      .onSet(value => this.handleTemperatureDisplayUnitsSet(value));
+      .onGet(connectedGet(this.platform, () => this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS))
+      .onSet(connectedSet(this.platform, value => this.handleTemperatureDisplayUnitsSet(value)));
 
     this.service.getCharacteristic(this.platform.customCharacteristic.characteristic.ValvePosition)
-      .onGet(() => this.getCurrentValvePositionAsInt());
+      .onGet(connectedGet(this.platform, () => this.getCurrentValvePositionAsInt()));
 
   }
 

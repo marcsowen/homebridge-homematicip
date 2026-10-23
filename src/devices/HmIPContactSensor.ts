@@ -7,6 +7,7 @@ import {
   isHmIPRecord,
   type SabotageChannel,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -67,15 +68,15 @@ export class HmIPContactSensor extends HmIPGenericDevice {
 
     this.service = this.getOrAddService(this.platform.Service.ContactSensor, accessory.context.device.label);
     this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .onGet(() => this.windowState === WindowState.CLOSED
+      .onGet(connectedGet(this.platform, () => this.windowState === WindowState.CLOSED
         ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-        : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+        : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED));
 
     if (this.featureSabotage) {
       this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .onGet(() => this.sabotage
+        .onGet(connectedGet(this.platform, () => this.sabotage
           ? this.platform.Characteristic.StatusTampered.TAMPERED
-          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
+          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED));
     }
 
   }

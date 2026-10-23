@@ -9,6 +9,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import {sanitizeHomeKitName} from '../HmIPName.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
@@ -148,8 +149,8 @@ export class HmIPButton extends HmIPGenericDevice {
         on: channel.on ?? false,
       };
       hapService.getCharacteristic(this.platform.Characteristic.On)
-        .onGet(() => runtimeChannel.on)
-        .onSet(value => this.handleSwitchSet(runtimeChannel, value));
+        .onGet(connectedGet(this.platform, () => runtimeChannel.on))
+        .onSet(connectedSet(this.platform, value => this.handleSwitchSet(runtimeChannel, value)));
       this.switchChannels.set(channel.index, runtimeChannel);
       this.platform.log.debug('Added button actuator channel %d to %s', channel.index, this.accessory.displayName);
     }

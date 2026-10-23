@@ -6,6 +6,7 @@ import {
   hasFunctionalChannelType,
   isHmIPRecord,
 } from 'homematicip-cloud-client-ts';
+import {connectedGet, connectedSet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -60,14 +61,14 @@ export class HmIPShading extends HmIPGenericDevice {
     this.positionState = this.platform.Characteristic.PositionState.STOPPED;
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
-      .onGet(() => this.currentPosition);
+      .onGet(connectedGet(this.platform, () => this.currentPosition));
     this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-      .onGet(() => this.targetPosition)
-      .onSet(value => this.handleTargetPositionSet(value));
+      .onGet(connectedGet(this.platform, () => this.targetPosition))
+      .onSet(connectedSet(this.platform, value => this.handleTargetPositionSet(value)));
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
-      .onGet(() => this.positionState);
+      .onGet(connectedGet(this.platform, () => this.positionState));
     this.service.getCharacteristic(this.platform.Characteristic.HoldPosition)
-      .onSet(value => this.handleHoldPositionSet(value));
+      .onSet(connectedSet(this.platform, value => this.handleHoldPositionSet(value)));
 
     if (this.channelIndex === undefined) {
       this.platform.log.warn('No shading channel found for device %s', this.accessory.displayName);

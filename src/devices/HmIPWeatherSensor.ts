@@ -1,6 +1,7 @@
 import type fakegato from 'fakegato-history';
 import type {Service} from 'homebridge';
 import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
+import {connectedGet} from '../HmIPAvailability.js';
 import type {HmIPPlatform} from '../HmIPPlatform.js';
 import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
 import {HmIPGenericDevice} from './HmIPGenericDevice.js';
@@ -163,38 +164,38 @@ export class HmIPWeatherSensor extends HmIPGenericDevice {
 
     // register characteristics
     this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-      .onGet(() => this.illumination);
+      .onGet(connectedGet(this.platform, () => this.illumination));
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({minValue: -100})
-      .onGet(() => this.actualTemperature);
+      .onGet(connectedGet(this.platform, () => this.actualTemperature));
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
-      .onGet(() => this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS);
+      .onGet(connectedGet(this.platform, () => this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS));
 
     this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .onGet(() => this.humidity);
+      .onGet(connectedGet(this.platform, () => this.humidity));
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.WindSpeed)
-      .onGet(() => this.windSpeed);
+      .onGet(connectedGet(this.platform, () => this.windSpeed));
 
     this.weatherService?.getCharacteristic(this.platform.customCharacteristic.characteristic.WeatherConditionCategory)
-      .onGet(() => this.getWeatherConditionCategory());
+      .onGet(connectedGet(this.platform, () => this.getWeatherConditionCategory()));
 
     this.stormOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .onGet(() => this.storm
+      .onGet(connectedGet(this.platform, () => this.storm
         ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED));
 
     this.sunshineOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .onGet(() => this.sunshine
+      .onGet(connectedGet(this.platform, () => this.sunshine
         ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED));
 
     this.windSpeedOccupancyService?.getCharacteristic(this.platform.Characteristic.OccupancyDetected)
-      .onGet(() => this.windSpeed >= 1.852
+      .onGet(connectedGet(this.platform, () => this.windSpeed >= 1.852
         ? this.platform.Characteristic.OccupancyDetected.OCCUPANCY_DETECTED
-        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
+        : this.platform.Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED));
 
   }
 

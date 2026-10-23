@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - homematicip-cloud-client-ts@0.3.0
