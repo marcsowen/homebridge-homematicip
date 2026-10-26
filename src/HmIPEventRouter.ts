@@ -1,117 +1,119 @@
-import type {Logger} from 'homebridge';
-import type {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange} from 'homematicip-cloud-client-ts';
-import {reduceHmIPState} from 'homematicip-cloud-client-ts';
-import type {HmIPDeviceAdapter} from './HmIPTypes.js';
+import type {Logger} from "homebridge";
+import type {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange} from "homematicip-cloud-client-ts";
+import {reduceHmIPState} from "homematicip-cloud-client-ts";
+import type {HmIPDeviceAdapter} from "./HmIPTypes.js";
 
 export interface HmIPEventRouterCallbacks {
-  addDevice(device: HmIPDevice): void;
-  removeDevice(deviceId: string, adapter: HmIPDeviceAdapter): void;
-  updateHome(home: HmIPHome): void;
-  updateSecurityGroups(groups: Readonly<Record<string, HmIPGroup>>): void;
+    addDevice(device: HmIPDevice): void;
+    removeDevice(deviceId: string, adapter: HmIPDeviceAdapter): void;
+    updateHome(home: HmIPHome): void;
+    updateSecurityGroups(groups: Readonly<Record<string, HmIPGroup>>): void;
 }
 
 export class HmIPEventRouter {
-  public constructor(
-    private readonly log: Logger,
-    private state: HmIPState,
-    private readonly devices: Map<string, HmIPDeviceAdapter>,
-    private readonly callbacks: HmIPEventRouterCallbacks,
-  ) {}
+    public constructor(
+        private readonly log: Logger,
+        private state: HmIPState,
+        private readonly devices: Map<string, HmIPDeviceAdapter>,
+        private readonly callbacks: HmIPEventRouterCallbacks,
+    ) {}
 
-  public handle(stateChange: HmIPStateChange, state: HmIPState = reduceHmIPState(this.state, stateChange)): void {
-    this.state = state;
-    let groupsChanged = false;
-    let securityZoneChanged = false;
+    public handle(stateChange: HmIPStateChange, state: HmIPState = reduceHmIPState(this.state, stateChange)): void {
+        this.state = state;
+        let groupsChanged = false;
+        let securityZoneChanged = false;
 
-    for (const event of Object.values(stateChange.events)) {
-      switch (event.pushEventType) {
-        case 'GROUP_CHANGED':
-        case 'GROUP_ADDED':
-          if (event.group) {
-            this.log.debug(`${event.pushEventType}: ${event.group.id} ${JSON.stringify(event.group)}`);
-            groupsChanged = true;
-            securityZoneChanged ||= event.group.type === 'SECURITY_ZONE';
-          }
-          break;
-        case 'GROUP_REMOVED':
-          if (event.group) {
-            this.log.debug(`${event.pushEventType}: ${event.group.id}`);
-            securityZoneChanged ||= event.group.type === 'SECURITY_ZONE';
-            groupsChanged = true;
-          }
-          break;
-        case 'DEVICE_REMOVED':
-          if (event.device) {
-            this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
-            const adapter = this.devices.get(event.device.id);
-            if (adapter) {
-              this.callbacks.removeDevice(event.device.id, adapter);
-            } else {
-              this.log.debug(`Removal event from unregistered device: ${event.device.id}`);
+        for (const event of Object.values(stateChange.events)) {
+            switch (event.pushEventType) {
+                case "GROUP_CHANGED":
+                case "GROUP_ADDED":
+                    if (event.group) {
+                        this.log.debug(`${event.pushEventType}: ${event.group.id} ${JSON.stringify(event.group)}`);
+                        groupsChanged = true;
+                        securityZoneChanged ||= event.group.type === "SECURITY_ZONE";
+                    }
+                    break;
+                case "GROUP_REMOVED":
+                    if (event.group) {
+                        this.log.debug(`${event.pushEventType}: ${event.group.id}`);
+                        securityZoneChanged ||= event.group.type === "SECURITY_ZONE";
+                        groupsChanged = true;
+                    }
+                    break;
+                case "DEVICE_REMOVED":
+                    if (event.device) {
+                        this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
+                        const adapter = this.devices.get(event.device.id);
+                        if (adapter) {
+                            this.callbacks.removeDevice(event.device.id, adapter);
+                        } else {
+                            this.log.debug(`Removal event from unregistered device: ${event.device.id}`);
+                        }
+                    }
+                    break;
+                case "DEVICE_ADDED":
+                    if (event.device) {
+                        this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
+                        const adapter = this.devices.get(event.device.id);
+                        if (adapter) {
+                            adapter.updateDevice(event.device, this.state.groups);
+                        } else {
+                            this.callbacks.addDevice(event.device);
+                        }
+                    }
+                    break;
+                case "DEVICE_CHANGED":
+                    if (event.device) {
+                        this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
+                        const adapter = this.devices.get(event.device.id);
+                        if (adapter) {
+                            adapter.updateDevice(event.device, this.state.groups);
+                        } else {
+                            this.log.debug(`Change event from unregistered device: ${event.device.id}`);
+                        }
+                    }
+                    break;
+                case "DEVICE_CHANNEL_EVENT": {
+                    const adapter = this.devices.get(event.deviceId);
+                    if (adapter) {
+                        this.log.debug(`Channel Event: ${JSON.stringify(event)}`);
+                        adapter.channelEvent?.(event.channelIndex, event.channelEventType);
+                    } else {
+                        this.log.debug(`Device channel event from unregistered device: ${event.deviceId}`);
+                    }
+                    break;
+                }
+                case "HOME_CHANGED":
+                    if (event.home) {
+                        this.log.debug(`${event.pushEventType}: ${event.home.id} ${JSON.stringify(event.home)}`);
+                        this.callbacks.updateHome(event.home);
+                    }
+                    break;
+                case "SECURITY_JOURNAL_CHANGED":
+                    this.log.debug(`${event.pushEventType}: ${JSON.stringify(event.data)}`);
+                    break;
+                case "UNKNOWN":
+                    this.log.debug(
+                        `Unhandled event type: ${event.sourcePushEventType} data=${JSON.stringify(event.data)}`,
+                    );
+                    break;
+                default: {
+                    const exhaustiveEvent: never = event;
+                    throw new Error(`Unhandled normalized event: ${JSON.stringify(exhaustiveEvent)}`);
+                }
             }
-          }
-          break;
-        case 'DEVICE_ADDED':
-          if (event.device) {
-            this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
-            const adapter = this.devices.get(event.device.id);
-            if (adapter) {
-              adapter.updateDevice(event.device, this.state.groups);
-            } else {
-              this.callbacks.addDevice(event.device);
-            }
-          }
-          break;
-        case 'DEVICE_CHANGED':
-          if (event.device) {
-            this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
-            const adapter = this.devices.get(event.device.id);
-            if (adapter) {
-              adapter.updateDevice(event.device, this.state.groups);
-            } else {
-              this.log.debug(`Change event from unregistered device: ${event.device.id}`);
-            }
-          }
-          break;
-        case 'DEVICE_CHANNEL_EVENT': {
-          const adapter = this.devices.get(event.deviceId);
-          if (adapter) {
-            this.log.debug(`Channel Event: ${JSON.stringify(event)}`);
-            adapter.channelEvent?.(event.channelIndex, event.channelEventType);
-          } else {
-            this.log.debug(`Device channel event from unregistered device: ${event.deviceId}`);
-          }
-          break;
         }
-        case 'HOME_CHANGED':
-          if (event.home) {
-            this.log.debug(`${event.pushEventType}: ${event.home.id} ${JSON.stringify(event.home)}`);
-            this.callbacks.updateHome(event.home);
-          }
-          break;
-        case 'SECURITY_JOURNAL_CHANGED':
-          this.log.debug(`${event.pushEventType}: ${JSON.stringify(event.data)}`);
-          break;
-        case 'UNKNOWN':
-          this.log.debug(`Unhandled event type: ${event.sourcePushEventType} data=${JSON.stringify(event.data)}`);
-          break;
-        default: {
-          const exhaustiveEvent: never = event;
-          throw new Error(`Unhandled normalized event: ${JSON.stringify(exhaustiveEvent)}`);
-        }
-      }
-    }
 
-    if (securityZoneChanged) {
-      this.callbacks.updateSecurityGroups(this.state.groups);
-    }
-    if (groupsChanged) {
-      for (const [deviceId, adapter] of this.devices) {
-        const device = this.state.devices[deviceId];
-        if (device) {
-          adapter.updateDevice(device, this.state.groups);
+        if (securityZoneChanged) {
+            this.callbacks.updateSecurityGroups(this.state.groups);
         }
-      }
+        if (groupsChanged) {
+            for (const [deviceId, adapter] of this.devices) {
+                const device = this.state.devices[deviceId];
+                if (device) {
+                    adapter.updateDevice(device, this.state.groups);
+                }
+            }
+        }
     }
-  }
 }

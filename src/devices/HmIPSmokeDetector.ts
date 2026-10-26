@@ -1,9 +1,9 @@
-import type {Service} from 'homebridge';
-import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
-import {connectedGet} from '../HmIPAvailability.js';
-import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
-import {HmIPGenericDevice} from './HmIPGenericDevice.js';
+import type {Service} from "homebridge";
+import type {HmIPDevice, HmIPGroup} from "homematicip-cloud-client-ts";
+import {connectedGet} from "../HmIPAvailability.js";
+import type {HmIPPlatform} from "../HmIPPlatform.js";
+import type {HmIPPlatformAccessory} from "../HmIPTypes.js";
+import {HmIPGenericDevice} from "./HmIPGenericDevice.js";
 
 /**
  * SmokeDetectorAlarmType
@@ -17,10 +17,10 @@ import {HmIPGenericDevice} from './HmIPGenericDevice.js';
  *
  */
 enum SmokeDetectorAlarmType {
-    IDLE_OFF = 'IDLE_OFF',
-    PRIMARY_ALARM = 'PRIMARY_ALARM',
-    INTRUSION_ALARM = 'INTRUSION_ALARM',
-    SECONDARY_ALARM = 'SECONDARY_ALARM'
+    IDLE_OFF = "IDLE_OFF",
+    PRIMARY_ALARM = "PRIMARY_ALARM",
+    INTRUSION_ALARM = "INTRUSION_ALARM",
+    SECONDARY_ALARM = "SECONDARY_ALARM",
 }
 
 interface SmokeDetectorChannel {
@@ -34,42 +34,52 @@ interface SmokeDetectorChannel {
  * HmIP-SWSD (Smoke Alarm with Q label)
  */
 export class HmIPSmokeDetector extends HmIPGenericDevice {
-  private service: Service;
+    private service: Service;
 
-  private smokeDetectorAlarmType = SmokeDetectorAlarmType.IDLE_OFF;
+    private smokeDetectorAlarmType = SmokeDetectorAlarmType.IDLE_OFF;
 
-  constructor(
-    platform: HmIPPlatform,
-    accessory: HmIPPlatformAccessory,
-  ) {
-    super(platform, accessory);
+    constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
+        super(platform, accessory);
 
-    this.platform.log.debug('Created SmokeDetector %s', accessory.context.device.label);
-    this.service = this.getOrAddService(this.platform.Service.SmokeSensor, accessory.context.device.label);
+        this.platform.log.debug("Created SmokeDetector %s", accessory.context.device.label);
+        this.service = this.getOrAddService(this.platform.Service.SmokeSensor, accessory.context.device.label);
 
-    this.service.getCharacteristic(this.platform.Characteristic.SmokeDetected)
-      .onGet(connectedGet(this.platform, () => this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
-      ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
-      : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED));
-  }
-
-  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPDevice, groups);
-    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (channel.functionalChannelType === 'SMOKE_DETECTOR_CHANNEL') {
-        const smokeDetectorChannel = <SmokeDetectorChannel>channel;
-        this.platform.log.debug('Smoke detector update: %s', JSON.stringify(channel));
-
-        if (smokeDetectorChannel.smokeDetectorAlarmType !== null
-          && smokeDetectorChannel.smokeDetectorAlarmType !== this.smokeDetectorAlarmType) {
-          this.smokeDetectorAlarmType = smokeDetectorChannel.smokeDetectorAlarmType;
-          this.platform.log.info('Smoke detector state of %s changed to %s', this.accessory.displayName, this.smokeDetectorAlarmType);
-          this.service.updateCharacteristic(this.platform.Characteristic.SmokeDetected,
-            this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
-              ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
-              : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED);
-        }
-      }
+        this.service
+            .getCharacteristic(this.platform.Characteristic.SmokeDetected)
+            .onGet(
+                connectedGet(this.platform, () =>
+                    this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
+                        ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
+                        : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED,
+                ),
+            );
     }
-  }
+
+    public override updateDevice(hmIPDevice: HmIPDevice, groups: {[key: string]: HmIPGroup}) {
+        super.updateDevice(hmIPDevice, groups);
+        for (const channel of Object.values(hmIPDevice.functionalChannels)) {
+            if (channel.functionalChannelType === "SMOKE_DETECTOR_CHANNEL") {
+                const smokeDetectorChannel = <SmokeDetectorChannel>channel;
+                this.platform.log.debug("Smoke detector update: %s", JSON.stringify(channel));
+
+                if (
+                    smokeDetectorChannel.smokeDetectorAlarmType !== null &&
+                    smokeDetectorChannel.smokeDetectorAlarmType !== this.smokeDetectorAlarmType
+                ) {
+                    this.smokeDetectorAlarmType = smokeDetectorChannel.smokeDetectorAlarmType;
+                    this.platform.log.info(
+                        "Smoke detector state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.smokeDetectorAlarmType,
+                    );
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.SmokeDetected,
+                        this.smokeDetectorAlarmType === SmokeDetectorAlarmType.PRIMARY_ALARM
+                            ? this.platform.Characteristic.SmokeDetected.SMOKE_DETECTED
+                            : this.platform.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED,
+                    );
+                }
+            }
+        }
+    }
 }

@@ -1,307 +1,312 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
-import {HmIPAccessoryRepository} from '../dist/HmIPAccessoryRepository.js';
-import {
-  getHmIPDeviceKind,
-  isHmIPControllerDevice,
-  isHmIPExternalDevice,
-} from '../dist/HmIPDeviceFactory.js';
-import {HmIPEventRouter} from '../dist/HmIPEventRouter.js';
-import {HmIPGenericDevice} from '../dist/devices/HmIPGenericDevice.js';
-import {sanitizeHomeKitName} from '../dist/HmIPName.js';
+import assert from "node:assert/strict";
+import test from "node:test";
+import {HmIPGenericDevice} from "../dist/devices/HmIPGenericDevice.js";
+import {HmIPAccessoryRepository} from "../dist/HmIPAccessoryRepository.js";
+import {getHmIPDeviceKind, isHmIPControllerDevice, isHmIPExternalDevice} from "../dist/HmIPDeviceFactory.js";
+import {HmIPEventRouter} from "../dist/HmIPEventRouter.js";
+import {sanitizeHomeKitName} from "../dist/HmIPName.js";
 
 const log = {
-  debug() {},
-  error() {},
-  info() {},
-  log() {},
-  prefix: '',
-  success() {},
-  warn() {},
+    debug() {},
+    error() {},
+    info() {},
+    log() {},
+    prefix: "",
+    success() {},
+    warn() {},
 };
 
 class MockPlatformAccessory {
-  constructor(displayName, UUID) {
-    this.context = {};
-    this.displayName = displayName;
-    this.services = [];
-    this.UUID = UUID;
-  }
+    constructor(displayName, UUID) {
+        this.context = {};
+        this.displayName = displayName;
+        this.services = [];
+        this.UUID = UUID;
+    }
 
-  getService(service) {
-    return this.services.find(candidate => candidate.UUID === service || candidate.UUID === service.UUID);
-  }
+    getService(service) {
+        return this.services.find((candidate) => candidate.UUID === service || candidate.UUID === service.UUID);
+    }
 }
 
 function createAccessoryApi() {
-  const calls = {registered: [], removed: [], updated: []};
-  return {
-    api: {
-      hap: {
-        Characteristic: {Name: 'Name'},
-        Service: {AccessoryInformation: 'AccessoryInformation'},
-      },
-      platformAccessory: MockPlatformAccessory,
-      registerPlatformAccessories: (_plugin, _platform, accessories) => calls.registered.push(...accessories),
-      unregisterPlatformAccessories: (_plugin, _platform, accessories) => calls.removed.push(...accessories),
-      updatePlatformAccessories: accessories => calls.updated.push(...accessories),
-    },
-    calls,
-  };
+    const calls = {registered: [], removed: [], updated: []};
+    return {
+        api: {
+            hap: {
+                Characteristic: {Name: "Name"},
+                Service: {AccessoryInformation: "AccessoryInformation"},
+            },
+            platformAccessory: MockPlatformAccessory,
+            registerPlatformAccessories: (_plugin, _platform, accessories) => calls.registered.push(...accessories),
+            unregisterPlatformAccessories: (_plugin, _platform, accessories) => calls.removed.push(...accessories),
+            updatePlatformAccessories: (accessories) => calls.updated.push(...accessories),
+        },
+        calls,
+    };
 }
 
-test('repository reuses newly registered accessories as cached entries', () => {
-  const {api, calls} = createAccessoryApi();
-  const repository = new HmIPAccessoryRepository(api, log, [{id: 'device1', hide: true}]);
-  const first = repository.acquire('uuid1', 'Switch', {id: 'device1'});
+test("repository reuses newly registered accessories as cached entries", () => {
+    const {api, calls} = createAccessoryApi();
+    const repository = new HmIPAccessoryRepository(api, log, [{id: "device1", hide: true}]);
+    const first = repository.acquire("uuid1", "Switch", {id: "device1"});
 
-  repository.register(first);
-  const second = repository.acquire('uuid1', 'Renamed switch', {id: 'device1'});
-  repository.register(second);
+    repository.register(first);
+    const second = repository.acquire("uuid1", "Renamed switch", {id: "device1"});
+    repository.register(second);
 
-  assert.equal(first.accessory, second.accessory);
-  assert.deepEqual(second.accessory.context.config, {hide: true});
-  assert.equal(repository.size, 1);
-  assert.deepEqual(calls.registered, [first.accessory]);
-  assert.deepEqual(calls.updated, [first.accessory]);
+    assert.equal(first.accessory, second.accessory);
+    assert.deepEqual(second.accessory.context.config, {hide: true});
+    assert.equal(repository.size, 1);
+    assert.deepEqual(calls.registered, [first.accessory]);
+    assert.deepEqual(calls.updated, [first.accessory]);
 });
 
-test('sanitizes new HomeKit names without changing valid Unicode names', () => {
-  assert.equal(sanitizeHomeKitName('Fußbodenheizungsaktor – 12-fach '), 'Fußbodenheizungsaktor - 12-fach');
-  assert.equal(sanitizeHomeKitName('Wandtaster – 6-fach Flur Eingang'), 'Wandtaster - 6-fach Flur Eingang');
-  assert.equal(sanitizeHomeKitName('Küche & Flur'), 'Küche & Flur');
-  assert.equal(sanitizeHomeKitName(' – '), 'Homematic IP Device');
+test("sanitizes new HomeKit names without changing valid Unicode names", () => {
+    assert.equal(sanitizeHomeKitName("Fußbodenheizungsaktor – 12-fach "), "Fußbodenheizungsaktor - 12-fach");
+    assert.equal(sanitizeHomeKitName("Wandtaster – 6-fach Flur Eingang"), "Wandtaster - 6-fach Flur Eingang");
+    assert.equal(sanitizeHomeKitName("Küche & Flur"), "Küche & Flur");
+    assert.equal(sanitizeHomeKitName(" – "), "Homematic IP Device");
 
-  const {api} = createAccessoryApi();
-  const repository = new HmIPAccessoryRepository(api, log);
-  const accessory = repository.acquire('uuid1', 'Wassersensor Wasserleitungen ', {id: 'device1'}).accessory;
-  assert.equal(accessory.displayName, 'Wassersensor Wasserleitungen');
+    const {api} = createAccessoryApi();
+    const repository = new HmIPAccessoryRepository(api, log);
+    const accessory = repository.acquire("uuid1", "Wassersensor Wasserleitungen ", {id: "device1"}).accessory;
+    assert.equal(accessory.displayName, "Wassersensor Wasserleitungen");
 });
 
-test('repairs invalid cached names while preserving valid customized names', () => {
-  const {api} = createAccessoryApi();
-  const repository = new HmIPAccessoryRepository(api, log);
-  const restored = new MockPlatformAccessory('Wandtaster – Eingang ', 'uuid1');
-  restored.context.device = {id: 'device1', label: 'Original HmIP name'};
-  const serviceUpdates = [];
-  restored.services.push({
-    UUID: 'Switch',
-    displayName: 'Eigener gültiger Name',
-    updateCharacteristic: (...args) => serviceUpdates.push(args),
-  });
-  repository.restore(restored);
+test("repairs invalid cached names while preserving valid customized names", () => {
+    const {api} = createAccessoryApi();
+    const repository = new HmIPAccessoryRepository(api, log);
+    const restored = new MockPlatformAccessory("Wandtaster – Eingang ", "uuid1");
+    restored.context.device = {id: "device1", label: "Original HmIP name"};
+    const serviceUpdates = [];
+    restored.services.push({
+        UUID: "Switch",
+        displayName: "Eigener gültiger Name",
+        updateCharacteristic: (...args) => serviceUpdates.push(args),
+    });
+    repository.restore(restored);
 
-  repository.acquire('uuid1', 'Ignored HmIP name', {id: 'device1', label: 'Ignored HmIP name'});
+    repository.acquire("uuid1", "Ignored HmIP name", {id: "device1", label: "Ignored HmIP name"});
 
-  assert.equal(restored.displayName, 'Wandtaster - Eingang');
-  assert.equal(restored.services[0].displayName, 'Eigener gültiger Name');
-  assert.deepEqual(serviceUpdates, []);
+    assert.equal(restored.displayName, "Wandtaster - Eingang");
+    assert.equal(restored.services[0].displayName, "Eigener gültiger Name");
+    assert.deepEqual(serviceUpdates, []);
 });
 
-test('repository reconciliation unregisters and forgets stale accessories', () => {
-  const {api, calls} = createAccessoryApi();
-  const repository = new HmIPAccessoryRepository(api, log);
-  const restored = new MockPlatformAccessory('Old switch', 'stale-uuid');
-  restored.context.device = {id: 'old-device', label: 'Original HmIP name'};
+test("repository reconciliation unregisters and forgets stale accessories", () => {
+    const {api, calls} = createAccessoryApi();
+    const repository = new HmIPAccessoryRepository(api, log);
+    const restored = new MockPlatformAccessory("Old switch", "stale-uuid");
+    restored.context.device = {id: "old-device", label: "Original HmIP name"};
 
-  assert.equal(repository.restore(restored), true);
-  assert.equal(repository.restore(restored), false);
-  const acquired = repository.acquire('stale-uuid', 'Renamed HmIP device', {
-    id: 'old-device',
-    label: 'Renamed HmIP device',
-  });
-  assert.equal(acquired.accessory.displayName, 'Old switch');
-  assert.equal(acquired.accessory.context.device.label, 'Original HmIP name');
-  repository.reconcile(new Set());
+    assert.equal(repository.restore(restored), true);
+    assert.equal(repository.restore(restored), false);
+    const acquired = repository.acquire("stale-uuid", "Renamed HmIP device", {
+        id: "old-device",
+        label: "Renamed HmIP device",
+    });
+    assert.equal(acquired.accessory.displayName, "Old switch");
+    assert.equal(acquired.accessory.context.device.label, "Original HmIP name");
+    repository.reconcile(new Set());
 
-  assert.equal(repository.size, 0);
-  assert.equal(repository.get('stale-uuid'), undefined);
-  assert.deepEqual(calls.removed, [restored]);
+    assert.equal(repository.size, 0);
+    assert.equal(repository.get("stale-uuid"), undefined);
+    assert.deepEqual(calls.removed, [restored]);
 });
 
-test('device updates publish firmware without changing HomeKit names', () => {
-  const characteristicUpdates = [];
-  const persistedAccessories = [];
-  const informationService = {
-    setCharacteristic() {
-      return this;
-    },
-    updateCharacteristic(characteristic, value) {
-      characteristicUpdates.push([characteristic, value]);
-      return this;
-    },
-  };
-  const platform = {
-    api: {updatePlatformAccessories: accessories => persistedAccessories.push(...accessories)},
-    Characteristic: {
-      FirmwareRevision: 'firmwareRevision',
-      Manufacturer: 'manufacturer',
-      Model: 'model',
-      SerialNumber: 'serialNumber',
-      StatusLowBattery: {},
-    },
-    config: {},
-    log,
-    Service: {AccessoryInformation: 'accessoryInformation', Battery: 'battery'},
-  };
-  const originalDevice = {
-    id: 'device1',
-    type: 'PLUGABLE_SWITCH',
-    label: 'Original HmIP name',
-    oem: 'eq-3',
-    modelType: 'HmIP-PS',
-    firmwareVersion: '1.0.0',
-    permanentlyReachable: true,
-    lastStatusUpdate: 0,
-    homeId: 'home1',
-    functionalChannels: {},
-  };
-  const accessory = {
-    context: {device: {...originalDevice}},
-    displayName: 'Custom Apple Home name',
-    UUID: 'uuid1',
-    getService: service => service === 'accessoryInformation' ? informationService : undefined,
-  };
-  class TestDevice extends HmIPGenericDevice {}
-  const device = new TestDevice(platform, accessory);
+test("device updates publish firmware without changing HomeKit names", () => {
+    const characteristicUpdates = [];
+    const persistedAccessories = [];
+    const informationService = {
+        setCharacteristic() {
+            return this;
+        },
+        updateCharacteristic(characteristic, value) {
+            characteristicUpdates.push([characteristic, value]);
+            return this;
+        },
+    };
+    const platform = {
+        api: {updatePlatformAccessories: (accessories) => persistedAccessories.push(...accessories)},
+        Characteristic: {
+            FirmwareRevision: "firmwareRevision",
+            Manufacturer: "manufacturer",
+            Model: "model",
+            SerialNumber: "serialNumber",
+            StatusLowBattery: {},
+        },
+        config: {},
+        log,
+        Service: {AccessoryInformation: "accessoryInformation", Battery: "battery"},
+    };
+    const originalDevice = {
+        id: "device1",
+        type: "PLUGABLE_SWITCH",
+        label: "Original HmIP name",
+        oem: "eq-3",
+        modelType: "HmIP-PS",
+        firmwareVersion: "1.0.0",
+        permanentlyReachable: true,
+        lastStatusUpdate: 0,
+        homeId: "home1",
+        functionalChannels: {},
+    };
+    const accessory = {
+        context: {device: {...originalDevice}},
+        displayName: "Custom Apple Home name",
+        UUID: "uuid1",
+        getService: (service) => (service === "accessoryInformation" ? informationService : undefined),
+    };
+    class TestDevice extends HmIPGenericDevice {}
+    const device = new TestDevice(platform, accessory);
 
-  device.updateDevice({
-    ...originalDevice,
-    label: 'Renamed HmIP device',
-    firmwareVersion: '2.0.0',
-  }, {});
+    device.updateDevice(
+        {
+            ...originalDevice,
+            label: "Renamed HmIP device",
+            firmwareVersion: "2.0.0",
+        },
+        {},
+    );
 
-  assert.deepEqual(characteristicUpdates, [['firmwareRevision', '2.0.0']]);
-  assert.equal(accessory.context.device.firmwareVersion, '2.0.0');
-  assert.equal(accessory.context.device.label, 'Original HmIP name');
-  assert.equal(accessory.displayName, 'Custom Apple Home name');
-  assert.deepEqual(persistedAccessories, [accessory]);
+    assert.deepEqual(characteristicUpdates, [["firmwareRevision", "2.0.0"]]);
+    assert.equal(accessory.context.device.firmwareVersion, "2.0.0");
+    assert.equal(accessory.context.device.label, "Original HmIP name");
+    assert.equal(accessory.displayName, "Custom Apple Home name");
+    assert.deepEqual(persistedAccessories, [accessory]);
 });
 
-test('maps Homematic IP device types to adapters', () => {
-  const device = type => ({type});
+test("maps Homematic IP device types to adapters", () => {
+    const device = (type) => ({type});
 
-  for (const thermostatType of [
-    'HEATING_THERMOSTAT',
-    'HEATING_THERMOSTAT_THREE',
-    'HEATING_THERMOSTAT_FLEX',
-  ]) {
-    assert.equal(getHmIPDeviceKind(device(thermostatType)), 'heatingThermostat');
-  }
-  assert.equal(getHmIPDeviceKind(device('WALL_MOUNTED_THERMOSTAT_PRO')), 'wallMountedThermostat');
-  assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_CONTACT_INTERFACE')), 'contactSensor');
-  assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_CONTACT_INTERFACE_6')), 'multiModeInput');
-  assert.equal(getHmIPDeviceKind(device('WIRED_INPUT_16')), 'multiModeInput');
-  assert.equal(getHmIPDeviceKind(device('BLIND_MODULE')), 'shading');
-  assert.equal(getHmIPDeviceKind(device('DIN_RAIL_BLIND_4')), 'blind');
-  for (const buttonType of [
-    'PUSH_BUTTON_6_LED_SWITCH',
-    'DOOR_BELL_BUTTON',
-    'DOOR_BELL_CONTACT_INTERFACE',
-    'KEY_REMOTE_CONTROL_4',
-    'KEY_REMOTE_CONTROL_KEY_MATIC',
-    'REMOTE_CONTROL_8',
-    'REMOTE_CONTROL_8_MODULE',
-    'WIRED_PUSH_BUTTON_2',
-    'WIRED_PUSH_BUTTON_6',
-  ]) {
-    assert.equal(getHmIPDeviceKind(device(buttonType)), 'button');
-  }
-  assert.equal(getHmIPDeviceKind(device('DIN_RAIL_SWITCH')), 'switch');
-  assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_SWITCH_COMPACT')), 'switch');
-  assert.equal(getHmIPDeviceKind(device('STATUS_BOARD_8')), 'switch');
-  assert.equal(getHmIPDeviceKind(device('MOTION_DETECTOR_SWITCH_OUTDOOR')), 'switch');
-  assert.equal(getHmIPDeviceKind(device('USB_SWITCH_MEASURING')), 'switchMeasuring');
-  assert.equal(getHmIPDeviceKind(device('WATERING_ACTUATOR')), 'wateringActuator');
-  assert.equal(getHmIPDeviceKind(device('RGBW_DIMMER')), 'universalLight');
-  assert.equal(getHmIPDeviceKind(device('BRAND_DIMMER')), 'dimmer');
-  assert.equal(getHmIPDeviceKind(device('FULL_FLUSH_DIMMER')), 'dimmer');
-  assert.equal(getHmIPDeviceKind(device('PLUGGABLE_DIMMER')), 'dimmer');
-  assert.equal(getHmIPDeviceKind(device('WIRED_DIMMER_3')), 'dimmer');
-  assert.equal(getHmIPDeviceKind(device('DIN_RAIL_DIMMER_3')), 'dimmer');
-  assert.equal(getHmIPDeviceKind(device('UNKNOWN_DEVICE')), undefined);
+    for (const thermostatType of ["HEATING_THERMOSTAT", "HEATING_THERMOSTAT_THREE", "HEATING_THERMOSTAT_FLEX"]) {
+        assert.equal(getHmIPDeviceKind(device(thermostatType)), "heatingThermostat");
+    }
+    assert.equal(getHmIPDeviceKind(device("WALL_MOUNTED_THERMOSTAT_PRO")), "wallMountedThermostat");
+    assert.equal(getHmIPDeviceKind(device("FULL_FLUSH_CONTACT_INTERFACE")), "contactSensor");
+    assert.equal(getHmIPDeviceKind(device("FULL_FLUSH_CONTACT_INTERFACE_6")), "multiModeInput");
+    assert.equal(getHmIPDeviceKind(device("WIRED_INPUT_16")), "multiModeInput");
+    assert.equal(getHmIPDeviceKind(device("BLIND_MODULE")), "shading");
+    assert.equal(getHmIPDeviceKind(device("DIN_RAIL_BLIND_4")), "blind");
+    for (const buttonType of [
+        "PUSH_BUTTON_6_LED_SWITCH",
+        "DOOR_BELL_BUTTON",
+        "DOOR_BELL_CONTACT_INTERFACE",
+        "KEY_REMOTE_CONTROL_4",
+        "KEY_REMOTE_CONTROL_KEY_MATIC",
+        "REMOTE_CONTROL_8",
+        "REMOTE_CONTROL_8_MODULE",
+        "WIRED_PUSH_BUTTON_2",
+        "WIRED_PUSH_BUTTON_6",
+    ]) {
+        assert.equal(getHmIPDeviceKind(device(buttonType)), "button");
+    }
+    assert.equal(getHmIPDeviceKind(device("DIN_RAIL_SWITCH")), "switch");
+    assert.equal(getHmIPDeviceKind(device("FULL_FLUSH_SWITCH_COMPACT")), "switch");
+    assert.equal(getHmIPDeviceKind(device("STATUS_BOARD_8")), "switch");
+    assert.equal(getHmIPDeviceKind(device("MOTION_DETECTOR_SWITCH_OUTDOOR")), "switch");
+    assert.equal(getHmIPDeviceKind(device("USB_SWITCH_MEASURING")), "switchMeasuring");
+    assert.equal(getHmIPDeviceKind(device("WATERING_ACTUATOR")), "wateringActuator");
+    assert.equal(getHmIPDeviceKind(device("RGBW_DIMMER")), "universalLight");
+    assert.equal(getHmIPDeviceKind(device("BRAND_DIMMER")), "dimmer");
+    assert.equal(getHmIPDeviceKind(device("FULL_FLUSH_DIMMER")), "dimmer");
+    assert.equal(getHmIPDeviceKind(device("PLUGGABLE_DIMMER")), "dimmer");
+    assert.equal(getHmIPDeviceKind(device("WIRED_DIMMER_3")), "dimmer");
+    assert.equal(getHmIPDeviceKind(device("DIN_RAIL_DIMMER_3")), "dimmer");
+    assert.equal(getHmIPDeviceKind(device("UNKNOWN_DEVICE")), undefined);
 });
 
-test('recognizes HAP, HCU, and wired access point controller devices as infrastructure', () => {
-  for (const type of [
-    'HOME_CONTROL_ACCESS_POINT',
-    'ACCESS_POINT',
-    'WIRED_DIN_RAIL_ACCESS_POINT',
-    'WIRELESS_ACCESS_POINT_BASIC',
-  ]) {
-    assert.equal(isHmIPControllerDevice({type}), true);
-  }
-  assert.equal(isHmIPControllerDevice({type: 'PLUGABLE_SWITCH'}), false);
+test("recognizes HAP, HCU, and wired access point controller devices as infrastructure", () => {
+    for (const type of [
+        "HOME_CONTROL_ACCESS_POINT",
+        "ACCESS_POINT",
+        "WIRED_DIN_RAIL_ACCESS_POINT",
+        "WIRELESS_ACCESS_POINT_BASIC",
+    ]) {
+        assert.equal(isHmIPControllerDevice({type}), true);
+    }
+    assert.equal(isHmIPControllerDevice({type: "PLUGABLE_SWITCH"}), false);
 });
 
-test('recognizes cloud and HCU plugin devices as external', () => {
-  assert.equal(isHmIPExternalDevice({type: 'EXTERNAL'}), true);
-  assert.equal(isHmIPExternalDevice({type: 'PLUGIN_EXTERNAL'}), true);
-  assert.equal(isHmIPExternalDevice({type: 'PLUGABLE_SWITCH'}), false);
+test("recognizes cloud and HCU plugin devices as external", () => {
+    assert.equal(isHmIPExternalDevice({type: "EXTERNAL"}), true);
+    assert.equal(isHmIPExternalDevice({type: "PLUGIN_EXTERNAL"}), true);
+    assert.equal(isHmIPExternalDevice({type: "PLUGABLE_SWITCH"}), false);
 });
 
-test('routes dynamic devices and preserves channel index zero', () => {
-  const channelEvents = [];
-  const addedDevices = [];
-  const state = {
-    devices: {},
-    groups: {},
-    home: {id: 'home1'},
-  };
-  const devices = new Map([
-    ['button1', {
-      accessory: {},
-      hidden: false,
-      updateDevice() {},
-      channelEvent: (channelIndex, eventType) => channelEvents.push([channelIndex, eventType]),
-    }],
-  ]);
-  const router = new HmIPEventRouter(log, state, devices, {
-    addDevice: device => addedDevices.push(device.id),
-    removeDevice() {},
-    updateHome() {},
-    updateSecurityGroups() {},
-  });
-  const addedDevice = {id: 'switch1', type: 'PLUGABLE_SWITCH', modelType: 'HmIP-PS'};
+test("routes dynamic devices and preserves channel index zero", () => {
+    const channelEvents = [];
+    const addedDevices = [];
+    const state = {
+        devices: {},
+        groups: {},
+        home: {id: "home1"},
+    };
+    const devices = new Map([
+        [
+            "button1",
+            {
+                accessory: {},
+                hidden: false,
+                updateDevice() {},
+                channelEvent: (channelIndex, eventType) => channelEvents.push([channelIndex, eventType]),
+            },
+        ],
+    ]);
+    const router = new HmIPEventRouter(log, state, devices, {
+        addDevice: (device) => addedDevices.push(device.id),
+        removeDevice() {},
+        updateHome() {},
+        updateSecurityGroups() {},
+    });
+    const addedDevice = {id: "switch1", type: "PLUGABLE_SWITCH", modelType: "HmIP-PS"};
 
-  router.handle({events: {
-    first: {pushEventType: 'DEVICE_ADDED', device: addedDevice},
-    second: {
-      pushEventType: 'DEVICE_CHANNEL_EVENT',
-      deviceId: 'button1',
-      channelIndex: 0,
-      channelEventType: 'PRESS_SHORT',
-    },
-  }});
+    router.handle({
+        events: {
+            first: {pushEventType: "DEVICE_ADDED", device: addedDevice},
+            second: {
+                pushEventType: "DEVICE_CHANNEL_EVENT",
+                deviceId: "button1",
+                channelIndex: 0,
+                channelEventType: "PRESS_SHORT",
+            },
+        },
+    });
 
-  assert.deepEqual(addedDevices, ['switch1']);
-  assert.equal(router.state.devices.switch1, addedDevice);
-  assert.equal(state.devices.switch1, undefined, 'shared reducer does not mutate earlier snapshots');
-  assert.deepEqual(channelEvents, [[0, 'PRESS_SHORT']]);
+    assert.deepEqual(addedDevices, ["switch1"]);
+    assert.equal(router.state.devices.switch1, addedDevice);
+    assert.equal(state.devices.switch1, undefined, "shared reducer does not mutate earlier snapshots");
+    assert.deepEqual(channelEvents, [[0, "PRESS_SHORT"]]);
 });
 
-test('propagates group changes to device adapters', () => {
-  const updates = [];
-  const device = {id: 'thermostat1', type: 'WALL_MOUNTED_THERMOSTAT_PRO'};
-  const state = {
-    devices: {thermostat1: device},
-    groups: {},
-    home: {id: 'home1'},
-  };
-  const devices = new Map([['thermostat1', {
-    accessory: {},
-    hidden: false,
-    updateDevice: (updatedDevice, groups) => updates.push([updatedDevice, {...groups}]),
-  }]]);
-  const router = new HmIPEventRouter(log, state, devices, {
-    addDevice() {},
-    removeDevice() {},
-    updateHome() {},
-    updateSecurityGroups() {},
-  });
-  const group = {id: 'room1', type: 'HEATING', setPointTemperature: 21};
+test("propagates group changes to device adapters", () => {
+    const updates = [];
+    const device = {id: "thermostat1", type: "WALL_MOUNTED_THERMOSTAT_PRO"};
+    const state = {
+        devices: {thermostat1: device},
+        groups: {},
+        home: {id: "home1"},
+    };
+    const devices = new Map([
+        [
+            "thermostat1",
+            {
+                accessory: {},
+                hidden: false,
+                updateDevice: (updatedDevice, groups) => updates.push([updatedDevice, {...groups}]),
+            },
+        ],
+    ]);
+    const router = new HmIPEventRouter(log, state, devices, {
+        addDevice() {},
+        removeDevice() {},
+        updateHome() {},
+        updateSecurityGroups() {},
+    });
+    const group = {id: "room1", type: "HEATING", setPointTemperature: 21};
 
-  router.handle({events: {group: {pushEventType: 'GROUP_CHANGED', group}}});
+    router.handle({events: {group: {pushEventType: "GROUP_CHANGED", group}}});
 
-  assert.deepEqual(updates, [[device, {room1: group}]]);
+    assert.deepEqual(updates, [[device, {room1: group}]]);
 });

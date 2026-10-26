@@ -1,9 +1,9 @@
-import type {Service} from 'homebridge';
-import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from 'homematicip-cloud-client-ts';
-import {connectedGet} from '../HmIPAvailability.js';
-import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
-import {HmIPGenericDevice} from './HmIPGenericDevice.js';
+import type {Service} from "homebridge";
+import type {HmIPDevice, HmIPGroup, MotionDetectionSendInterval, SabotageChannel} from "homematicip-cloud-client-ts";
+import {connectedGet} from "../HmIPAvailability.js";
+import type {HmIPPlatform} from "../HmIPPlatform.js";
+import type {HmIPPlatformAccessory} from "../HmIPTypes.js";
+import {HmIPGenericDevice} from "./HmIPGenericDevice.js";
 
 interface MotionDetectionChannel {
     functionalChannelType: string;
@@ -24,92 +24,116 @@ interface MotionDetectionChannel {
  *
  */
 export class HmIPMotionDetector extends HmIPGenericDevice {
-  private motionSensorService: Service;
-  private lightSensorService: Service | undefined;
+    private motionSensorService: Service;
+    private lightSensorService: Service | undefined;
 
-  private motionDetected = false;
-  private sabotage = false;
-  private lightLevel = 1;
+    private motionDetected = false;
+    private sabotage = false;
+    private lightLevel = 1;
 
-  private addLightSensor : boolean = false;
+    private addLightSensor: boolean = false;
 
-  constructor(
-    platform: HmIPPlatform,
-    accessory: HmIPPlatformAccessory,
-  ) {
-    super(platform, accessory);
+    constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
+        super(platform, accessory);
 
-    this.platform.log.debug('Created MotionDetector %s', accessory.context.device.label);
-    this.motionSensorService = this.getOrAddService(
-      this.platform.Service.MotionSensor,
-      accessory.context.device.label,
-    );
+        this.platform.log.debug("Created MotionDetector %s", accessory.context.device.label);
+        this.motionSensorService = this.getOrAddService(
+            this.platform.Service.MotionSensor,
+            accessory.context.device.label,
+        );
 
-    this.motionSensorService.getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .onGet(connectedGet(this.platform, () => this.motionDetected));
+        this.motionSensorService
+            .getCharacteristic(this.platform.Characteristic.MotionDetected)
+            .onGet(connectedGet(this.platform, () => this.motionDetected));
 
-    if (this.featureSabotage) {
-      this.motionSensorService.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .onGet(connectedGet(this.platform, () => this.sabotage
-          ? this.platform.Characteristic.StatusTampered.TAMPERED
-          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED));
+        if (this.featureSabotage) {
+            this.motionSensorService
+                .getCharacteristic(this.platform.Characteristic.StatusTampered)
+                .onGet(
+                    connectedGet(this.platform, () =>
+                        this.sabotage
+                            ? this.platform.Characteristic.StatusTampered.TAMPERED
+                            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED,
+                    ),
+                );
+        }
+
+        this.addLightSensor = this.accessoryConfig?.lightSensor === true;
+
+        if (this.addLightSensor) {
+            this.lightSensorService = this.getOrAddService(
+                this.platform.Service.LightSensor,
+                accessory.context.device.label,
+                "LightSensor",
+            );
+
+            this.lightSensorService
+                .getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
+                .onGet(connectedGet(this.platform, () => Math.max(1, this.lightLevel)));
+        } else {
+            const lightSensorService = this.accessory.getServiceById(this.platform.Service.LightSensor, "LightSensor");
+            if (lightSensorService !== undefined) {
+                this.accessory.removeService(lightSensorService);
+            }
+        }
     }
 
-    this.addLightSensor = this.accessoryConfig?.lightSensor === true;
+    public override updateDevice(hmIPDevice: HmIPDevice, groups: {[key: string]: HmIPGroup}) {
+        super.updateDevice(hmIPDevice, groups);
+        for (const channel of Object.values(hmIPDevice.functionalChannels)) {
+            if (channel.functionalChannelType === "MOTION_DETECTION_CHANNEL") {
+                const motionDetectionChannel = <MotionDetectionChannel>channel;
+                this.platform.log.debug("Motion detector update: %s", JSON.stringify(channel));
 
-    if (this.addLightSensor) {
-      this.lightSensorService = this.getOrAddService(
-        this.platform.Service.LightSensor,
-        accessory.context.device.label,
-        'LightSensor',
-      );
+                if (
+                    motionDetectionChannel.motionDetected !== null &&
+                    motionDetectionChannel.motionDetected !== this.motionDetected
+                ) {
+                    this.motionDetected = motionDetectionChannel.motionDetected;
+                    this.platform.log.debug(
+                        "Motion detector state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.motionDetected,
+                    );
+                    this.motionSensorService.updateCharacteristic(
+                        this.platform.Characteristic.MotionDetected,
+                        this.motionDetected,
+                    );
+                }
+                if (
+                    motionDetectionChannel.illumination !== null &&
+                    motionDetectionChannel.illumination !== this.lightLevel
+                ) {
+                    this.lightLevel = motionDetectionChannel.illumination;
+                    this.platform.log.debug(
+                        "Illumination detector state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.lightLevel,
+                    );
+                    this.lightSensorService?.updateCharacteristic(
+                        this.platform.Characteristic.CurrentAmbientLightLevel,
+                        Math.max(1, this.lightLevel),
+                    );
+                }
+            }
 
-      this.lightSensorService.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-        .onGet(connectedGet(this.platform, () => Math.max(1, this.lightLevel)));
-
-    } else {
-      const lightSensorService = this.accessory.getServiceById(this.platform.Service.LightSensor, 'LightSensor');
-      if (lightSensorService !== undefined) {
-        this.accessory.removeService(lightSensorService);
-      }
+            if (channel.functionalChannelType === "DEVICE_SABOTAGE") {
+                const sabotageChannel = <SabotageChannel>channel;
+                if (sabotageChannel.sabotage !== null && sabotageChannel.sabotage !== this.sabotage) {
+                    this.sabotage = sabotageChannel.sabotage;
+                    this.platform.log.info(
+                        "Sabotage state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.sabotage,
+                    );
+                    this.motionSensorService.updateCharacteristic(
+                        this.platform.Characteristic.StatusTampered,
+                        this.sabotage
+                            ? this.platform.Characteristic.StatusTampered.TAMPERED
+                            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED,
+                    );
+                }
+            }
+        }
     }
-
-  }
-
-  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPDevice, groups);
-    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (channel.functionalChannelType === 'MOTION_DETECTION_CHANNEL') {
-        const motionDetectionChannel = <MotionDetectionChannel>channel;
-        this.platform.log.debug('Motion detector update: %s', JSON.stringify(channel));
-
-        if (motionDetectionChannel.motionDetected !== null && motionDetectionChannel.motionDetected !== this.motionDetected) {
-          this.motionDetected = motionDetectionChannel.motionDetected;
-          this.platform.log.debug('Motion detector state of %s changed to %s', this.accessory.displayName,
-				  this.motionDetected);
-          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.MotionDetected,
-							this.motionDetected);
-        }
-        if (motionDetectionChannel.illumination !== null && motionDetectionChannel.illumination !== this.lightLevel) {
-          this.lightLevel = motionDetectionChannel.illumination;
-          this.platform.log.debug('Illumination detector state of %s changed to %s', this.accessory.displayName,
-				  this.lightLevel);
-          this.lightSensorService?.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel,
-            Math.max(1, this.lightLevel));
-        }
-      }
-
-      if (channel.functionalChannelType === 'DEVICE_SABOTAGE') {
-        const sabotageChannel = <SabotageChannel>channel;
-        if (sabotageChannel.sabotage !== null && sabotageChannel.sabotage !== this.sabotage) {
-          this.sabotage = sabotageChannel.sabotage;
-          this.platform.log.info('Sabotage state of %s changed to %s', this.accessory.displayName, this.sabotage);
-          this.motionSensorService.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage
-            ? this.platform.Characteristic.StatusTampered.TAMPERED
-            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
-        }
-      }
-
-    }
-  }
 }

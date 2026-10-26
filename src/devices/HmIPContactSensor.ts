@@ -1,44 +1,43 @@
-import type {Service} from 'homebridge';
+import type {Service} from "homebridge";
 import {
-  type HmIPDevice,
-  type HmIPFunctionalChannel,
-  type HmIPGroup,
-  hasFunctionalChannelType,
-  isHmIPRecord,
-  type SabotageChannel,
-} from 'homematicip-cloud-client-ts';
-import {connectedGet} from '../HmIPAvailability.js';
-import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
-import {HmIPGenericDevice} from './HmIPGenericDevice.js';
+    type HmIPDevice,
+    type HmIPFunctionalChannel,
+    type HmIPGroup,
+    hasFunctionalChannelType,
+    isHmIPRecord,
+    type SabotageChannel,
+} from "homematicip-cloud-client-ts";
+import {connectedGet} from "../HmIPAvailability.js";
+import type {HmIPPlatform} from "../HmIPPlatform.js";
+import type {HmIPPlatformAccessory} from "../HmIPTypes.js";
+import {HmIPGenericDevice} from "./HmIPGenericDevice.js";
 
 enum WindowState {
-  OPEN = 'OPEN',
-  CLOSED = 'CLOSED',
-  TILTED = 'TILTED'
+    OPEN = "OPEN",
+    CLOSED = "CLOSED",
+    TILTED = "TILTED",
 }
 
 interface ContactChannel extends HmIPFunctionalChannel {
-  functionalChannelType:
-    | 'SHUTTER_CONTACT_CHANNEL'
-    | 'CONTACT_INTERFACE_CHANNEL'
-    | 'MULTI_MODE_INPUT_CHANNEL';
-  windowState: WindowState;
+    functionalChannelType: "SHUTTER_CONTACT_CHANNEL" | "CONTACT_INTERFACE_CHANNEL" | "MULTI_MODE_INPUT_CHANNEL";
+    windowState: WindowState;
 }
 
 const windowStates: ReadonlySet<unknown> = new Set(Object.values(WindowState));
 
 function isContactChannel(channel: HmIPFunctionalChannel): channel is ContactChannel {
-  if (!hasFunctionalChannelType(
-    channel,
-    'SHUTTER_CONTACT_CHANNEL',
-    'CONTACT_INTERFACE_CHANNEL',
-    'MULTI_MODE_INPUT_CHANNEL',
-  )) {
-    return false;
-  }
-  const candidate: unknown = channel;
-  return isHmIPRecord(candidate) && windowStates.has(candidate.windowState);
+    if (
+        !hasFunctionalChannelType(
+            channel,
+            "SHUTTER_CONTACT_CHANNEL",
+            "CONTACT_INTERFACE_CHANNEL",
+            "MULTI_MODE_INPUT_CHANNEL",
+        )
+    ) {
+        return false;
+    }
+    const candidate: unknown = channel;
+    return isHmIPRecord(candidate) && windowStates.has(candidate.windowState);
 }
 
 /**
@@ -53,60 +52,79 @@ function isContactChannel(channel: HmIPFunctionalChannel): channel is ContactCha
  *
  */
 export class HmIPContactSensor extends HmIPGenericDevice {
-  private service: Service;
+    private service: Service;
 
-  private windowState = WindowState.CLOSED;
-  private sabotage = false;
+    private windowState = WindowState.CLOSED;
+    private sabotage = false;
 
-  constructor(
-    platform: HmIPPlatform,
-    accessory: HmIPPlatformAccessory,
-  ) {
-    super(platform, accessory);
+    constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
+        super(platform, accessory);
 
-    this.platform.log.debug('Created HmIPContactSensor %s', accessory.context.device.label);
+        this.platform.log.debug("Created HmIPContactSensor %s", accessory.context.device.label);
 
-    this.service = this.getOrAddService(this.platform.Service.ContactSensor, accessory.context.device.label);
-    this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .onGet(connectedGet(this.platform, () => this.windowState === WindowState.CLOSED
-        ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-        : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED));
+        this.service = this.getOrAddService(this.platform.Service.ContactSensor, accessory.context.device.label);
+        this.service
+            .getCharacteristic(this.platform.Characteristic.ContactSensorState)
+            .onGet(
+                connectedGet(this.platform, () =>
+                    this.windowState === WindowState.CLOSED
+                        ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+                        : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
+                ),
+            );
 
-    if (this.featureSabotage) {
-      this.service.getCharacteristic(this.platform.Characteristic.StatusTampered)
-        .onGet(connectedGet(this.platform, () => this.sabotage
-          ? this.platform.Characteristic.StatusTampered.TAMPERED
-          : this.platform.Characteristic.StatusTampered.NOT_TAMPERED));
+        if (this.featureSabotage) {
+            this.service
+                .getCharacteristic(this.platform.Characteristic.StatusTampered)
+                .onGet(
+                    connectedGet(this.platform, () =>
+                        this.sabotage
+                            ? this.platform.Characteristic.StatusTampered.TAMPERED
+                            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED,
+                    ),
+                );
+        }
     }
 
-  }
+    public override updateDevice(hmIPDevice: HmIPDevice, groups: {[key: string]: HmIPGroup}) {
+        super.updateDevice(hmIPDevice, groups);
+        for (const channel of Object.values(hmIPDevice.functionalChannels)) {
+            if (isContactChannel(channel)) {
+                this.platform.log.debug(`Contact update: ${JSON.stringify(channel)}`);
 
-  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPDevice, groups);
-    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (isContactChannel(channel)) {
-        this.platform.log.debug(`Contact update: ${JSON.stringify(channel)}`);
+                if (channel.windowState !== this.windowState) {
+                    this.windowState = channel.windowState;
+                    this.platform.log.info(
+                        "Contact state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.windowState,
+                    );
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.ContactSensorState,
+                        this.windowState === WindowState.CLOSED
+                            ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+                            : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
+                    );
+                }
+            }
 
-        if (channel.windowState !== this.windowState) {
-          this.windowState = channel.windowState;
-          this.platform.log.info('Contact state of %s changed to %s', this.accessory.displayName, this.windowState);
-          this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState,
-            this.windowState === WindowState.CLOSED
-              ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-              : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+            if (channel.functionalChannelType === "DEVICE_SABOTAGE") {
+                const sabotageChannel = <SabotageChannel>channel;
+                if (sabotageChannel.sabotage !== null && sabotageChannel.sabotage !== this.sabotage) {
+                    this.sabotage = sabotageChannel.sabotage;
+                    this.platform.log.info(
+                        "Sabotage state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.sabotage,
+                    );
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.StatusTampered,
+                        this.sabotage
+                            ? this.platform.Characteristic.StatusTampered.TAMPERED
+                            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED,
+                    );
+                }
+            }
         }
-      }
-
-      if (channel.functionalChannelType === 'DEVICE_SABOTAGE') {
-        const sabotageChannel = <SabotageChannel>channel;
-        if (sabotageChannel.sabotage !== null && sabotageChannel.sabotage !== this.sabotage) {
-          this.sabotage = sabotageChannel.sabotage;
-          this.platform.log.info('Sabotage state of %s changed to %s', this.accessory.displayName, this.sabotage);
-          this.service.updateCharacteristic(this.platform.Characteristic.StatusTampered, this.sabotage
-            ? this.platform.Characteristic.StatusTampered.TAMPERED
-            : this.platform.Characteristic.StatusTampered.NOT_TAMPERED);
-        }
-      }
     }
-  }
 }

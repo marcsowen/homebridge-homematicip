@@ -1,208 +1,214 @@
-import type {Service, WithUUID} from 'homebridge';
+import type {Service, WithUUID} from "homebridge";
 import {
-  getHmIPDeviceReachability,
-  type HmIPDevice,
-  type HmIPFunctionalChannel,
-  type HmIPGroup,
-  hasFunctionalChannelType,
-  isHmIPRecord,
-} from 'homematicip-cloud-client-ts';
-import {connectedGet} from '../HmIPAvailability.js';
-import {getDeviceConfig} from '../HmIPConfig.js';
-import {sanitizeHomeKitName} from '../HmIPName.js';
-import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
+    getHmIPDeviceReachability,
+    type HmIPDevice,
+    type HmIPFunctionalChannel,
+    type HmIPGroup,
+    hasFunctionalChannelType,
+    isHmIPRecord,
+} from "homematicip-cloud-client-ts";
+import {connectedGet} from "../HmIPAvailability.js";
+import {getDeviceConfig} from "../HmIPConfig.js";
+import {sanitizeHomeKitName} from "../HmIPName.js";
+import type {HmIPPlatform} from "../HmIPPlatform.js";
+import type {HmIPPlatformAccessory} from "../HmIPTypes.js";
 
 interface DeviceBaseChannel extends HmIPFunctionalChannel {
-  functionalChannelType: 'DEVICE_OPERATIONLOCK' | 'DEVICE_BASE' | 'DEVICE_SABOTAGE';
-  unreach: boolean | null;
-  lowBat: boolean | null;
-  supportedOptionalFeatures: {
-    IOptionalFeatureLowBat: boolean;
-  };
+    functionalChannelType: "DEVICE_OPERATIONLOCK" | "DEVICE_BASE" | "DEVICE_SABOTAGE";
+    unreach: boolean | null;
+    lowBat: boolean | null;
+    supportedOptionalFeatures: {
+        IOptionalFeatureLowBat: boolean;
+    };
 }
 
 type NamedServiceConstructor = WithUUID<typeof Service> & {
-  new(displayName: string, subtype?: string): Service;
+    new (displayName: string, subtype?: string): Service;
 };
 
 function isDeviceBaseChannel(channel: HmIPFunctionalChannel): channel is DeviceBaseChannel {
-  if (!hasFunctionalChannelType(channel, 'DEVICE_OPERATIONLOCK', 'DEVICE_BASE', 'DEVICE_SABOTAGE')) {
-    return false;
-  }
-  const candidate: unknown = channel;
-  return isHmIPRecord(candidate)
-    && (candidate.unreach === null || typeof candidate.unreach === 'boolean')
-    && (candidate.lowBat === null || typeof candidate.lowBat === 'boolean')
-    && isHmIPRecord(candidate.supportedOptionalFeatures)
-    && typeof candidate.supportedOptionalFeatures.IOptionalFeatureLowBat === 'boolean';
+    if (!hasFunctionalChannelType(channel, "DEVICE_OPERATIONLOCK", "DEVICE_BASE", "DEVICE_SABOTAGE")) {
+        return false;
+    }
+    const candidate: unknown = channel;
+    return (
+        isHmIPRecord(candidate) &&
+        (candidate.unreach === null || typeof candidate.unreach === "boolean") &&
+        (candidate.lowBat === null || typeof candidate.lowBat === "boolean") &&
+        isHmIPRecord(candidate.supportedOptionalFeatures) &&
+        typeof candidate.supportedOptionalFeatures.IOptionalFeatureLowBat === "boolean"
+    );
 }
 
 /**
  * Generic device
  */
 export abstract class HmIPGenericDevice {
+    public hasFunctionalServices = true;
+    public hidden = false;
+    protected unreach = false;
+    protected lowBat = false;
+    protected rssiDeviceValue = 0;
+    protected rssiPeerValue = 0;
+    protected dutyCycle = false;
+    protected configPending = false;
+    protected featureSabotage = false;
+    protected accessoryConfig;
+    private readonly batteryService: Service | undefined;
 
-  public hasFunctionalServices = true;
-  public hidden = false;
-  protected unreach = false;
-  protected lowBat = false;
-  protected rssiDeviceValue = 0;
-  protected rssiPeerValue = 0;
-  protected dutyCycle = false;
-  protected configPending = false;
-  protected featureSabotage = false;
-  protected accessoryConfig;
-  private readonly batteryService: Service | undefined;
+    protected constructor(
+        protected readonly platform: HmIPPlatform,
+        public readonly accessory: HmIPPlatformAccessory,
+    ) {
+        this.accessoryConfig = getDeviceConfig(platform.config.devices, accessory.context.device.id);
+        this.hidden = this.accessoryConfig?.hide === true;
 
-  protected constructor(
-    protected readonly platform: HmIPPlatform,
-    public readonly accessory: HmIPPlatformAccessory,
-  ) {
+        this.accessory
+            .getService(this.platform.Service.AccessoryInformation)
+            ?.setCharacteristic(this.platform.Characteristic.Manufacturer, accessory.context.device.oem ?? "eq-3")
+            .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)
+            .setCharacteristic(
+                this.platform.Characteristic.SerialNumber,
+                accessory.context.channelIndex === undefined
+                    ? accessory.context.device.id
+                    : `${accessory.context.device.id}-${accessory.context.channelIndex}`,
+            )
+            .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);
 
-    this.accessoryConfig = getDeviceConfig(platform.config.devices, accessory.context.device.id);
-    this.hidden = this.accessoryConfig?.hide === true;
+        const hmIPDevice = accessory.context.device;
+        let featureLowBat = false;
+        this.unreach = getHmIPDeviceReachability(hmIPDevice) === false;
 
-    this.accessory.getService(this.platform.Service.AccessoryInformation)?.setCharacteristic(
-      this.platform.Characteristic.Manufacturer,
-      accessory.context.device.oem ?? 'eq-3',
-    )
-      .setCharacteristic(this.platform.Characteristic.Model, accessory.context.device.modelType)
-      .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        accessory.context.channelIndex === undefined
-          ? accessory.context.device.id
-          : `${accessory.context.device.id}-${accessory.context.channelIndex}`,
-      )
-      .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.device.firmwareVersion);
+        for (const channel of Object.values(hmIPDevice.functionalChannels)) {
+            if (isDeviceBaseChannel(channel)) {
+                featureLowBat = channel.supportedOptionalFeatures.IOptionalFeatureLowBat;
+                if (featureLowBat && channel.lowBat !== null) {
+                    this.lowBat = channel.lowBat;
+                }
 
-    const hmIPDevice = accessory.context.device;
-    let featureLowBat = false;
-    this.unreach = getHmIPDeviceReachability(hmIPDevice) === false;
-
-    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (isDeviceBaseChannel(channel)) {
-        featureLowBat = channel.supportedOptionalFeatures.IOptionalFeatureLowBat;
-        if (featureLowBat && channel.lowBat !== null) {
-          this.lowBat = channel.lowBat;
+                if (channel.functionalChannelType === "DEVICE_SABOTAGE") {
+                    this.featureSabotage = true;
+                }
+            }
         }
 
-        if (channel.functionalChannelType === 'DEVICE_SABOTAGE') {
-          this.featureSabotage = true;
+        if (featureLowBat) {
+            this.batteryService =
+                this.accessory.getService(this.platform.Service.Battery) ||
+                this.accessory.addService(this.platform.Service.Battery);
+            this.batteryService
+                ?.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
+                .onGet(
+                    connectedGet(this.platform, () =>
+                        this.lowBat
+                            ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
+                            : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
+                    ),
+                );
         }
-      }
     }
 
-    if (featureLowBat) {
-      this.batteryService = this.accessory.getService(this.platform.Service.Battery)
-        || this.accessory.addService(this.platform.Service.Battery);
-      this.batteryService?.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-        .onGet(connectedGet(this.platform, () => this.lowBat
-          ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-          : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL));
-    }
-  }
-
-  public get accessories(): readonly HmIPPlatformAccessory[] {
-    return [this.accessory];
-  }
-
-  protected getOrAddService(
-    ServiceType: NamedServiceConstructor,
-    displayName: string,
-    subtype?: string,
-  ): Service {
-    const existingService = subtype === undefined
-      ? this.accessory.getService(ServiceType)
-      : this.accessory.getServiceById(ServiceType, subtype);
-    if (existingService) {
-      return existingService;
-    }
-    return this.accessory.addService(new ServiceType(sanitizeHomeKitName(displayName), subtype));
-  }
-
-  protected setServiceLabelIndex(service: Service, index: number): void {
-    if (!Number.isInteger(index) || index < 1 || index > 255) {
-      this.platform.log.warn(
-        'Cannot assign HomeKit service label index %s to %s',
-        index,
-        this.accessory.displayName,
-      );
-      return;
-    }
-    if (!service.testCharacteristic(this.platform.Characteristic.ServiceLabelIndex)) {
-      service.addOptionalCharacteristic(this.platform.Characteristic.ServiceLabelIndex);
-    }
-    service.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex, index);
-  }
-
-  protected rejectMissingFunctionalServices(expectedChannels: string): void {
-    this.hasFunctionalServices = false;
-    const device = this.accessory.context.device;
-    const channelStructure = Object.values(device.functionalChannels).map(channel => {
-      const candidate: unknown = channel;
-      if (!isHmIPRecord(candidate)) {
-        return {type: 'INVALID', index: 'INVALID', fields: []};
-      }
-      return {
-        type: typeof candidate.functionalChannelType === 'string' ? candidate.functionalChannelType : 'MISSING',
-        index: typeof candidate.index === 'number' ? candidate.index : 'MISSING',
-        fields: Object.keys(candidate).sort(),
-      };
-    });
-    this.platform.log.warn(
-      'No functional services created for Homematic IP model %s (device type %s); expected %s. '
-      + 'Redacted channel structure: %s',
-      device.modelType,
-      device.type,
-      expectedChannels,
-      JSON.stringify(channelStructure),
-    );
-  }
-
-  public updateDevice(hmIPDevice: HmIPDevice, _groups: Readonly<Record<string, HmIPGroup>>) {
-    this.updateFirmwareRevision(hmIPDevice.firmwareVersion);
-    const reachable = getHmIPDeviceReachability(hmIPDevice);
-    if (reachable !== undefined && !reachable !== this.unreach) {
-      this.unreach = !reachable;
-      this.platform.log.info('Unreach of %s changed to %s', this.accessory.displayName, this.unreach);
+    public get accessories(): readonly HmIPPlatformAccessory[] {
+        return [this.accessory];
     }
 
-    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (isDeviceBaseChannel(channel)) {
-        if (this.batteryService && channel.lowBat !== null && channel.lowBat !== this.lowBat) {
-          this.lowBat = channel.lowBat;
-          this.platform.log.info('LowBat of %s changed to %s', this.accessory.displayName, this.lowBat);
-          this.batteryService.setCharacteristic(this.platform.Characteristic.StatusLowBattery,
-            this.lowBat ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-              : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
+    protected getOrAddService(ServiceType: NamedServiceConstructor, displayName: string, subtype?: string): Service {
+        const existingService =
+            subtype === undefined
+                ? this.accessory.getService(ServiceType)
+                : this.accessory.getServiceById(ServiceType, subtype);
+        if (existingService) {
+            return existingService;
         }
-      }
-    }
-  }
-
-  private updateFirmwareRevision(firmwareVersion: string): void {
-    if (firmwareVersion === this.accessory.context.device.firmwareVersion) {
-      return;
+        return this.accessory.addService(new ServiceType(sanitizeHomeKitName(displayName), subtype));
     }
 
-    const previousFirmwareVersion = this.accessory.context.device.firmwareVersion;
-    this.accessory.getService(this.platform.Service.AccessoryInformation)
-      ?.updateCharacteristic(this.platform.Characteristic.FirmwareRevision, firmwareVersion);
+    protected setServiceLabelIndex(service: Service, index: number): void {
+        if (!Number.isInteger(index) || index < 1 || index > 255) {
+            this.platform.log.warn(
+                "Cannot assign HomeKit service label index %s to %s",
+                index,
+                this.accessory.displayName,
+            );
+            return;
+        }
+        if (!service.testCharacteristic(this.platform.Characteristic.ServiceLabelIndex)) {
+            service.addOptionalCharacteristic(this.platform.Characteristic.ServiceLabelIndex);
+        }
+        service.updateCharacteristic(this.platform.Characteristic.ServiceLabelIndex, index);
+    }
 
-    // Persist only technical metadata. In particular, do not copy the HmIP label
-    // or update displayName/Characteristic.Name, as those may be customized in HomeKit.
-    this.accessory.context.device.firmwareVersion = firmwareVersion;
-    this.platform.api.updatePlatformAccessories([this.accessory]);
-    this.platform.log.info(
-      'Firmware revision of %s changed from %s to %s',
-      this.accessory.displayName,
-      previousFirmwareVersion,
-      firmwareVersion,
-    );
-  }
+    protected rejectMissingFunctionalServices(expectedChannels: string): void {
+        this.hasFunctionalServices = false;
+        const device = this.accessory.context.device;
+        const channelStructure = Object.values(device.functionalChannels).map((channel) => {
+            const candidate: unknown = channel;
+            if (!isHmIPRecord(candidate)) {
+                return {type: "INVALID", index: "INVALID", fields: []};
+            }
+            return {
+                type: typeof candidate.functionalChannelType === "string" ? candidate.functionalChannelType : "MISSING",
+                index: typeof candidate.index === "number" ? candidate.index : "MISSING",
+                fields: Object.keys(candidate).sort(),
+            };
+        });
+        this.platform.log.warn(
+            "No functional services created for Homematic IP model %s (device type %s); expected %s. " +
+                "Redacted channel structure: %s",
+            device.modelType,
+            device.type,
+            expectedChannels,
+            JSON.stringify(channelStructure),
+        );
+    }
 
-  public dispose(): void {
-    // Subclasses with timers or other resources override this hook.
-  }
+    public updateDevice(hmIPDevice: HmIPDevice, _groups: Readonly<Record<string, HmIPGroup>>) {
+        this.updateFirmwareRevision(hmIPDevice.firmwareVersion);
+        const reachable = getHmIPDeviceReachability(hmIPDevice);
+        if (reachable !== undefined && !reachable !== this.unreach) {
+            this.unreach = !reachable;
+            this.platform.log.info("Unreach of %s changed to %s", this.accessory.displayName, this.unreach);
+        }
+
+        for (const channel of Object.values(hmIPDevice.functionalChannels)) {
+            if (isDeviceBaseChannel(channel)) {
+                if (this.batteryService && channel.lowBat !== null && channel.lowBat !== this.lowBat) {
+                    this.lowBat = channel.lowBat;
+                    this.platform.log.info("LowBat of %s changed to %s", this.accessory.displayName, this.lowBat);
+                    this.batteryService.setCharacteristic(
+                        this.platform.Characteristic.StatusLowBattery,
+                        this.lowBat
+                            ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
+                            : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
+                    );
+                }
+            }
+        }
+    }
+
+    private updateFirmwareRevision(firmwareVersion: string): void {
+        if (firmwareVersion === this.accessory.context.device.firmwareVersion) {
+            return;
+        }
+
+        const previousFirmwareVersion = this.accessory.context.device.firmwareVersion;
+        this.accessory
+            .getService(this.platform.Service.AccessoryInformation)
+            ?.updateCharacteristic(this.platform.Characteristic.FirmwareRevision, firmwareVersion);
+
+        // Persist only technical metadata. In particular, do not copy the HmIP label
+        // or update displayName/Characteristic.Name, as those may be customized in HomeKit.
+        this.accessory.context.device.firmwareVersion = firmwareVersion;
+        this.platform.api.updatePlatformAccessories([this.accessory]);
+        this.platform.log.info(
+            "Firmware revision of %s changed from %s to %s",
+            this.accessory.displayName,
+            previousFirmwareVersion,
+            firmwareVersion,
+        );
+    }
+
+    public dispose(): void {
+        // Subclasses with timers or other resources override this hook.
+    }
 }

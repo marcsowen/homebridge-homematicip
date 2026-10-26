@@ -1,4 +1,4 @@
-const DEFAULT_HOMEKIT_NAME = 'Homematic IP Device';
+const DEFAULT_HOMEKIT_NAME = "Homematic IP Device";
 const MAX_HOMEKIT_NAME_LENGTH = 64;
 
 /**
@@ -10,20 +10,22 @@ const MAX_HOMEKIT_NAME_LENGTH = 64;
  * services, including before a PlatformAccessory is constructed.
  */
 export function sanitizeHomeKitName(name: string, fallback = DEFAULT_HOMEKIT_NAME): string {
-  const sanitized = name
-    .normalize('NFC')
-    .replace(/[\u2010-\u2015\u2212]/gu, '-')
-    .replace(/[^\p{L}\p{N}\p{Zs}\u2019'&!._:;()/,-]+/gu, ' ')
-    .replace(/\p{Zs}+/gu, ' ')
-    .replace(/^[^\p{L}\p{N}]+/u, '')
-    .replace(/[^\p{L}\p{N}]+$/u, '');
+    const sanitized = name
+        .normalize("NFC")
+        .replace(/[\u2010-\u2015\u2212]/gu, "-")
+        .replace(/[^\p{L}\p{N}\p{Zs}\u2019'&!._:;()/,-]+/gu, " ")
+        .replace(/\p{Zs}+/gu, " ")
+        .replace(/^[^\p{L}\p{N}]+/u, "")
+        .replace(/[^\p{L}\p{N}]+$/u, "");
 
-  const shortened = Array.from(sanitized).slice(0, MAX_HOMEKIT_NAME_LENGTH).join('')
-    .replace(/[^\p{L}\p{N}]+$/u, '');
-  if (shortened) {
-    return shortened;
-  }
+    const shortened = Array.from(sanitized)
+        .slice(0, MAX_HOMEKIT_NAME_LENGTH)
+        .join("")
+        .replace(/[^\p{L}\p{N}]+$/u, "");
+    if (shortened) {
+        return shortened;
+    }
 
-  const safeFallback = fallback === name ? DEFAULT_HOMEKIT_NAME : sanitizeHomeKitName(fallback, DEFAULT_HOMEKIT_NAME);
-  return safeFallback || DEFAULT_HOMEKIT_NAME;
+    const safeFallback = fallback === name ? DEFAULT_HOMEKIT_NAME : sanitizeHomeKitName(fallback, DEFAULT_HOMEKIT_NAME);
+    return safeFallback || DEFAULT_HOMEKIT_NAME;
 }

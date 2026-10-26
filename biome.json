@@ -1,17 +1,18 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
-  "files": {
-    "includes": [
-      "src/**/*.ts"
-    ]
-  },
   "formatter": {
-    "enabled": false
+    "indentStyle": "space",
+    "indentWidth": 4,
+    "lineWidth": 120,
+    "bracketSpacing": false
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "style": {
+        "useBlockStatements": "error"
+      }
     }
   }
 }

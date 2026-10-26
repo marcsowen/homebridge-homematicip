@@ -1,39 +1,36 @@
-import type {
-  CharacteristicValue,
-  Service,
-} from 'homebridge';
-import type {HmIPDevice, HmIPGroup} from 'homematicip-cloud-client-ts';
-import {connectedGet, connectedSet} from '../HmIPAvailability.js';
-import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
-import {HmIPGenericDevice} from './HmIPGenericDevice.js';
+import type {CharacteristicValue, Service} from "homebridge";
+import type {HmIPDevice, HmIPGroup} from "homematicip-cloud-client-ts";
+import {connectedGet, connectedSet} from "../HmIPAvailability.js";
+import type {HmIPPlatform} from "../HmIPPlatform.js";
+import type {HmIPPlatformAccessory} from "../HmIPTypes.js";
+import {HmIPGenericDevice} from "./HmIPGenericDevice.js";
 
 enum LockState {
-  OPEN='OPEN',
-  UNLOCKED='UNLOCKED',
-  LOCKED='LOCKED'
+    OPEN = "OPEN",
+    UNLOCKED = "UNLOCKED",
+    LOCKED = "LOCKED",
 }
 
 enum MotorState {
-  STOPPED='STOPPED',
-  CLOSING='CLOSING',
-  OPENING='OPENING'
+    STOPPED = "STOPPED",
+    CLOSING = "CLOSING",
+    OPENING = "OPENING",
 }
 
 interface DoorLockChannel {
-  functionalChannelType: string;
-  acousticChannelstateDisabled: boolean;
-  autoRelockDelay: number;
-  autoRelockEnabled: boolean;
-  doorHandleType: string;
-  doorLockDirection: string;
-  doorLockEndStopOffsetLocked: string;
-  doorLockEndStopOffsetOpen: string;
-  doorLockNeutralPosition: string;
-  doorLockTurns: number;
-  holdTime: string;
-  lockState: LockState;
-  motorState: MotorState;
+    functionalChannelType: string;
+    acousticChannelstateDisabled: boolean;
+    autoRelockDelay: number;
+    autoRelockEnabled: boolean;
+    doorHandleType: string;
+    doorLockDirection: string;
+    doorLockEndStopOffsetLocked: string;
+    doorLockEndStopOffsetOpen: string;
+    doorLockNeutralPosition: string;
+    doorLockTurns: number;
+    holdTime: string;
+    lockState: LockState;
+    motorState: MotorState;
 }
 
 /**
@@ -43,137 +40,157 @@ interface DoorLockChannel {
  *
  */
 export class HmIPDoorLockDrive extends HmIPGenericDevice {
-  private service: Service;
+    private service: Service;
 
-  private lockState: LockState = LockState.UNLOCKED;
-  private motorState: MotorState = MotorState.STOPPED;
-  private targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
-  private openLatch = false;
-  private pin;
+    private lockState: LockState = LockState.UNLOCKED;
+    private motorState: MotorState = MotorState.STOPPED;
+    private targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
+    private openLatch = false;
+    private pin;
 
-  constructor(
-    platform: HmIPPlatform,
-    accessory: HmIPPlatformAccessory,
-  ) {
-    super(platform, accessory);
+    constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
+        super(platform, accessory);
 
-    this.openLatch = this.accessoryConfig?.openLatch === true;
-    this.pin = this.accessoryConfig?.pin;
+        this.openLatch = this.accessoryConfig?.openLatch === true;
+        this.pin = this.accessoryConfig?.pin;
 
-    this.platform.log.debug(`Created door lock drive ${accessory.context.device.label}`);
-    this.service = this.getOrAddService(this.platform.Service.LockMechanism, accessory.context.device.label);
+        this.platform.log.debug(`Created door lock drive ${accessory.context.device.label}`);
+        this.service = this.getOrAddService(this.platform.Service.LockMechanism, accessory.context.device.label);
 
-    this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .onGet(connectedGet(this.platform, this.handleLockCurrentStateGet.bind(this)));
+        this.service
+            .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+            .onGet(connectedGet(this.platform, this.handleLockCurrentStateGet.bind(this)));
 
-    this.service.getCharacteristic(this.platform.Characteristic.LockTargetState)
-      .onGet(connectedGet(this.platform, this.handleLockTargetStateGet.bind(this)))
-      .onSet(connectedSet(this.platform, this.handleLockTargetStateSet.bind(this)));
-  }
-
-  handleLockCurrentStateGet() {
-    return this.getHmKitLockCurrentState(this.lockState);
-  }
-
-  handleLockTargetStateGet() {
-    return this.targetLockState;
-  }
-
-  async handleLockTargetStateSet(value: CharacteristicValue) {
-    this.targetLockState = Number(value);
-    this.platform.log.info('Setting door lock drive %s to %s', this.accessory.displayName, this.getLockTargetStateString(value));
-    const body = {
-      channelIndex: 1,
-      deviceId: this.accessory.context.device.id,
-      authorizationPin: this.pin !== undefined ? this.pin : '',
-      targetLockState: this.getHmIPTargetLockState(value),
-    };
-    await this.platform.connector.command('setLockState', body);
-  }
-
-  public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {
-    super.updateDevice(hmIPDevice, groups);
-    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (channel.functionalChannelType === 'DOOR_LOCK_CHANNEL') {
-        const doorLockChannel = <DoorLockChannel>channel;
-        this.platform.log.debug(`Door lock drive update: ${JSON.stringify(channel)}`);
-
-        if (doorLockChannel.lockState !== null && doorLockChannel.lockState !== this.lockState) {
-          this.lockState = doorLockChannel.lockState;
-          this.platform.log.info('Door lock drive lock state of %s changed to %s', this.accessory.displayName, this.lockState);
-          this.updateHmKitLockTargetState();
-          this.service.updateCharacteristic(this.platform.Characteristic.LockCurrentState, this.getHmKitLockCurrentState(this.lockState));
-          this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.targetLockState);
-        }
-
-        if (doorLockChannel.motorState !== null && doorLockChannel.motorState !== this.motorState) {
-          this.motorState = doorLockChannel.motorState;
-          this.platform.log.debug('Door lock drive motor state of %s changed to %s', this.accessory.displayName, this.motorState);
-          this.updateHmKitLockTargetState();
-          this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.targetLockState);
-        }
-      }
+        this.service
+            .getCharacteristic(this.platform.Characteristic.LockTargetState)
+            .onGet(connectedGet(this.platform, this.handleLockTargetStateGet.bind(this)))
+            .onSet(connectedSet(this.platform, this.handleLockTargetStateSet.bind(this)));
     }
-  }
 
-  private getLockTargetStateString(lockTargetState: CharacteristicValue): string {
-    switch (lockTargetState) {
-      case this.platform.Characteristic.LockTargetState.UNSECURED:
-        return 'UNSECURED';
-      case this.platform.Characteristic.LockTargetState.SECURED:
-        return 'SECURED';
-      default:
-        return 'UNKNOWN';
+    handleLockCurrentStateGet() {
+        return this.getHmKitLockCurrentState(this.lockState);
     }
-  }
 
-  private getHmIPTargetLockState(lockTargetState: CharacteristicValue): string {
-    switch (lockTargetState) {
-      case this.platform.Characteristic.LockTargetState.UNSECURED:
-        if (this.openLatch) {
-          return LockState.OPEN;
-        } else {
-          return LockState.UNLOCKED;
+    handleLockTargetStateGet() {
+        return this.targetLockState;
+    }
+
+    async handleLockTargetStateSet(value: CharacteristicValue) {
+        this.targetLockState = Number(value);
+        this.platform.log.info(
+            "Setting door lock drive %s to %s",
+            this.accessory.displayName,
+            this.getLockTargetStateString(value),
+        );
+        const body = {
+            channelIndex: 1,
+            deviceId: this.accessory.context.device.id,
+            authorizationPin: this.pin !== undefined ? this.pin : "",
+            targetLockState: this.getHmIPTargetLockState(value),
+        };
+        await this.platform.connector.command("setLockState", body);
+    }
+
+    public override updateDevice(hmIPDevice: HmIPDevice, groups: {[key: string]: HmIPGroup}) {
+        super.updateDevice(hmIPDevice, groups);
+        for (const channel of Object.values(hmIPDevice.functionalChannels)) {
+            if (channel.functionalChannelType === "DOOR_LOCK_CHANNEL") {
+                const doorLockChannel = <DoorLockChannel>channel;
+                this.platform.log.debug(`Door lock drive update: ${JSON.stringify(channel)}`);
+
+                if (doorLockChannel.lockState !== null && doorLockChannel.lockState !== this.lockState) {
+                    this.lockState = doorLockChannel.lockState;
+                    this.platform.log.info(
+                        "Door lock drive lock state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.lockState,
+                    );
+                    this.updateHmKitLockTargetState();
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.LockCurrentState,
+                        this.getHmKitLockCurrentState(this.lockState),
+                    );
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.LockTargetState,
+                        this.targetLockState,
+                    );
+                }
+
+                if (doorLockChannel.motorState !== null && doorLockChannel.motorState !== this.motorState) {
+                    this.motorState = doorLockChannel.motorState;
+                    this.platform.log.debug(
+                        "Door lock drive motor state of %s changed to %s",
+                        this.accessory.displayName,
+                        this.motorState,
+                    );
+                    this.updateHmKitLockTargetState();
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.LockTargetState,
+                        this.targetLockState,
+                    );
+                }
+            }
         }
-      case this.platform.Characteristic.LockTargetState.SECURED:
-        return LockState.LOCKED;
-      default:
-        return LockState.LOCKED;
     }
-  }
 
-  private getHmKitLockCurrentState(lockState: LockState): number {
-    switch(lockState) {
-      case LockState.LOCKED:
-        return this.platform.Characteristic.LockCurrentState.SECURED;
-      case LockState.UNLOCKED:
-        return this.platform.Characteristic.LockCurrentState.UNSECURED;
-      case LockState.OPEN:
-        return this.platform.Characteristic.LockCurrentState.UNSECURED;
-      default:
-        return this.platform.Characteristic.LockCurrentState.UNKNOWN;
+    private getLockTargetStateString(lockTargetState: CharacteristicValue): string {
+        switch (lockTargetState) {
+            case this.platform.Characteristic.LockTargetState.UNSECURED:
+                return "UNSECURED";
+            case this.platform.Characteristic.LockTargetState.SECURED:
+                return "SECURED";
+            default:
+                return "UNKNOWN";
+        }
     }
-  }
 
-  private updateHmKitLockTargetState() {
-    switch (this.lockState) {
-      case LockState.LOCKED:
-        if (this.motorState === MotorState.STOPPED) {
-          this.targetLockState = this.platform.Characteristic.LockTargetState.SECURED;
-        } else {
-          this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
+    private getHmIPTargetLockState(lockTargetState: CharacteristicValue): string {
+        switch (lockTargetState) {
+            case this.platform.Characteristic.LockTargetState.UNSECURED:
+                if (this.openLatch) {
+                    return LockState.OPEN;
+                } else {
+                    return LockState.UNLOCKED;
+                }
+            case this.platform.Characteristic.LockTargetState.SECURED:
+                return LockState.LOCKED;
+            default:
+                return LockState.LOCKED;
         }
-        break;
-      case LockState.UNLOCKED:
-        if (this.motorState === MotorState.CLOSING) {
-          this.targetLockState = this.platform.Characteristic.LockTargetState.SECURED;
-        } else {
-          this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
-        }
-        break;
-      case LockState.OPEN:
-        this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
-        break;
     }
-  }
+
+    private getHmKitLockCurrentState(lockState: LockState): number {
+        switch (lockState) {
+            case LockState.LOCKED:
+                return this.platform.Characteristic.LockCurrentState.SECURED;
+            case LockState.UNLOCKED:
+                return this.platform.Characteristic.LockCurrentState.UNSECURED;
+            case LockState.OPEN:
+                return this.platform.Characteristic.LockCurrentState.UNSECURED;
+            default:
+                return this.platform.Characteristic.LockCurrentState.UNKNOWN;
+        }
+    }
+
+    private updateHmKitLockTargetState() {
+        switch (this.lockState) {
+            case LockState.LOCKED:
+                if (this.motorState === MotorState.STOPPED) {
+                    this.targetLockState = this.platform.Characteristic.LockTargetState.SECURED;
+                } else {
+                    this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
+                }
+                break;
+            case LockState.UNLOCKED:
+                if (this.motorState === MotorState.CLOSING) {
+                    this.targetLockState = this.platform.Characteristic.LockTargetState.SECURED;
+                } else {
+                    this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
+                }
+                break;
+            case LockState.OPEN:
+                this.targetLockState = this.platform.Characteristic.LockTargetState.UNSECURED;
+                break;
+        }
+    }
 }

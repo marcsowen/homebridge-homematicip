@@ -1,90 +1,87 @@
-import type {
-  CharacteristicValue,
-  Service,
-} from 'homebridge';
+import type {CharacteristicValue, Service} from "homebridge";
 import {
-  type HmIPDevice,
-  type HmIPFunctionalChannel,
-  type HmIPGroup,
-  hasFunctionalChannelType,
-  isHmIPRecord,
-} from 'homematicip-cloud-client-ts';
-import {connectedGet, connectedSet} from '../HmIPAvailability.js';
-import {sanitizeHomeKitName} from '../HmIPName.js';
-import type {HmIPPlatform} from '../HmIPPlatform.js';
-import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
-import {HmIPGenericDevice} from './HmIPGenericDevice.js';
+    type HmIPDevice,
+    type HmIPFunctionalChannel,
+    type HmIPGroup,
+    hasFunctionalChannelType,
+    isHmIPRecord,
+} from "homematicip-cloud-client-ts";
+import {connectedGet, connectedSet} from "../HmIPAvailability.js";
+import {sanitizeHomeKitName} from "../HmIPName.js";
+import type {HmIPPlatform} from "../HmIPPlatform.js";
+import type {HmIPPlatformAccessory} from "../HmIPTypes.js";
+import {HmIPGenericDevice} from "./HmIPGenericDevice.js";
 
-type DimmerChannelType = 'DIMMER_CHANNEL' | 'MULTI_MODE_INPUT_DIMMER_CHANNEL';
+type DimmerChannelType = "DIMMER_CHANNEL" | "MULTI_MODE_INPUT_DIMMER_CHANNEL";
 
 interface DimmerChannel extends HmIPFunctionalChannel {
-  functionalChannelType: DimmerChannelType;
-  dimLevel?: number | null;
-  index: number;
-  label?: string | null;
+    functionalChannelType: DimmerChannelType;
+    dimLevel?: number | null;
+    index: number;
+    label?: string | null;
 }
 
 interface DimmerRuntimeChannel {
-  dimLevel: number;
-  index: number;
-  hapService: Service;
-  homeKitRequestVersion: number;
-  lastNonZeroDimLevel: number;
-  requestedDimLevel: number | undefined;
-  requestedDimLevelAt: number;
+    dimLevel: number;
+    index: number;
+    hapService: Service;
+    homeKitRequestVersion: number;
+    lastNonZeroDimLevel: number;
+    requestedDimLevel: number | undefined;
+    requestedDimLevelAt: number;
 }
 
 export interface HmIPDimmerChannelDescriptor {
-  index: number;
-  label: string;
+    index: number;
+    label: string;
 }
 
 function isDimmerChannel(channel: HmIPFunctionalChannel): channel is DimmerChannel {
-  if (!hasFunctionalChannelType(channel, 'DIMMER_CHANNEL', 'MULTI_MODE_INPUT_DIMMER_CHANNEL')) {
-    return false;
-  }
-  const candidate: unknown = channel;
-  return isHmIPRecord(candidate)
-    && (candidate.dimLevel === undefined || candidate.dimLevel === null || typeof candidate.dimLevel === 'number')
-    && typeof candidate.index === 'number'
-    && (candidate.label === undefined || candidate.label === null || typeof candidate.label === 'string');
+    if (!hasFunctionalChannelType(channel, "DIMMER_CHANNEL", "MULTI_MODE_INPUT_DIMMER_CHANNEL")) {
+        return false;
+    }
+    const candidate: unknown = channel;
+    return (
+        isHmIPRecord(candidate) &&
+        (candidate.dimLevel === undefined || candidate.dimLevel === null || typeof candidate.dimLevel === "number") &&
+        typeof candidate.index === "number" &&
+        (candidate.label === undefined || candidate.label === null || typeof candidate.label === "string")
+    );
 }
 
 function expectedChannelType(deviceType: string): DimmerChannelType {
-  // The reference client models the HmIP-DRDI3 outputs as multi-mode input
-  // dimmer channels. All other supported dimmers, including HmIPW-DRD3,
-  // expose their actuator outputs as ordinary dimmer channels.
-  return deviceType === 'DIN_RAIL_DIMMER_3'
-    ? 'MULTI_MODE_INPUT_DIMMER_CHANNEL'
-    : 'DIMMER_CHANNEL';
+    // The reference client models the HmIP-DRDI3 outputs as multi-mode input
+    // dimmer channels. All other supported dimmers, including HmIPW-DRD3,
+    // expose their actuator outputs as ordinary dimmer channels.
+    return deviceType === "DIN_RAIL_DIMMER_3" ? "MULTI_MODE_INPUT_DIMMER_CHANNEL" : "DIMMER_CHANNEL";
 }
 
 function getDimmerChannels(device: HmIPDevice): DimmerChannel[] {
-  const channelType = expectedChannelType(device.type);
-  return Object.values(device.functionalChannels)
-    .filter(isDimmerChannel)
-    .filter(channel => channel.functionalChannelType === channelType)
-    .sort((left, right) => left.index - right.index);
+    const channelType = expectedChannelType(device.type);
+    return Object.values(device.functionalChannels)
+        .filter(isDimmerChannel)
+        .filter((channel) => channel.functionalChannelType === channelType)
+        .sort((left, right) => left.index - right.index);
 }
 
 function getChannelLabel(device: HmIPDevice, channel: DimmerChannel, channelCount: number): string {
-  const label = channel.label?.trim();
-  if (label) {
-    return label;
-  }
-  return channelCount === 1 ? device.label : `${device.label} ${channel.index}`;
+    const label = channel.label?.trim();
+    if (label) {
+        return label;
+    }
+    return channelCount === 1 ? device.label : `${device.label} ${channel.index}`;
 }
 
 export function getHmIPDimmerChannels(device: HmIPDevice): HmIPDimmerChannelDescriptor[] {
-  const channels = getDimmerChannels(device);
-  return channels.map(channel => ({
-    index: channel.index,
-    label: getChannelLabel(device, channel, channels.length),
-  }));
+    const channels = getDimmerChannels(device);
+    return channels.map((channel) => ({
+        index: channel.index,
+        label: getChannelLabel(device, channel, channels.length),
+    }));
 }
 
 function toBrightness(dimLevel: number): number {
-  return Math.round(Math.min(1, Math.max(0, dimLevel)) * 100);
+    return Math.round(Math.min(1, Math.max(0, dimLevel)) * 100);
 }
 
 const REQUESTED_DIM_LEVEL_GRACE_MILLIS = 10_000;
@@ -100,193 +97,215 @@ const HOMEKIT_ON_BRIGHTNESS_GRACE_MILLIS = 100;
  * HmIP-DRDI3 DIN Rail Dimming Actuator - 3 channels
  */
 export class HmIPDimmer extends HmIPGenericDevice {
-  private readonly channels = new Map<number, DimmerRuntimeChannel>();
+    private readonly channels = new Map<number, DimmerRuntimeChannel>();
 
-  constructor(
-    platform: HmIPPlatform,
-    accessory: HmIPPlatformAccessory,
-  ) {
-    super(platform, accessory);
+    constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
+        super(platform, accessory);
 
-    this.platform.log.debug(`Created dimmer ${accessory.context.device.label}`);
+        this.platform.log.debug(`Created dimmer ${accessory.context.device.label}`);
 
-    const device = accessory.context.device;
-    const channelType = expectedChannelType(device.type);
-    const dimmerChannels = getDimmerChannels(device)
-      .filter(channel => this.accessory.context.channelIndex === undefined
-        || channel.index === this.accessory.context.channelIndex);
-    const legacyService = this.accessory.services.find(service =>
-      service.UUID === this.platform.Service.Lightbulb.UUID && service.subtype === undefined);
-
-    for (const [position, channel] of dimmerChannels.entries()) {
-      if (this.channels.has(channel.index)) {
-        continue;
-      }
-
-      let hapService = this.accessory.getServiceById(this.platform.Service.Lightbulb, channel.index.toString());
-      if (!hapService && position === 0 && legacyService) {
-        // Before multichannel support, ordinary dimmers had one service without
-        // a subtype. Reuse it to retain HomeKit room, automation, and name data.
-        hapService = legacyService;
-      }
-      if (!hapService) {
-        const label = this.channelLabel(channel, dimmerChannels.length);
-        hapService = this.accessory.addService(
-          new this.platform.Service.Lightbulb(sanitizeHomeKitName(label), channel.index.toString()),
+        const device = accessory.context.device;
+        const channelType = expectedChannelType(device.type);
+        const dimmerChannels = getDimmerChannels(device).filter(
+            (channel) =>
+                this.accessory.context.channelIndex === undefined ||
+                channel.index === this.accessory.context.channelIndex,
         );
-      }
-      if (dimmerChannels.length > 1) {
-        this.setServiceLabelIndex(hapService, channel.index);
-      }
+        const legacyService = this.accessory.services.find(
+            (service) => service.UUID === this.platform.Service.Lightbulb.UUID && service.subtype === undefined,
+        );
 
-      const runtimeChannel: DimmerRuntimeChannel = {
-        dimLevel: channel.dimLevel ?? 0,
-        index: channel.index,
-        hapService,
-        homeKitRequestVersion: 0,
-        lastNonZeroDimLevel: channel.dimLevel && channel.dimLevel > 0 ? channel.dimLevel : 1,
-        requestedDimLevel: undefined,
-        requestedDimLevelAt: 0,
-      };
-      hapService.getCharacteristic(this.platform.Characteristic.On)
-        .onGet(connectedGet(this.platform, () => runtimeChannel.dimLevel > 0))
-        .onSet(connectedSet(this.platform, value => this.handleOnSet(runtimeChannel, value)));
-      hapService.getCharacteristic(this.platform.Characteristic.Brightness)
-        .onGet(connectedGet(this.platform, () => toBrightness(runtimeChannel.dimLevel)))
-        .onSet(connectedSet(this.platform, value => this.handleBrightnessSet(runtimeChannel, value)));
-      this.channels.set(channel.index, runtimeChannel);
-      this.platform.log.debug('Added dimmer channel %d to %s', channel.index, this.accessory.displayName);
+        for (const [position, channel] of dimmerChannels.entries()) {
+            if (this.channels.has(channel.index)) {
+                continue;
+            }
+
+            let hapService = this.accessory.getServiceById(this.platform.Service.Lightbulb, channel.index.toString());
+            if (!hapService && position === 0 && legacyService) {
+                // Before multichannel support, ordinary dimmers had one service without
+                // a subtype. Reuse it to retain HomeKit room, automation, and name data.
+                hapService = legacyService;
+            }
+            if (!hapService) {
+                const label = this.channelLabel(channel, dimmerChannels.length);
+                hapService = this.accessory.addService(
+                    new this.platform.Service.Lightbulb(sanitizeHomeKitName(label), channel.index.toString()),
+                );
+            }
+            if (dimmerChannels.length > 1) {
+                this.setServiceLabelIndex(hapService, channel.index);
+            }
+
+            const runtimeChannel: DimmerRuntimeChannel = {
+                dimLevel: channel.dimLevel ?? 0,
+                index: channel.index,
+                hapService,
+                homeKitRequestVersion: 0,
+                lastNonZeroDimLevel: channel.dimLevel && channel.dimLevel > 0 ? channel.dimLevel : 1,
+                requestedDimLevel: undefined,
+                requestedDimLevelAt: 0,
+            };
+            hapService
+                .getCharacteristic(this.platform.Characteristic.On)
+                .onGet(connectedGet(this.platform, () => runtimeChannel.dimLevel > 0))
+                .onSet(connectedSet(this.platform, (value) => this.handleOnSet(runtimeChannel, value)));
+            hapService
+                .getCharacteristic(this.platform.Characteristic.Brightness)
+                .onGet(connectedGet(this.platform, () => toBrightness(runtimeChannel.dimLevel)))
+                .onSet(connectedSet(this.platform, (value) => this.handleBrightnessSet(runtimeChannel, value)));
+            this.channels.set(channel.index, runtimeChannel);
+            this.platform.log.debug("Added dimmer channel %d to %s", channel.index, this.accessory.displayName);
+        }
+
+        if (this.channels.size === 0) {
+            this.rejectMissingFunctionalServices(`${channelType} with numeric index and optional number/null dimLevel`);
+        } else {
+            this.removeStaleLightbulbServices();
+        }
     }
 
-    if (this.channels.size === 0) {
-      this.rejectMissingFunctionalServices(`${channelType} with numeric index and optional number/null dimLevel`);
-    } else {
-      this.removeStaleLightbulbServices();
+    private channelLabel(channel: DimmerChannel, channelCount: number): string {
+        if (this.accessory.context.channelIndex !== undefined) {
+            return this.accessory.displayName;
+        }
+        return getChannelLabel(this.accessory.context.device, channel, channelCount);
     }
-  }
 
-  private channelLabel(channel: DimmerChannel, channelCount: number): string {
-    if (this.accessory.context.channelIndex !== undefined) {
-      return this.accessory.displayName;
+    private removeStaleLightbulbServices(): void {
+        const activeServices = new Set([...this.channels.values()].map((channel) => channel.hapService));
+        for (const service of [...this.accessory.services]) {
+            if (service.UUID === this.platform.Service.Lightbulb.UUID && !activeServices.has(service)) {
+                this.accessory.removeService(service);
+                this.platform.log.debug(
+                    "Removed obsolete dimmer service %s from %s",
+                    service.displayName,
+                    this.accessory.displayName,
+                );
+            }
+        }
     }
-    return getChannelLabel(this.accessory.context.device, channel, channelCount);
-  }
 
-  private removeStaleLightbulbServices(): void {
-    const activeServices = new Set([...this.channels.values()].map(channel => channel.hapService));
-    for (const service of [...this.accessory.services]) {
-      if (service.UUID === this.platform.Service.Lightbulb.UUID && !activeServices.has(service)) {
-        this.accessory.removeService(service);
-        this.platform.log.debug('Removed obsolete dimmer service %s from %s', service.displayName,
-          this.accessory.displayName);
-      }
+    private async handleOnSet(channel: DimmerRuntimeChannel, value: CharacteristicValue): Promise<void> {
+        const requestVersion = ++channel.homeKitRequestVersion;
+        if (value && channel.dimLevel === 0 && !this.hasRecentPositiveDimLevelRequest(channel)) {
+            // HomeKit scenes send On and Brightness as separate writes, and their order
+            // differs between clients. Give a following brightness write a brief chance
+            // to supersede this fallback so the light does not flash at another level.
+            await new Promise((resolve) => setTimeout(resolve, HOMEKIT_ON_BRIGHTNESS_GRACE_MILLIS));
+            if (
+                requestVersion === channel.homeKitRequestVersion &&
+                channel.dimLevel === 0 &&
+                !this.hasRecentPositiveDimLevelRequest(channel)
+            ) {
+                await this.setBrightness(channel, toBrightness(channel.lastNonZeroDimLevel));
+            }
+        } else if (!value) {
+            await this.setBrightness(channel, 0);
+        }
     }
-  }
 
-  private async handleOnSet(channel: DimmerRuntimeChannel, value: CharacteristicValue): Promise<void> {
-    const requestVersion = ++channel.homeKitRequestVersion;
-    if (value && channel.dimLevel === 0 && !this.hasRecentPositiveDimLevelRequest(channel)) {
-      // HomeKit scenes send On and Brightness as separate writes, and their order
-      // differs between clients. Give a following brightness write a brief chance
-      // to supersede this fallback so the light does not flash at another level.
-      await new Promise(resolve => setTimeout(resolve, HOMEKIT_ON_BRIGHTNESS_GRACE_MILLIS));
-      if (requestVersion === channel.homeKitRequestVersion
-        && channel.dimLevel === 0
-        && !this.hasRecentPositiveDimLevelRequest(channel)) {
-        await this.setBrightness(channel, toBrightness(channel.lastNonZeroDimLevel));
-      }
-    } else if (!value) {
-      await this.setBrightness(channel, 0);
+    private async handleBrightnessSet(channel: DimmerRuntimeChannel, value: CharacteristicValue): Promise<void> {
+        const brightness = Number(value);
+        if (!Number.isFinite(brightness)) {
+            throw new Error(`Invalid HomeKit brightness value: ${String(value)}`);
+        }
+        channel.homeKitRequestVersion++;
+        await this.setBrightness(channel, Math.min(100, Math.max(0, brightness)));
     }
-  }
 
-  private async handleBrightnessSet(channel: DimmerRuntimeChannel, value: CharacteristicValue): Promise<void> {
-    const brightness = Number(value);
-    if (!Number.isFinite(brightness)) {
-      throw new Error(`Invalid HomeKit brightness value: ${String(value)}`);
+    private async setBrightness(channel: DimmerRuntimeChannel, brightness: number): Promise<void> {
+        this.platform.log.info(
+            "Setting brightness of %s channel %d to %s %%",
+            this.accessory.displayName,
+            channel.index,
+            brightness,
+        );
+        const requestedDimLevel = brightness / 100;
+        channel.requestedDimLevel = requestedDimLevel;
+        channel.requestedDimLevelAt = Date.now();
+        if (requestedDimLevel > 0) {
+            channel.lastNonZeroDimLevel = requestedDimLevel;
+        }
+        try {
+            await this.platform.connector.command("setDimLevel", {
+                channelIndex: channel.index,
+                deviceId: this.accessory.context.device.id,
+                dimLevel: requestedDimLevel,
+            });
+        } catch (error) {
+            if (channel.requestedDimLevel === requestedDimLevel) {
+                channel.requestedDimLevel = undefined;
+                channel.requestedDimLevelAt = 0;
+            }
+            throw error;
+        }
     }
-    channel.homeKitRequestVersion++;
-    await this.setBrightness(channel, Math.min(100, Math.max(0, brightness)));
-  }
 
-  private async setBrightness(channel: DimmerRuntimeChannel, brightness: number): Promise<void> {
-    this.platform.log.info('Setting brightness of %s channel %d to %s %%', this.accessory.displayName,
-      channel.index, brightness);
-    const requestedDimLevel = brightness / 100;
-    channel.requestedDimLevel = requestedDimLevel;
-    channel.requestedDimLevelAt = Date.now();
-    if (requestedDimLevel > 0) {
-      channel.lastNonZeroDimLevel = requestedDimLevel;
+    private hasRecentPositiveDimLevelRequest(channel: DimmerRuntimeChannel): boolean {
+        if (
+            channel.requestedDimLevel === undefined ||
+            Date.now() - channel.requestedDimLevelAt > REQUESTED_DIM_LEVEL_GRACE_MILLIS
+        ) {
+            channel.requestedDimLevel = undefined;
+            channel.requestedDimLevelAt = 0;
+            return false;
+        }
+        return channel.requestedDimLevel > 0;
     }
-    try {
-      await this.platform.connector.command('setDimLevel', {
-        channelIndex: channel.index,
-        deviceId: this.accessory.context.device.id,
-        dimLevel: requestedDimLevel,
-      });
-    } catch (error) {
-      if (channel.requestedDimLevel === requestedDimLevel) {
-        channel.requestedDimLevel = undefined;
-        channel.requestedDimLevelAt = 0;
-      }
-      throw error;
+
+    public override dispose(): void {
+        for (const channel of this.channels.values()) {
+            channel.homeKitRequestVersion++;
+        }
+        super.dispose();
     }
-  }
 
-  private hasRecentPositiveDimLevelRequest(channel: DimmerRuntimeChannel): boolean {
-    if (channel.requestedDimLevel === undefined
-      || Date.now() - channel.requestedDimLevelAt > REQUESTED_DIM_LEVEL_GRACE_MILLIS) {
-      channel.requestedDimLevel = undefined;
-      channel.requestedDimLevelAt = 0;
-      return false;
+    public override updateDevice(hmIPDevice: HmIPDevice, groups: Readonly<Record<string, HmIPGroup>>): void {
+        super.updateDevice(hmIPDevice, groups);
+        const channelType = expectedChannelType(hmIPDevice.type);
+        for (const channel of Object.values(hmIPDevice.functionalChannels)) {
+            if (
+                !isDimmerChannel(channel) ||
+                channel.functionalChannelType !== channelType ||
+                typeof channel.dimLevel !== "number"
+            ) {
+                continue;
+            }
+
+            const currentChannel = this.channels.get(channel.index);
+            if (!currentChannel) {
+                continue;
+            }
+            if (
+                currentChannel.requestedDimLevel !== undefined &&
+                Math.abs(currentChannel.requestedDimLevel - channel.dimLevel) < 0.000_001
+            ) {
+                currentChannel.requestedDimLevel = undefined;
+                currentChannel.requestedDimLevelAt = 0;
+            }
+            if (currentChannel.dimLevel === channel.dimLevel) {
+                continue;
+            }
+
+            const wasOn = currentChannel.dimLevel > 0;
+            currentChannel.dimLevel = channel.dimLevel;
+            if (currentChannel.dimLevel > 0) {
+                currentChannel.lastNonZeroDimLevel = currentChannel.dimLevel;
+            }
+            const isOn = currentChannel.dimLevel > 0;
+            if (wasOn !== isOn) {
+                currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.On, isOn);
+            }
+            currentChannel.hapService.updateCharacteristic(
+                this.platform.Characteristic.Brightness,
+                toBrightness(currentChannel.dimLevel),
+            );
+            this.platform.log.debug(
+                "Brightness of %s channel %d changed to %d %%",
+                this.accessory.displayName,
+                currentChannel.index,
+                toBrightness(currentChannel.dimLevel),
+            );
+        }
     }
-    return channel.requestedDimLevel > 0;
-  }
-
-  public override dispose(): void {
-    for (const channel of this.channels.values()) {
-      channel.homeKitRequestVersion++;
-    }
-    super.dispose();
-  }
-
-  public override updateDevice(hmIPDevice: HmIPDevice, groups: Readonly<Record<string, HmIPGroup>>): void {
-    super.updateDevice(hmIPDevice, groups);
-    const channelType = expectedChannelType(hmIPDevice.type);
-    for (const channel of Object.values(hmIPDevice.functionalChannels)) {
-      if (!isDimmerChannel(channel) || channel.functionalChannelType !== channelType
-        || typeof channel.dimLevel !== 'number') {
-        continue;
-      }
-
-      const currentChannel = this.channels.get(channel.index);
-      if (!currentChannel) {
-        continue;
-      }
-      if (currentChannel.requestedDimLevel !== undefined
-        && Math.abs(currentChannel.requestedDimLevel - channel.dimLevel) < 0.000_001) {
-        currentChannel.requestedDimLevel = undefined;
-        currentChannel.requestedDimLevelAt = 0;
-      }
-      if (currentChannel.dimLevel === channel.dimLevel) {
-        continue;
-      }
-
-      const wasOn = currentChannel.dimLevel > 0;
-      currentChannel.dimLevel = channel.dimLevel;
-      if (currentChannel.dimLevel > 0) {
-        currentChannel.lastNonZeroDimLevel = currentChannel.dimLevel;
-      }
-      const isOn = currentChannel.dimLevel > 0;
-      if (wasOn !== isOn) {
-        currentChannel.hapService.updateCharacteristic(this.platform.Characteristic.On, isOn);
-      }
-      currentChannel.hapService.updateCharacteristic(
-        this.platform.Characteristic.Brightness,
-        toBrightness(currentChannel.dimLevel),
-      );
-      this.platform.log.debug('Brightness of %s channel %d changed to %d %%', this.accessory.displayName,
-        currentChannel.index, toBrightness(currentChannel.dimLevel));
-    }
-  }
 }

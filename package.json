@@ -33,11 +33,12 @@
   ],
   "packageManager": "pnpm@12.15.0",
   "scripts": {
-    "lint": "biome check src",
+    "lint": "biome check src test",
     "test": "pnpm run build && node --test test/*.test.js",
     "watch": "pnpm run build && pnpm link && nodemon",
     "build": "rimraf ./dist && tsc",
-    "prepublishOnly": "pnpm run lint && pnpm run test"
+    "prepublishOnly": "pnpm run lint && pnpm run test",
+    "format": "biome check --write src test"
   },
   "engines": {
     "node": "^24.0.0 || ^26.0.0",

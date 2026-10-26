@@ -1,234 +1,253 @@
-import type {CharacteristicValue, Service} from 'homebridge';
+import type {CharacteristicValue, Service} from "homebridge";
 import {
-  type HmIPGroup,
-  type HmIPHome,
-  isHmIPRecord,
-  isHmIPSecurityAndAlarmSolution,
-  isHmIPSecurityZoneGroup,
-} from 'homematicip-cloud-client-ts';
-import {connectedGet, connectedSet} from './HmIPAvailability.js';
-import {getDeviceConfig} from './HmIPConfig.js';
-import type {HmIPPlatform} from './HmIPPlatform.js';
-import type {HmIPPlatformAccessory} from './HmIPTypes.js';
+    type HmIPGroup,
+    type HmIPHome,
+    isHmIPRecord,
+    isHmIPSecurityAndAlarmSolution,
+    isHmIPSecurityZoneGroup,
+} from "homematicip-cloud-client-ts";
+import {connectedGet, connectedSet} from "./HmIPAvailability.js";
+import {getDeviceConfig} from "./HmIPConfig.js";
+import type {HmIPPlatform} from "./HmIPPlatform.js";
+import type {HmIPPlatformAccessory} from "./HmIPTypes.js";
 
 const CLASSIC_SECURITY_ZONE_LABELS = {
-  internal: 'INTERNAL',
-  external: 'EXTERNAL',
+    internal: "INTERNAL",
+    external: "EXTERNAL",
 } as const;
 
 const REQUEST_BASED_SECURITY_ZONE_LABELS = {
-  internal: 'ABSENCE',
-  external: 'PRESENCE',
+    internal: "ABSENCE",
+    external: "PRESENCE",
 } as const;
 
 type SecurityZoneLabels = typeof CLASSIC_SECURITY_ZONE_LABELS | typeof REQUEST_BASED_SECURITY_ZONE_LABELS;
 
-type WindowState = 'CLOSED' | 'OPEN' | 'TILTED';
+type WindowState = "CLOSED" | "OPEN" | "TILTED";
 
 function getWindowState(group: HmIPGroup): WindowState | undefined {
-  const candidate: unknown = group;
-  if (!isHmIPRecord(candidate)) {
-    return undefined;
-  }
-  return candidate.windowState === 'CLOSED'
-    || candidate.windowState === 'OPEN'
-    || candidate.windowState === 'TILTED'
-    ? candidate.windowState
-    : undefined;
+    const candidate: unknown = group;
+    if (!isHmIPRecord(candidate)) {
+        return undefined;
+    }
+    return candidate.windowState === "CLOSED" || candidate.windowState === "OPEN" || candidate.windowState === "TILTED"
+        ? candidate.windowState
+        : undefined;
 }
 
 class SecuritySystemTarget {
-  public label: string;
-  public internal: boolean;
-  public external: boolean;
+    public label: string;
+    public internal: boolean;
+    public external: boolean;
 
-  constructor(label: string, internal: boolean, external: boolean) {
-    this.label = label;
-    this.internal = internal;
-    this.external = external;
-  }
+    constructor(label: string, internal: boolean, external: boolean) {
+        this.label = label;
+        this.internal = internal;
+        this.external = external;
+    }
 }
 
 /**
  * HomematicIP security system
  */
 export class HmIPSecuritySystem {
-  private service: Service;
+    private service: Service;
 
-  public hidden = false;
-  private activationInProgress = false;
-  private intrusionAlarmActive = false;
-  private safetyAlarmActive = false;
-  private alarmActive = false;
-  private internalZoneActive = false;
-  private externalZoneActive = false;
-  private externalWindowState: WindowState = 'CLOSED';
-  private securityZoneLabels: SecurityZoneLabels = CLASSIC_SECURITY_ZONE_LABELS;
+    public hidden = false;
+    private activationInProgress = false;
+    private intrusionAlarmActive = false;
+    private safetyAlarmActive = false;
+    private alarmActive = false;
+    private internalZoneActive = false;
+    private externalZoneActive = false;
+    private externalWindowState: WindowState = "CLOSED";
+    private securityZoneLabels: SecurityZoneLabels = CLASSIC_SECURITY_ZONE_LABELS;
 
-  constructor(
-    protected platform: HmIPPlatform,
-    protected accessory: HmIPPlatformAccessory<HmIPHome>,
-  ) {
-    this.hidden = platform.config.hideSecuritySystem === true
-      || getDeviceConfig(platform.config.devices, 'HOME_SECURITY_SYSTEM')?.hide === true;
+    constructor(
+        protected platform: HmIPPlatform,
+        protected accessory: HmIPPlatformAccessory<HmIPHome>,
+    ) {
+        this.hidden =
+            platform.config.hideSecuritySystem === true ||
+            getDeviceConfig(platform.config.devices, "HOME_SECURITY_SYSTEM")?.hide === true;
 
-    this.platform.log.debug('Created security system');
-    const home = accessory.context.device;
+        this.platform.log.debug("Created security system");
+        const home = accessory.context.device;
 
-    this.accessory.getService(this.platform.Service.AccessoryInformation)?.setCharacteristic(this.platform.Characteristic.Manufacturer, 'eq-3')
-      .setCharacteristic(this.platform.Characteristic.Model, accessory.displayName)
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, home.id)
-      .setCharacteristic(this.platform.Characteristic.FirmwareRevision, home.currentAPVersion);
+        this.accessory
+            .getService(this.platform.Service.AccessoryInformation)
+            ?.setCharacteristic(this.platform.Characteristic.Manufacturer, "eq-3")
+            .setCharacteristic(this.platform.Characteristic.Model, accessory.displayName)
+            .setCharacteristic(this.platform.Characteristic.SerialNumber, home.id)
+            .setCharacteristic(this.platform.Characteristic.FirmwareRevision, home.currentAPVersion);
 
-    this.service = this.accessory.getService(this.platform.Service.SecuritySystem)
-      || this.accessory.addService(this.platform.Service.SecuritySystem);
+        this.service =
+            this.accessory.getService(this.platform.Service.SecuritySystem) ||
+            this.accessory.addService(this.platform.Service.SecuritySystem);
 
-    this.updateHome(home);
+        this.updateHome(home);
 
-    this.service.getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-      .onGet(connectedGet(this.platform, () => this.getSecuritySystemCurrentState()));
+        this.service
+            .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+            .onGet(connectedGet(this.platform, () => this.getSecuritySystemCurrentState()));
 
-    this.service.getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
-      .onGet(connectedGet(this.platform, () => this.getSecuritySystemTargetState()))
-      .onSet(connectedSet(this.platform, value => this.handleTargetStateSet(value)));
+        this.service
+            .getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
+            .onGet(connectedGet(this.platform, () => this.getSecuritySystemTargetState()))
+            .onSet(connectedSet(this.platform, (value) => this.handleTargetStateSet(value)));
 
-    this.service.addOptionalCharacteristic(this.platform.Characteristic.ContactSensorState);
-    this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .onGet(connectedGet(this.platform, () => this.getContactSensorState()));
-
-  }
-
-  private async handleTargetStateSet(value: CharacteristicValue): Promise<void> {
-    const target = this.getSecuritySystemTarget(Number(value));
-    if (!target) {
-      throw new Error(`Unsupported security system target: ${value}`);
+        this.service.addOptionalCharacteristic(this.platform.Characteristic.ContactSensorState);
+        this.service
+            .getCharacteristic(this.platform.Characteristic.ContactSensorState)
+            .onGet(connectedGet(this.platform, () => this.getContactSensorState()));
     }
-    this.platform.log.info('Setting target security system state to %s', target.label);
-    const body = {
-      zonesActivation: {
-        [this.securityZoneLabels.internal]: target.internal,
-        [this.securityZoneLabels.external]: target.external,
-      },
-    };
-    await this.platform.connector.command('setSecurityZonesActivation', body, {priority: 2});
-  }
 
-  public updateHome(home: HmIPHome) {
-    for (const functionalHome of Object.values(home.functionalHomes)) {
-      if (isHmIPSecurityAndAlarmSolution(functionalHome)) {
-        this.platform.log.debug(`Security system update: ${JSON.stringify(functionalHome)}`);
+    private async handleTargetStateSet(value: CharacteristicValue): Promise<void> {
+        const target = this.getSecuritySystemTarget(Number(value));
+        if (!target) {
+            throw new Error(`Unsupported security system target: ${value}`);
+        }
+        this.platform.log.info("Setting target security system state to %s", target.label);
+        const body = {
+            zonesActivation: {
+                [this.securityZoneLabels.internal]: target.internal,
+                [this.securityZoneLabels.external]: target.external,
+            },
+        };
+        await this.platform.connector.command("setSecurityZonesActivation", body, {priority: 2});
+    }
 
-        if (functionalHome.activationInProgress !== this.activationInProgress) {
-          this.activationInProgress = functionalHome.activationInProgress;
-          this.platform.log.info('Security system activation in progress changed to %s', this.activationInProgress);
+    public updateHome(home: HmIPHome) {
+        for (const functionalHome of Object.values(home.functionalHomes)) {
+            if (isHmIPSecurityAndAlarmSolution(functionalHome)) {
+                this.platform.log.debug(`Security system update: ${JSON.stringify(functionalHome)}`);
+
+                if (functionalHome.activationInProgress !== this.activationInProgress) {
+                    this.activationInProgress = functionalHome.activationInProgress;
+                    this.platform.log.info(
+                        "Security system activation in progress changed to %s",
+                        this.activationInProgress,
+                    );
+                }
+
+                if (functionalHome.intrusionAlarmActive !== this.intrusionAlarmActive) {
+                    this.intrusionAlarmActive = functionalHome.intrusionAlarmActive;
+                    this.platform.log.info("Security system intrusion alarm changed to %s", this.intrusionAlarmActive);
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.SecuritySystemTargetState,
+                        this.getSecuritySystemTargetState(),
+                    );
+                    this.service.updateCharacteristic(
+                        this.platform.Characteristic.SecuritySystemCurrentState,
+                        this.getSecuritySystemCurrentState(),
+                    );
+                }
+
+                if (functionalHome.safetyAlarmActive !== this.safetyAlarmActive) {
+                    this.safetyAlarmActive = functionalHome.safetyAlarmActive;
+                    this.platform.log.info("Security system safety alarm changed to %s", this.safetyAlarmActive);
+                }
+
+                if (functionalHome.alarmActive !== this.alarmActive) {
+                    this.alarmActive = functionalHome.alarmActive;
+                    this.platform.log.info("Security system alarm changed to %s", this.alarmActive);
+                }
+            }
+        }
+    }
+
+    public updateGroups(groups: Readonly<Record<string, HmIPGroup>>) {
+        const securityZoneGroups = Object.values(groups).filter(isHmIPSecurityZoneGroup);
+        const securityZoneLabels = securityZoneGroups.some(
+            (group) => group.label === "ABSENCE" || group.label === "PRESENCE",
+        )
+            ? REQUEST_BASED_SECURITY_ZONE_LABELS
+            : CLASSIC_SECURITY_ZONE_LABELS;
+
+        if (securityZoneLabels !== this.securityZoneLabels) {
+            this.securityZoneLabels = securityZoneLabels;
+            this.platform.log.debug(
+                "Security system uses %s and %s zone labels",
+                securityZoneLabels.internal,
+                securityZoneLabels.external,
+            );
         }
 
-        if (functionalHome.intrusionAlarmActive !== this.intrusionAlarmActive) {
-          this.intrusionAlarmActive = functionalHome.intrusionAlarmActive;
-          this.platform.log.info('Security system intrusion alarm changed to %s', this.intrusionAlarmActive);
-          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
-          this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
+        const internalZone = securityZoneGroups.find((group) => group.label === securityZoneLabels.internal);
+        const externalZone = securityZoneGroups.find((group) => group.label === securityZoneLabels.external);
+        const internalActive = internalZone?.active ?? false;
+        const externalActive = externalZone?.active ?? false;
+        const windowState = externalZone ? (getWindowState(externalZone) ?? "CLOSED") : "CLOSED";
+        const stateChanged = internalActive !== this.internalZoneActive || externalActive !== this.externalZoneActive;
+        const windowStateChanged = windowState !== this.externalWindowState;
+        this.internalZoneActive = internalActive;
+        this.externalZoneActive = externalActive;
+        this.externalWindowState = windowState;
+
+        if (stateChanged) {
+            this.service.updateCharacteristic(
+                this.platform.Characteristic.SecuritySystemTargetState,
+                this.getSecuritySystemTargetState(),
+            );
+            this.service.updateCharacteristic(
+                this.platform.Characteristic.SecuritySystemCurrentState,
+                this.getSecuritySystemCurrentState(),
+            );
+        }
+        if (windowStateChanged) {
+            this.service.updateCharacteristic(
+                this.platform.Characteristic.ContactSensorState,
+                this.getContactSensorState(),
+            );
+        }
+    }
+
+    private getContactSensorState(): number {
+        return this.externalWindowState === "CLOSED"
+            ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+            : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+    }
+
+    private getSecuritySystemCurrentState(): number {
+        if (this.intrusionAlarmActive) {
+            return this.platform.Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
         }
 
-        if (functionalHome.safetyAlarmActive !== this.safetyAlarmActive) {
-          this.safetyAlarmActive = functionalHome.safetyAlarmActive;
-          this.platform.log.info('Security system safety alarm changed to %s', this.safetyAlarmActive);
+        if (this.externalZoneActive) {
+            if (this.internalZoneActive) {
+                return this.platform.Characteristic.SecuritySystemCurrentState.AWAY_ARM;
+            } else {
+                return this.platform.Characteristic.SecuritySystemCurrentState.STAY_ARM;
+            }
         }
 
-        if (functionalHome.alarmActive !== this.alarmActive) {
-          this.alarmActive = functionalHome.alarmActive;
-          this.platform.log.info('Security system alarm changed to %s', this.alarmActive);
+        return this.platform.Characteristic.SecuritySystemCurrentState.DISARMED;
+    }
+
+    private getSecuritySystemTargetState(): number {
+        if (this.externalZoneActive) {
+            if (this.internalZoneActive) {
+                return this.platform.Characteristic.SecuritySystemTargetState.AWAY_ARM;
+            } else {
+                return this.platform.Characteristic.SecuritySystemTargetState.STAY_ARM;
+            }
         }
-      }
-    }
-  }
 
-  public updateGroups(groups: Readonly<Record<string, HmIPGroup>>) {
-    const securityZoneGroups = Object.values(groups).filter(isHmIPSecurityZoneGroup);
-    const securityZoneLabels = securityZoneGroups.some(
-      group => group.label === 'ABSENCE' || group.label === 'PRESENCE',
-    )
-      ? REQUEST_BASED_SECURITY_ZONE_LABELS
-      : CLASSIC_SECURITY_ZONE_LABELS;
-
-    if (securityZoneLabels !== this.securityZoneLabels) {
-      this.securityZoneLabels = securityZoneLabels;
-      this.platform.log.debug(
-        'Security system uses %s and %s zone labels',
-        securityZoneLabels.internal,
-        securityZoneLabels.external,
-      );
+        return this.platform.Characteristic.SecuritySystemTargetState.DISARM;
     }
 
-    const internalZone = securityZoneGroups.find(group => group.label === securityZoneLabels.internal);
-    const externalZone = securityZoneGroups.find(group => group.label === securityZoneLabels.external);
-    const internalActive = internalZone?.active ?? false;
-    const externalActive = externalZone?.active ?? false;
-    const windowState = externalZone ? getWindowState(externalZone) ?? 'CLOSED' : 'CLOSED';
-    const stateChanged = internalActive !== this.internalZoneActive || externalActive !== this.externalZoneActive;
-    const windowStateChanged = windowState !== this.externalWindowState;
-    this.internalZoneActive = internalActive;
-    this.externalZoneActive = externalActive;
-    this.externalWindowState = windowState;
-
-    if (stateChanged) {
-      this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemTargetState, this.getSecuritySystemTargetState());
-      this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, this.getSecuritySystemCurrentState());
+    private getSecuritySystemTarget(state: number): SecuritySystemTarget | undefined {
+        switch (state) {
+            case this.platform.Characteristic.SecuritySystemTargetState.STAY_ARM:
+                return new SecuritySystemTarget("STAY_ARM", false, true);
+            case this.platform.Characteristic.SecuritySystemTargetState.AWAY_ARM:
+                return new SecuritySystemTarget("AWAY_ARM", true, true);
+            case this.platform.Characteristic.SecuritySystemTargetState.NIGHT_ARM:
+                return new SecuritySystemTarget("NIGHT_ARM", false, true);
+            case this.platform.Characteristic.SecuritySystemTargetState.DISARM:
+                return new SecuritySystemTarget("DISARM", false, false);
+            default:
+                return undefined;
+        }
     }
-    if (windowStateChanged) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.ContactSensorState,
-        this.getContactSensorState(),
-      );
-    }
-  }
-
-  private getContactSensorState(): number {
-    return this.externalWindowState === 'CLOSED'
-      ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-      : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-  }
-
-  private getSecuritySystemCurrentState(): number {
-    if (this.intrusionAlarmActive) {
-      return this.platform.Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
-    }
-
-    if (this.externalZoneActive) {
-      if (this.internalZoneActive) {
-        return this.platform.Characteristic.SecuritySystemCurrentState.AWAY_ARM;
-      } else {
-        return this.platform.Characteristic.SecuritySystemCurrentState.STAY_ARM;
-      }
-    }
-
-    return this.platform.Characteristic.SecuritySystemCurrentState.DISARMED;
-  }
-
-  private getSecuritySystemTargetState(): number {
-    if (this.externalZoneActive) {
-      if (this.internalZoneActive) {
-        return this.platform.Characteristic.SecuritySystemTargetState.AWAY_ARM;
-      } else {
-        return this.platform.Characteristic.SecuritySystemTargetState.STAY_ARM;
-      }
-    }
-
-    return this.platform.Characteristic.SecuritySystemTargetState.DISARM;
-  }
-
-  private getSecuritySystemTarget(state: number): SecuritySystemTarget | undefined {
-    switch (state) {
-      case this.platform.Characteristic.SecuritySystemTargetState.STAY_ARM:
-        return new SecuritySystemTarget('STAY_ARM', false, true);
-      case this.platform.Characteristic.SecuritySystemTargetState.AWAY_ARM:
-        return new SecuritySystemTarget('AWAY_ARM', true, true);
-      case this.platform.Characteristic.SecuritySystemTargetState.NIGHT_ARM:
-        return new SecuritySystemTarget('NIGHT_ARM', false, true);
-      case this.platform.Characteristic.SecuritySystemTargetState.DISARM:
-        return new SecuritySystemTarget('DISARM', false, false);
-      default:
-        return undefined;
-    }
-  }
 }
