@@ -77,9 +77,9 @@ export class HmIPSwitchMeasuring extends HmIPGenericDevice {
     const body = {
       channelIndex: this.channelIndex,
       deviceId: this.accessory.context.device.id,
-      on: value,
+      on: value === true || value === 1,
     };
-    await this.platform.connector.command('device/control/setSwitchState', body);
+    await this.platform.connector.command('setSwitchState', body);
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

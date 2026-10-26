@@ -1,3 +1,10 @@
+## 2.12.0 (2026-10-26)
+
+### Improvements
+
+- Use homematicip-cloud-client-ts 0.4.0 for shared snapshot/WebSocket synchronization, structured cloud errors, typed commands, and radio reachability detection.
+- Remove the plugin-specific reconnect implementation; preserve device mapping and user-defined HomeKit names.
+
 ## 2.11.0 (2026-10-23)
 
 ### Fixes

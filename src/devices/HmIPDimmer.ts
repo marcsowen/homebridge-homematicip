@@ -219,7 +219,7 @@ export class HmIPDimmer extends HmIPGenericDevice {
       channel.lastNonZeroDimLevel = requestedDimLevel;
     }
     try {
-      await this.platform.connector.command('device/control/setDimLevel', {
+      await this.platform.connector.command('setDimLevel', {
         channelIndex: channel.index,
         deviceId: this.accessory.context.device.id,
         dimLevel: requestedDimLevel,

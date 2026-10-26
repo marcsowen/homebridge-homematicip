@@ -123,9 +123,9 @@ test('uses request-based security zone labels reported by the installation', asy
   await setTargetState(Characteristic.SecuritySystemTargetState.NIGHT_ARM);
 
   assert.deepEqual(commands, [[
-    'home/security/setZonesActivation',
+    'setSecurityZonesActivation',
     {zonesActivation: {ABSENCE: false, PRESENCE: true}},
-    2,
+    {priority: 2},
   ]]);
 
   securitySystem.updateGroups({
@@ -149,9 +149,9 @@ test('keeps using classic security zone labels when reported by the installation
   await setTargetState(Characteristic.SecuritySystemTargetState.AWAY_ARM);
 
   assert.deepEqual(commands, [[
-    'home/security/setZonesActivation',
+    'setSecurityZonesActivation',
     {zonesActivation: {EXTERNAL: true, INTERNAL: true}},
-    2,
+    {priority: 2},
   ]]);
 });
 

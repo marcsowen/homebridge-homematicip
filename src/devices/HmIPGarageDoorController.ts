@@ -62,7 +62,7 @@ import type {HmIPPlatformAccessory} from '../HmIPTypes.js';
         channelIndex: 2,
         deviceId: this.accessory.context.device.id,
       };
-      await this.platform.connector.command('device/control/startImpulse', body);
+      await this.platform.connector.command('startImpulse', body);
     }
   
     public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

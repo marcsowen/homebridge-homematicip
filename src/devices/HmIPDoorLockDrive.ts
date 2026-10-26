@@ -88,7 +88,7 @@ export class HmIPDoorLockDrive extends HmIPGenericDevice {
       authorizationPin: this.pin !== undefined ? this.pin : '',
       targetLockState: this.getHmIPTargetLockState(value),
     };
-    await this.platform.connector.command('device/control/setLockState', body);
+    await this.platform.connector.command('setLockState', body);
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

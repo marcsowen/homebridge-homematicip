@@ -79,7 +79,7 @@ export class HmIPShading extends HmIPGenericDevice {
     const channelIndex = this.requireChannelIndex();
     this.targetPosition = Number(value);
     this.platform.log.info('Setting target shading position for %s to %s %%', this.accessory.displayName, value);
-    await this.platform.connector.command('device/control/setPrimaryShadingLevel', {
+    await this.platform.connector.command('setPrimaryShadingLevel', {
       channelIndex,
       deviceId: this.accessory.context.device.id,
       primaryShadingLevel: HmIPShading.homeKitToHmIP(this.targetPosition),
@@ -90,7 +90,7 @@ export class HmIPShading extends HmIPGenericDevice {
     if (value !== true) {
       return;
     }
-    await this.platform.connector.command('device/control/stop', {
+    await this.platform.connector.command('stop', {
       channelIndex: this.requireChannelIndex(),
       deviceId: this.accessory.context.device.id,
     });

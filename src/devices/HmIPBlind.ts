@@ -189,7 +189,7 @@ export class HmIPBlind extends HmIPGenericDevice {
       this.accessory.displayName, channel.index, targetPosition);
     const shutterLevel = HmIPBlind.shutterHomeKitToHmIP(Math.min(100, Math.max(0, targetPosition)));
     channel.targetShutterLevel = shutterLevel;
-    await this.platform.connector.command('device/control/setShutterLevel', {
+    await this.platform.connector.command('setShutterLevel', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
       shutterLevel,
@@ -204,7 +204,7 @@ export class HmIPBlind extends HmIPGenericDevice {
       return;
     }
     this.platform.log.info('Stopping blind %s channel %d', this.accessory.displayName, channel.index);
-    await this.platform.connector.command('device/control/stop', {
+    await this.platform.connector.command('stop', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
     });
@@ -220,7 +220,7 @@ export class HmIPBlind extends HmIPGenericDevice {
     }
     this.platform.log.info('Setting target slats position for %s channel %d to %s°',
       this.accessory.displayName, channel.index, targetAngle);
-    await this.platform.connector.command('device/control/setSlatsLevel', {
+    await this.platform.connector.command('setSlatsLevel', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
       // HomeKit scenes set height and slat angle independently. Use the latest

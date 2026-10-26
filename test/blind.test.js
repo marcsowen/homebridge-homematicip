@@ -202,9 +202,9 @@ test('controls each HmIP-DRBLI4 output through its actual channel index', async 
   await services[3].getCharacteristic(Characteristic.TargetHorizontalTiltAngle).setter(45);
 
   assert.deepEqual(commands, [
-    ['device/control/setShutterLevel', {channelIndex: 2, deviceId: 'blind1', shutterLevel: 0.6}],
-    ['device/control/stop', {channelIndex: 3, deviceId: 'blind1'}],
-    ['device/control/setSlatsLevel', {
+    ['setShutterLevel', {channelIndex: 2, deviceId: 'blind1', shutterLevel: 0.6}],
+    ['stop', {channelIndex: 3, deviceId: 'blind1'}],
+    ['setSlatsLevel', {
       channelIndex: 4,
       deviceId: 'blind1',
       shutterLevel: 0.4,
@@ -250,7 +250,7 @@ test('keeps ordinary blind channels working for existing blind actuators', async
   await service.getCharacteristic(Characteristic.TargetPosition).setter(50);
 
   assert.deepEqual(commands, [[
-    'device/control/setShutterLevel',
+    'setShutterLevel',
     {channelIndex: 1, deviceId: 'blind1', shutterLevel: 0.5},
   ]]);
 });
@@ -265,8 +265,8 @@ test('uses the latest requested height when a scene sets height before slats', a
   await service.getCharacteristic(Characteristic.TargetHorizontalTiltAngle).setter(0);
 
   assert.deepEqual(commands, [
-    ['device/control/setShutterLevel', {channelIndex: 1, deviceId: 'blind1', shutterLevel: 1}],
-    ['device/control/setSlatsLevel', {
+    ['setShutterLevel', {channelIndex: 1, deviceId: 'blind1', shutterLevel: 1}],
+    ['setSlatsLevel', {
       channelIndex: 1,
       deviceId: 'blind1',
       shutterLevel: 1,
@@ -285,13 +285,13 @@ test('keeps the final requested height when a scene sets slats before height', a
   await service.getCharacteristic(Characteristic.TargetPosition).setter(0);
 
   assert.deepEqual(commands, [
-    ['device/control/setSlatsLevel', {
+    ['setSlatsLevel', {
       channelIndex: 1,
       deviceId: 'blind1',
       shutterLevel: 0,
       slatsLevel: 0.5,
     }],
-    ['device/control/setShutterLevel', {channelIndex: 1, deviceId: 'blind1', shutterLevel: 1}],
+    ['setShutterLevel', {channelIndex: 1, deviceId: 'blind1', shutterLevel: 1}],
   ]);
 });
 

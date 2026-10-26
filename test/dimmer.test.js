@@ -226,9 +226,9 @@ test('exposes all HmIPW-DRD3 output channels and uses their actual indexes', asy
   await lightServices[1].setters.get(Characteristic.Brightness)(50);
   await lightServices[2].setters.get(Characteristic.Brightness)(75);
   assert.deepEqual(commands, [
-    ['device/control/setDimLevel', {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0.25}],
-    ['device/control/setDimLevel', {channelIndex: 2, deviceId: 'dimmer1', dimLevel: 0.5}],
-    ['device/control/setDimLevel', {channelIndex: 3, deviceId: 'dimmer1', dimLevel: 0.75}],
+    ['setDimLevel', {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0.25}],
+    ['setDimLevel', {channelIndex: 2, deviceId: 'dimmer1', dimLevel: 0.5}],
+    ['setDimLevel', {channelIndex: 3, deviceId: 'dimmer1', dimLevel: 0.75}],
   ]);
 });
 
@@ -276,7 +276,7 @@ test('does not overwrite a scene brightness when brightness is set before on', a
   await lightService.setters.get(Characteristic.On)(true);
 
   assert.deepEqual(commands, [[
-    'device/control/setDimLevel',
+    'setDimLevel',
     {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0.5},
   ]]);
 });
@@ -292,7 +292,7 @@ test('does not flash at another level when on is set before scene brightness', a
   await onRequest;
 
   assert.deepEqual(commands, [[
-    'device/control/setDimLevel',
+    'setDimLevel',
     {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0.5},
   ]]);
 });
@@ -308,7 +308,7 @@ test('an off request cancels a pending delayed on request', async () => {
   await onRequest;
 
   assert.deepEqual(commands, [[
-    'device/control/setDimLevel',
+    'setDimLevel',
     {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0},
   ]]);
 });
@@ -327,8 +327,8 @@ test('restores the last non-zero brightness when switched back on', async () => 
   await lightService.setters.get(Characteristic.On)(true);
 
   assert.deepEqual(commands, [
-    ['device/control/setDimLevel', {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0}],
-    ['device/control/setDimLevel', {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0.4}],
+    ['setDimLevel', {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0}],
+    ['setDimLevel', {channelIndex: 1, deviceId: 'dimmer1', dimLevel: 0.4}],
   ]);
 });
 
@@ -359,7 +359,7 @@ test('exposes HmIPW-DRD3 channels as stable independent accessories on demand', 
   const secondLight = collection.accessories[1].getServiceById(MockLightbulbService, '2');
   await secondLight.setters.get(Characteristic.Brightness)(55);
   assert.deepEqual(commands, [[
-    'device/control/setDimLevel',
+    'setDimLevel',
     {channelIndex: 2, deviceId: 'dimmer1', dimLevel: 0.55},
   ]]);
 

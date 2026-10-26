@@ -59,7 +59,7 @@ export class HmIPShutter extends HmIPGenericDevice {
       deviceId: this.accessory.context.device.id,
       shutterLevel: HmIPShutter.shutterHomeKitToHmIP(Number(value)),
     };
-    await this.platform.connector.command('device/control/setShutterLevel', body);
+    await this.platform.connector.command('setShutterLevel', body);
   }
 
   private async handleHoldPositionSet(value: CharacteristicValue): Promise<void> {
@@ -69,7 +69,7 @@ export class HmIPShutter extends HmIPGenericDevice {
         channelIndex: 1,
         deviceId: this.accessory.context.device.id,
       };
-      await this.platform.connector.command('device/control/stop', body);
+      await this.platform.connector.command('stop', body);
     }
   }
 

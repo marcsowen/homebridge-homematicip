@@ -14,6 +14,7 @@ import {
   type HmIPDevice,
   type HmIPGroup,
   type HmIPHome,
+  HmIPSession,
   type HmIPState,
   type IdentifiableDevice,
 } from 'homematicip-cloud-client-ts';
@@ -23,7 +24,6 @@ import {HmIPDimmerCollection} from './devices/HmIPDimmerCollection.js';
 import {HmIPMultiModeInputCollection} from './devices/HmIPMultiModeInputCollection.js';
 import {HmIPAccessoryRepository} from './HmIPAccessoryRepository.js';
 import {getDeviceConfig, type HmIPPlatformConfig, hasLegacyDeviceConfig} from './HmIPConfig.js';
-import {HmIPConnection} from './HmIPConnection.js';
 import {
   getHmIPDeviceKind,
   HmIPDeviceFactory,
@@ -50,7 +50,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
   public readonly connector: HmIPClient;
   public groups: Record<string, HmIPGroup> = {};
   public connectionReady = false;
-  private connection: HmIPConnection | undefined;
+  private connection: HmIPSession | undefined;
   private eventRouter: HmIPEventRouter | undefined;
   private readonly accessoryRepository: HmIPAccessoryRepository;
   private readonly deviceMap = new Map<string, HmIPDeviceAdapter>();
@@ -158,9 +158,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
   private async startPairing(accessPointId: string): Promise<boolean> {
     const shutdownSignal = this.shutdownController.signal;
-    if (!(await this.connector.init(shutdownSignal)).valueOf()) {
-      return false;
-    }
+    await this.connector.init(shutdownSignal);
     const signal = AbortSignal.any([shutdownSignal, AbortSignal.timeout(PAIRING_TIMEOUT_MILLIS)]);
     try {
       return await this.completePairing(accessPointId, signal);
@@ -237,28 +235,17 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
    */
   private async discoverDevices(): Promise<boolean> {
     const signal = this.shutdownController.signal;
-    if (!(await this.connector.init(signal)).valueOf()) {
-      return false;
-    }
     signal.throwIfAborted();
-
-    const stateResponse = await this.connector.getCurrentState(signal);
-    signal.throwIfAborted();
-    if (stateResponse === false) {
-      return false;
-    }
-    this.applySnapshot(stateResponse);
-    this.connection = new HmIPConnection(
-      this.log,
-      signal => this.connector.getCurrentState(signal),
-      state => this.applySnapshot(state),
-      change => this.eventRouter?.handle(change),
-      ready => { this.connectionReady = ready; },
-    );
-    this.connector.connect(
-      change => this.connection?.change(change),
-      event => this.connection?.connection(event),
-    );
+    this.connection = new HmIPSession(this.connector, {
+      snapshot: state => this.applySnapshot(state),
+      change: (change, state) => {
+        this.groups = state.groups;
+        this.eventRouter?.handle(change, state);
+      },
+      status: status => { this.connectionReady = status === 'ready'; },
+      error: error => this.log.warn('Homematic IP synchronization: %s', error.message),
+    });
+    await this.connection.start();
     return true;
   }
 
@@ -367,7 +354,8 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     this.lifecycleState = 'stopping';
     this.log.debug('Executed shutdown callback');
     this.shutdownController.abort();
-    this.connection?.stop();
+    void this.connection?.stop().catch(() => this.log.error('Cannot stop Homematic IP session.'));
+    this.connectionReady = false;
     this.connector.shutdown();
     for (const adapter of this.deviceMap.values()) {
       adapter.dispose();

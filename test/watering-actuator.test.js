@@ -192,13 +192,13 @@ test('starts timed watering and stops through the reference API commands', async
   await valveService.setters.get(Active)(Active.INACTIVE);
 
   assert.deepEqual(commands, [
-    ['device/control/setWateringSwitchStateWithTime', {
+    ['setWateringSwitchStateWithTime', {
       channelIndex: 1,
       deviceId: 'watering1',
       wateringActive: true,
       wateringTime: 600,
     }],
-    ['device/control/setWateringSwitchState', {
+    ['setWateringSwitchState', {
       channelIndex: 1,
       deviceId: 'watering1',
       wateringActive: false,

@@ -110,7 +110,7 @@ export class HmIPSecuritySystem {
         [this.securityZoneLabels.external]: target.external,
       },
     };
-    await this.platform.connector.command('home/security/setZonesActivation', body, 2);
+    await this.platform.connector.command('setSecurityZonesActivation', body, {priority: 2});
   }
 
   public updateHome(home: HmIPHome) {

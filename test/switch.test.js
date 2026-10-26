@@ -178,7 +178,7 @@ test('exposes actuator channels and removes cached input-channel switches', asyn
   assert.deepEqual(switchServices, [outputService]);
   await outputService.setters.get(Characteristic.On)(true);
   assert.deepEqual(commands, [[
-    'device/control/setSwitchState',
+    'setSwitchState',
     {channelIndex: 1, deviceId: 'switch1', on: true},
   ]]);
 });
@@ -212,7 +212,7 @@ test('exposes the HmIP-FSI16 multi-mode channel as its actuator output', async (
   assert.deepEqual(switchServices, [outputService]);
   await outputService.setters.get(Characteristic.On)(true);
   assert.deepEqual(commands, [[
-    'device/control/setSwitchState',
+    'setSwitchState',
     {channelIndex: 1, deviceId: 'switch1', on: true},
   ]]);
 });
@@ -230,7 +230,7 @@ test('exposes the HmIP-DRSI1 multi-mode channel as its actuator output', async (
   assert.equal(outputService.getters.get(Characteristic.On)(), false);
   await outputService.setters.get(Characteristic.On)(true);
   assert.deepEqual(commands, [[
-    'device/control/setSwitchState',
+    'setSwitchState',
     {channelIndex: 1, deviceId: 'switch1', on: true},
   ]]);
 });
@@ -260,7 +260,7 @@ test('exposes HmIP-FS6 as a multichannel switch', async () => {
   );
   await switchServices[5].setters.get(Characteristic.On)(true);
   assert.deepEqual(commands, [[
-    'device/control/setSwitchState',
+    'setSwitchState',
     {channelIndex: 6, deviceId: 'switch1', on: true},
   ]]);
 });

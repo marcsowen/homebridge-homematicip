@@ -204,15 +204,15 @@ test('uses the universal-light reference commands and actual channel indexes', a
   await tunableWhite.getCharacteristic(Characteristic.ColorTemperature).setter(250);
 
   assert.deepEqual(commands, [
-    ['device/control/setSwitchState', {channelIndex: 1, deviceId: 'rgbw1', on: false}],
-    ['device/control/setDimLevel', {channelIndex: 1, deviceId: 'rgbw1', dimLevel: 0.75}],
-    ['device/control/setHueSaturationDimLevel', {
+    ['setSwitchState', {channelIndex: 1, deviceId: 'rgbw1', on: false}],
+    ['setDimLevel', {channelIndex: 1, deviceId: 'rgbw1', dimLevel: 0.75}],
+    ['setHueSaturationDimLevel', {
       channelIndex: 1, deviceId: 'rgbw1', hue: 120, saturationLevel: 0.4, dimLevel: 0.75,
     }],
-    ['device/control/setHueSaturationDimLevel', {
+    ['setHueSaturationDimLevel', {
       channelIndex: 1, deviceId: 'rgbw1', hue: 120, saturationLevel: 0.6, dimLevel: 0.75,
     }],
-    ['device/control/setColorTemperatureDimLevel', {
+    ['setColorTemperatureDimLevel', {
       channelIndex: 2, deviceId: 'rgbw1', colorTemperature: 4000, dimLevel: 0.5,
     }],
   ]);

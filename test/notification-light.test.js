@@ -166,7 +166,7 @@ test('labels both HmIP-BSL notification-light services and applies colors after 
   await topLight.getCharacteristic(Characteristic.Hue).setter(120);
   await topLight.getCharacteristic(Characteristic.Saturation).setter(100);
   assert.deepEqual(commands.at(-1), [
-    'device/control/setSimpleRGBColorDimLevel',
+    'setSimpleRGBColorDimLevel',
     {
       channelIndex: 2,
       deviceId: 'bsl1',

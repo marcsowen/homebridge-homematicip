@@ -210,7 +210,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
           groupId: this.heatingGroupId,
           controlMode: controlMode,
         };
-        await this.platform.connector.command('group/heating/setControlMode', body);
+        await this.platform.connector.command('setHeatingControlMode', body);
       }
       if (stateName === 'OFF') {
         const targetTemperature = this.cooling ? this.maxTemperature : this.minTemperature;
@@ -243,7 +243,7 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
         groupId: this.heatingGroupId,
         setPointTemperature: temperature,
       };
-      await this.platform.connector.command('group/heating/setSetPointTemperature', body);
+      await this.platform.connector.command('setHeatingSetPointTemperature', body);
     }
   }
 

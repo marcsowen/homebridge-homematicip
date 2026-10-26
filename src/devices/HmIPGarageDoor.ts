@@ -96,7 +96,7 @@ export class HmIPGarageDoor extends HmIPGenericDevice {
       deviceId: this.accessory.context.device.id,
       doorCommand: value === this.platform.Characteristic.TargetDoorState.OPEN ? DoorCommand.OPEN : DoorCommand.CLOSE,
     };
-    await this.platform.connector.command('device/control/sendDoorCommand', body);
+    await this.platform.connector.command('sendDoorCommand', body);
   }
 
   private async handleOnSet(value: CharacteristicValue): Promise<void> {
@@ -104,9 +104,9 @@ export class HmIPGarageDoor extends HmIPGenericDevice {
     const body = {
       channelIndex: 1,
       deviceId: this.accessory.context.device.id,
-      on: value,
+      on: value === true || value === 1,
     };
-    await this.platform.connector.command('device/control/setSwitchState', body);
+    await this.platform.connector.command('setSwitchState', body);
   }
 
   public override updateDevice(hmIPDevice: HmIPDevice, groups: { [key: string]: HmIPGroup }) {

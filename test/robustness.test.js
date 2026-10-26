@@ -275,7 +275,8 @@ test('routes dynamic devices and preserves channel index zero', () => {
   }});
 
   assert.deepEqual(addedDevices, ['switch1']);
-  assert.equal(state.devices.switch1, addedDevice);
+  assert.equal(router.state.devices.switch1, addedDevice);
+  assert.equal(state.devices.switch1, undefined, 'shared reducer does not mutate earlier snapshots');
   assert.deepEqual(channelEvents, [[0, 'PRESS_SHORT']]);
 });
 

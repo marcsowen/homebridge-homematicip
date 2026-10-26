@@ -145,12 +145,12 @@ test('controls HmIP-HDM1 through its actual shading channel', async () => {
   await coveringService.getCharacteristic(Characteristic.HoldPosition).setter(true);
 
   assert.deepEqual(commands, [
-    ['device/control/setPrimaryShadingLevel', {
+    ['setPrimaryShadingLevel', {
       channelIndex: 3,
       deviceId: 'hdm1',
       primaryShadingLevel: 0.6,
     }],
-    ['device/control/stop', {channelIndex: 3, deviceId: 'hdm1'}],
+    ['stop', {channelIndex: 3, deviceId: 'hdm1'}],
   ]);
 });
 

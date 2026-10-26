@@ -167,7 +167,7 @@ export class HmIPButton extends HmIPGenericDevice {
   }
 
   private async handleSwitchSet(channel: SwitchRuntimeChannel, value: CharacteristicValue): Promise<void> {
-    await this.platform.connector.command('device/control/setSwitchState', {
+    await this.platform.connector.command('setSwitchState', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
       on: Boolean(value),

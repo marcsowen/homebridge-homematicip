@@ -169,7 +169,7 @@ export class HmIPUniversalLight extends HmIPGenericDevice {
 
   private async setOn(channel: RuntimeChannel, value: CharacteristicValue): Promise<void> {
     const on = Boolean(value);
-    await this.platform.connector.command('device/control/setSwitchState', {
+    await this.platform.connector.command('setSwitchState', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
       on,
@@ -180,7 +180,7 @@ export class HmIPUniversalLight extends HmIPGenericDevice {
   private async setBrightness(channel: RuntimeChannel, value: CharacteristicValue): Promise<void> {
     const brightness = this.numberValue(value, 'brightness');
     const dimLevel = clamp(brightness, 0, 100) / 100;
-    await this.platform.connector.command('device/control/setDimLevel', {
+    await this.platform.connector.command('setDimLevel', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
       dimLevel,
@@ -201,7 +201,7 @@ export class HmIPUniversalLight extends HmIPGenericDevice {
   }
 
   private async setHueSaturation(channel: RuntimeChannel, hue: number, saturationLevel: number): Promise<void> {
-    await this.platform.connector.command('device/control/setHueSaturationDimLevel', {
+    await this.platform.connector.command('setHueSaturationDimLevel', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
       hue,
@@ -217,7 +217,7 @@ export class HmIPUniversalLight extends HmIPGenericDevice {
       channel.minimalColorTemperature,
       channel.maximumColorTemperature,
     );
-    await this.platform.connector.command('device/control/setColorTemperatureDimLevel', {
+    await this.platform.connector.command('setColorTemperatureDimLevel', {
       channelIndex: channel.index,
       deviceId: this.accessory.context.device.id,
       colorTemperature: kelvin,

@@ -1,5 +1,6 @@
 import type {Service, WithUUID} from 'homebridge';
 import {
+  getHmIPDeviceReachability,
   type HmIPDevice,
   type HmIPFunctionalChannel,
   type HmIPGroup,
@@ -77,13 +78,10 @@ export abstract class HmIPGenericDevice {
 
     const hmIPDevice = accessory.context.device;
     let featureLowBat = false;
+    this.unreach = getHmIPDeviceReachability(hmIPDevice) === false;
 
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (isDeviceBaseChannel(channel)) {
-        if (channel.unreach !== null) {
-          this.unreach = channel.unreach;
-        }
-
         featureLowBat = channel.supportedOptionalFeatures.IOptionalFeatureLowBat;
         if (featureLowBat && channel.lowBat !== null) {
           this.lowBat = channel.lowBat;
@@ -164,14 +162,14 @@ export abstract class HmIPGenericDevice {
 
   public updateDevice(hmIPDevice: HmIPDevice, _groups: Readonly<Record<string, HmIPGroup>>) {
     this.updateFirmwareRevision(hmIPDevice.firmwareVersion);
+    const reachable = getHmIPDeviceReachability(hmIPDevice);
+    if (reachable !== undefined && !reachable !== this.unreach) {
+      this.unreach = !reachable;
+      this.platform.log.info('Unreach of %s changed to %s', this.accessory.displayName, this.unreach);
+    }
 
     for (const channel of Object.values(hmIPDevice.functionalChannels)) {
       if (isDeviceBaseChannel(channel)) {
-        if (channel.unreach !== null && channel.unreach !== this.unreach) {
-          this.unreach = channel.unreach;
-          this.platform.log.info('Unreach of %s changed to %s', this.accessory.displayName, this.unreach);
-        }
-
         if (this.batteryService && channel.lowBat !== null && channel.lowBat !== this.lowBat) {
           this.lowBat = channel.lowBat;
           this.platform.log.info('LowBat of %s changed to %s', this.accessory.displayName, this.lowBat);

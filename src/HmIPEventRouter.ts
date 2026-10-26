@@ -1,5 +1,6 @@
 import type {Logger} from 'homebridge';
 import type {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange} from 'homematicip-cloud-client-ts';
+import {reduceHmIPState} from 'homematicip-cloud-client-ts';
 import type {HmIPDeviceAdapter} from './HmIPTypes.js';
 
 export interface HmIPEventRouterCallbacks {
@@ -12,12 +13,13 @@ export interface HmIPEventRouterCallbacks {
 export class HmIPEventRouter {
   public constructor(
     private readonly log: Logger,
-    private readonly state: HmIPState,
+    private state: HmIPState,
     private readonly devices: Map<string, HmIPDeviceAdapter>,
     private readonly callbacks: HmIPEventRouterCallbacks,
   ) {}
 
-  public handle(stateChange: HmIPStateChange): void {
+  public handle(stateChange: HmIPStateChange, state: HmIPState = reduceHmIPState(this.state, stateChange)): void {
+    this.state = state;
     let groupsChanged = false;
     let securityZoneChanged = false;
 
@@ -27,7 +29,6 @@ export class HmIPEventRouter {
         case 'GROUP_ADDED':
           if (event.group) {
             this.log.debug(`${event.pushEventType}: ${event.group.id} ${JSON.stringify(event.group)}`);
-            this.state.groups[event.group.id] = event.group;
             groupsChanged = true;
             securityZoneChanged ||= event.group.type === 'SECURITY_ZONE';
           }
@@ -36,7 +37,6 @@ export class HmIPEventRouter {
           if (event.group) {
             this.log.debug(`${event.pushEventType}: ${event.group.id}`);
             securityZoneChanged ||= event.group.type === 'SECURITY_ZONE';
-            delete this.state.groups[event.group.id];
             groupsChanged = true;
           }
           break;
@@ -49,13 +49,11 @@ export class HmIPEventRouter {
             } else {
               this.log.debug(`Removal event from unregistered device: ${event.device.id}`);
             }
-            delete this.state.devices[event.device.id];
           }
           break;
         case 'DEVICE_ADDED':
           if (event.device) {
             this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
-            this.state.devices[event.device.id] = event.device;
             const adapter = this.devices.get(event.device.id);
             if (adapter) {
               adapter.updateDevice(event.device, this.state.groups);
@@ -67,7 +65,6 @@ export class HmIPEventRouter {
         case 'DEVICE_CHANGED':
           if (event.device) {
             this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
-            this.state.devices[event.device.id] = event.device;
             const adapter = this.devices.get(event.device.id);
             if (adapter) {
               adapter.updateDevice(event.device, this.state.groups);
@@ -89,7 +86,6 @@ export class HmIPEventRouter {
         case 'HOME_CHANGED':
           if (event.home) {
             this.log.debug(`${event.pushEventType}: ${event.home.id} ${JSON.stringify(event.home)}`);
-            this.state.home = event.home;
             this.callbacks.updateHome(event.home);
           }
           break;

@@ -228,7 +228,7 @@ test('HmIP-WRC6-230 exposes six buttons and its actuator output', async () => {
 
   await switches[0].getCharacteristic(Characteristic.On).setter(true);
   assert.deepEqual(commands, [[
-    'device/control/setSwitchState',
+    'setSwitchState',
     {channelIndex: 8, deviceId: 'wrc6', on: true},
   ]]);
 });

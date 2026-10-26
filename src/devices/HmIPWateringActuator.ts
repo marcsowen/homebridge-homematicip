@@ -119,14 +119,14 @@ export class HmIPWateringActuator extends HmIPGenericDevice {
       wateringActive ? 'ON' : 'OFF',
     );
     if (wateringActive && this.wateringOnTime > 0) {
-      await this.platform.connector.command('device/control/setWateringSwitchStateWithTime', {
+      await this.platform.connector.command('setWateringSwitchStateWithTime', {
         channelIndex: this.channelIndex,
         deviceId: this.accessory.context.device.id,
         wateringActive: true,
         wateringTime: this.wateringOnTime,
       });
     } else {
-      await this.platform.connector.command('device/control/setWateringSwitchState', {
+      await this.platform.connector.command('setWateringSwitchState', {
         channelIndex: this.channelIndex,
         deviceId: this.accessory.context.device.id,
         wateringActive,

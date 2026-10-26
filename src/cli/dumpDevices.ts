@@ -156,13 +156,9 @@ async function run(): Promise<void> {
   });
 
   try {
-    if (!(await client.init()).valueOf()) {
-      throw new Error('Could not initialize the Homematic IP cloud connection');
-    }
+    await client.init();
     const state = await client.getCurrentState();
-    if (state === false) {
-      throw new Error('Could not retrieve the Homematic IP state');
-    }
+
     const devices = Object.values(state.devices)
       .filter(device => options.all || matchesDevice(device, options.deviceQuery as string))
       .sort((left, right) => left.modelType.localeCompare(right.modelType));
