@@ -90,6 +90,10 @@ fails. Restart Homebridge to begin another pairing attempt.
 
 See the [plugin wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) for additional configuration details.
 
+### Eco mode
+
+If the home uses heating control, the plugin adds an "Eco Mode" switch that turns the home's eco mode on and off, for example from HomeKit automations or buttons. The participating rooms, the eco temperature, and the duration are taken from the Homematic IP app settings: with a duration selected there, eco mode ends automatically after that time, otherwise it stays active until the switch is turned off. Holiday mode is not shown as eco mode. Set `hideEcoMode` to `true` to remove the switch.
+
 ### Accessory synchronization
 
 Devices added to or removed from the Homematic IP installation are reflected in Homebridge while the plugin is running.
