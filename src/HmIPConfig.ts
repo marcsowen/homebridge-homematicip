@@ -26,6 +26,7 @@ export interface HmIPPlatformConfig extends PlatformConfig {
     access_point: string;
     auth_token?: string;
     hideSecuritySystem?: boolean;
+    hideEcoMode?: boolean;
     pin?: string;
     devices?: HmIPDeviceConfigs;
 }

@@ -1,3 +1,9 @@
+## Unreleased
+
+### Improvements
+
+- **Eco mode**: Added a HomeKit switch that turns the home's eco mode on and off using the rooms, temperature, and duration configured in the Homematic IP app. It can be hidden with `hideEcoMode`.
+
 ## 2.12.0 (2026-10-26)
 
 ### Improvements
