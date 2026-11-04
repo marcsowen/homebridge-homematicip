@@ -181,7 +181,7 @@ importers:
         version: 26.6.5
       homebridge:
         specifier: ^2.4.0
-        version: 2.4.0(supports-color@5.5.0)
+        version: 2.5.0(supports-color@5.5.0)
       nodemon:
         specifier: ^3.1.14
         version: 3.1.14
@@ -263,42 +263,43 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@homebridge/ciao@1.3.12':
-    resolution: {integrity: sha512-84/0u0kqKy4qcKupIDaTtbkmk+3qFDuMzxTC0NPfVlHcUT+jHGdP+QCqwEw94/GJxRezDeBLwxaclkBZgCdeUg==}
+  '@homebridge/ciao@1.4.0':
+    resolution: {integrity: sha512-y3KXxXv3Ct9JJEwHamEmEcZCxLjKG4YJm+FYrRPVcV6nSsTJt/pTFNYRzbvm7FrV2Rd0FyHgwzBfSyL36OQHVw==}
+    engines: {node: '>=22'}
     hasBin: true
 
-  '@homebridge/dbus-native@0.7.9':
-    resolution: {integrity: sha512-PFOeWyXfH2eoM4o6Zmj9PzCUDlrrbtrbAJVzHYXpXK5rh/dz84Ygu79WHKK3DWW2/oXieYPV6up+i1izSPbc3g==}
-    hasBin: true
-
-  '@homebridge/hap-nodejs@2.2.2':
-    resolution: {integrity: sha512-drTJSn63wGn5R6sDLmgjJdIW7G1awn1CxEEW1Jn+t3oCTMGSlk7lBZjGYbOpeL6acjiBqXNdo79NWcXn7s4CnQ==}
-    engines: {node: ^22 || ^24 || ^26}
+  '@homebridge/hap-nodejs@2.3.0':
+    resolution: {integrity: sha512-9TqyGMf0ad5HMob0yMIppDcdK18TZ0+nz7LjQKnfiMEmPnkvhXfxNiyIxNQt81HoqXNjE9MQ3ltM3/s4VlnV9w==}
+    engines: {node: ^22.12.0 || ^24 || ^26}
 
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
-  '@matter/general@0.17.9':
-    resolution: {integrity: sha512-NMAhD/EKpfTb1e0UllUJLdWgViw+Jp41PoY6s4yVGAiuo0sot6CYSdQauXelQPldhonrn2bLSKAa2mQUKWdhLQ==}
+  '@matter/general@0.18.0':
+    resolution: {integrity: sha512-/gk5qFk1+O5LT5XdqLidehh9nZE1QuTSzmeDxE4J5ZgbK3/nLXjI4+81Q8PYLSwxbkLjPgOLUj1H1sB7ATu40Q==}
 
-  '@matter/main@0.17.9':
-    resolution: {integrity: sha512-YFBpU1AquN6sLC466xcOslAaERtlBnofHfuvDyY9B8UHZZJwFUfsDT7gMWVYkU5J/S9vc7lslL9TMvvns8Biaw==}
+  '@matter/main@0.18.0':
+    resolution: {integrity: sha512-4L/SzEJUqquePcxxrLxO+7AD6443YHHlf/eDIIJGGCngYx4Z7x/hiVFPxoPBdF2KpxgCquPmqb4Nyho8ABsNjw==}
 
-  '@matter/model@0.17.9':
-    resolution: {integrity: sha512-NICGlK8ubD2an1eKIhEX2osZRl5JjnZE3Z8CJGnWItyVU5MbX1ta/EdCx/eBGy8WQPTxpYu93keW3L6qTUMOlg==}
+  '@matter/model@0.18.0':
+    resolution: {integrity: sha512-tk07q2fU6A0hkPh+BCMteiePiSeXk3Jj+xAukU4QHBBPv8LoEEpfMQOpubnBlkvwP4h/ArKWSFxMP6TJaLPVQg==}
 
-  '@matter/node@0.17.9':
-    resolution: {integrity: sha512-5AT6NYfIlLaILHAgVQoNZkuobff+CR7Ewkdj14YkENx77rRlujgDlDpXRiJkAHc+EUvRkwr5zA9ZL70XkwHkEw==}
+  '@matter/node@0.18.0':
+    resolution: {integrity: sha512-ZDpvkUH/0KnXgb/bnaTzUjlfynVEmStZMDEOVXFyZyCeaUSy06P1KCIyU39vuCvlR8WRLQ8z3Jf+eHxoW2+HNw==}
 
-  '@matter/nodejs@0.17.9':
-    resolution: {integrity: sha512-2C3J89qeLyknLtbe/ls46dmjs/eN8LmMSKpGl90mC2ut8471z4rkpFYNE+MTJLFg8yzC+R86yi35Y3lBzioEwA==}
-    engines: {node: '>=20.19.0 <22.0.0 || >=22.13.0'}
+  '@matter/nodejs@0.18.0':
+    resolution: {integrity: sha512-4du5G6hF5e81aHSc6mfWN7+feWAw3gGCNG4ZsL/xeuO27klTvvLGiIddL9E7mxVxacctjsFUnIBaAPXnnsFQkQ==}
+    engines: {node: '>=20.19.0 <21.0.0 || >=22.13.0'}
 
-  '@matter/protocol@0.17.9':
-    resolution: {integrity: sha512-BZg1BWwm3rHsFxyQm17VjpTNO3kwd+AIjI9dtfnPFkH5CeS7r6Ebd/9j8L0zxeVPotciMcSW8H5W+3kCcuB2HQ==}
+  '@matter/protocol@0.18.0':
+    resolution: {integrity: sha512-jRN4mgWBq741JKu9/XqYtPW0Arw3gQorp/HKyuwdJx/oAUls6FX2dvJis3t+2qm5EzSr4xyYle4onl6Z46pV9Q==}
 
-  '@matter/types@0.17.9':
-    resolution: {integrity: sha512-Tdb08WzfM2Ma962NTtNrHTA3S26eBGCj5/kpnpl9LS5Twpw78Rgk/jogOIM/HDVCbu/M/ZSQPmdBN/q3vWEXAw==}
+  '@matter/types@0.18.0':
+    resolution: {integrity: sha512-SQqMxT5wCRMOaH1JU5Pk1/fotaMDxPVPcPapdCwhoAtIwAIv1aqiyHVqe3N2jkcxbZPmHihztJ876JbRpPo8dw==}
+
+  '@noble/ciphers@2.4.0':
+    resolution: {integrity: sha512-AnjFn0Jv92laAkvMrghlFZq4qQCIN/4DxFV/eooqtC2YTjB7kBeLMS2T9KJX4Dn+ZVXLOwK0lSgqDtx9gvxtiw==}
+    engines: {node: '>= 20.19.0'}
 
   '@noble/curves@2.4.0':
     resolution: {integrity: sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==}
@@ -306,6 +307,10 @@ packages:
 
   '@noble/hashes@2.4.0':
     resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
+    engines: {node: '>= 20.19.0'}
+
+  '@noble/post-quantum@0.7.1':
+    resolution: {integrity: sha512-+P9981IiAnVh+rmcubozzVwrEy3XsN/tMhTnvsjV9VDaYpOnNCqWqKo2FLWxbu92YHfjGIlE5XnW175UK+ln+Q==}
     engines: {node: '>= 20.19.0'}
 
   '@types/node@26.6.5':
@@ -453,8 +458,8 @@ packages:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
 
-  bonjour-hap@3.10.5:
-    resolution: {integrity: sha512-8E81oIQF0pjlDNVAKcAGwPYYG9BKD42Q8Fi7eJ/vYxEwyL/M8YpjM4gnFC1QTmagWI3jzbw7jPI0q2C1qWfQLQ==}
+  bonjour-hap@3.11.0:
+    resolution: {integrity: sha512-JQeNwR7L1QeZj7NMnfqDW+M93Sz6mJNAHvOSu1MOGXBPUTnQlBY4i6+cKKZP4qi99BzcKginHWQf4NQNirXbRA==}
 
   brace-expansion@5.0.12:
     resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
@@ -478,8 +483,8 @@ packages:
     resolution: {integrity: sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==}
     engines: {node: '>= 0.4'}
 
-  chalk@6.0.0:
-    resolution: {integrity: sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg==}
+  chalk@6.0.1:
+    resolution: {integrity: sha512-/Ce6KNm3vIbWdMlNna6RVIZ/ICQxnJxCicet5LBKK9ZffBkqzDw0xh9EiKSljdRtiIQ1S1z4YgcscUUGzNCWrA==}
     engines: {node: '>=22'}
 
   chokidar@3.6.0:
@@ -493,6 +498,11 @@ packages:
   data-uri-to-buffer@4.0.1:
     resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
     engines: {node: '>= 12'}
+
+  dbus-native@0.16.3:
+    resolution: {integrity: sha512-nw8IGF3FNRRAxM2EjUEVCbXGISX5jJ5fGxKN+9DEQhua3aZJmSPIFs1B/HpFaeECnwj4ypdoyw2JtEapYpxanA==}
+    engines: {node: '>=22.12.0'}
+    hasBin: true
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -519,9 +529,6 @@ packages:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
 
-  duplexer@0.1.2:
-    resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
-
   ecdsa-sig-formatter@1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
 
@@ -536,9 +543,6 @@ packages:
   es-object-atoms@1.1.2:
     resolution: {integrity: sha512-HWcBoN6NileqtSydK2FqHbS/LoDd2pqrnQHLyJzBj4kOp/ky2MWMN694xOfkK8/SnUsW2DH7EfyVlydKCsm1Zw==}
     engines: {node: '>= 0.4'}
-
-  event-stream@4.0.1:
-    resolution: {integrity: sha512-qACXdu/9VHPBzcyhdOWR5/IahhGMf0roTeZJfzz077GwylcDd90yOHLouhmv7GJ5XzPi6ekaQWd8AvPP2nOvpA==}
 
   eventemitter3@5.0.4:
     resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
@@ -569,11 +573,8 @@ packages:
     resolution: {integrity: sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==}
     engines: {node: '>=12.20.0'}
 
-  from@0.1.7:
-    resolution: {integrity: sha512-twe20eF1OxVxp/ML/kq2p1uc6KvFK/+vs8WjEbeKmV2He22MKm7YF2ANIt+EOqhJ5L3K/SuuPhk0hWQDjOM23g==}
-
-  fs-extra@11.4.0:
-    resolution: {integrity: sha512-EQsFzMUJkCKGr1ePqlYADkIUmHW1s3ZXr5Yqy6wbGrfUCphpl2maM/kyOIRA2HpP3AaFQTZXD4ldjek+nccddA==}
+  fs-extra@11.4.1:
+    resolution: {integrity: sha512-KYAb4c9BJQI6QqGKthV68OHe0badztdXJWKo0WtBA9IuCFPTKvE5ZdUBglP833aMjhaSPNO4A5j/EkzZtGlKjA==}
     engines: {node: '>=14.14'}
 
   fsevents@2.3.3:
@@ -647,19 +648,14 @@ packages:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
 
-  hexy@0.4.0:
-    resolution: {integrity: sha512-HxJ6HCV/zrSBeAVRNEhr3CE6yTlCYklMHfCVfJkp7kC+HJqSP1SQ+howWPiHK37t++ELUtgoAoGJut5HyRhIvg==}
-    engines: {node: '>=14.0.0'}
-    hasBin: true
-
-  homebridge@2.4.0:
-    resolution: {integrity: sha512-yAc/jGC04h6LqcZTiO6aubzKmCulWGIdYUx3lj8r/aJQbAL5EZta9aX71LWnko3bChhTaD7sS7LLJ5Hqu4DbVA==}
-    engines: {node: ^22 || ^24 || ^26}
+  homebridge@2.5.0:
+    resolution: {integrity: sha512-6uTzUFltCZRfEAzA/uGP0G297jEI3WAVIwYdbl75KU1/Gc0J2sL+9eu1GsiSNmSmYY7BILXL31MhCQRCqSLUYg==}
+    engines: {node: ^22.12.0 || ^24 || ^26}
     hasBin: true
 
   homematicip-cloud-client-ts@0.4.0:
     resolution: {integrity: sha512-VS0Go7aK4JBIjJjkiUYAKqxa8GFv9lWcrKvOG2vqMAQLK9SVz+gYXQfRSUq5OgaIX43VsZAzcQzVVaXmmZIvRw==}
-    engines: {node: '^24.0.0 || ^26.0.0'}
+    engines: {node: ^24.0.0 || ^26.0.0}
 
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
@@ -696,15 +692,9 @@ packages:
   jws@4.0.1:
     resolution: {integrity: sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==}
 
-  long@5.3.2:
-    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
-
   lru-cache@11.5.3:
     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
     engines: {node: 20 || >=22}
-
-  map-stream@0.0.7:
-    resolution: {integrity: sha512-C0X0KQmGm3N2ftbTGBhSyuydQ+vV1LC3f3zPvT3RXHXNZrvfPZcoXp/N5DOa8vedX/rTMm2CjTtivFg2STJMRQ==}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -713,9 +703,6 @@ packages:
   minimatch@10.2.6:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
-
-  minimist@1.2.8:
-    resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
 
   minipass@7.1.3:
     resolution: {integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==}
@@ -770,9 +757,6 @@ packages:
   path-scurry@2.0.2:
     resolution: {integrity: sha512-3O/iVVsJAPsOnpwWIeD+d6z/7PmqApyQePUtCndjatj/9I5LylHvt5qluFaBT3I5h3r1ejfR056c+FCv+NnNXg==}
     engines: {node: 18 || 20 || >=22}
-
-  pause-stream@0.0.11:
-    resolution: {integrity: sha512-e3FBlXLmN/D1S+zHzanP4E/4Z60oFAa3O051qt1pxa7DEJWKAyil6upYVXCWadEnuoqa4Pkc9oUx9zsxYeRv8A==}
 
   picomatch@2.3.2:
     resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
@@ -837,18 +821,9 @@ packages:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
 
-  split@1.0.1:
-    resolution: {integrity: sha512-mTyOoPbrivtXnwnIxZRFYRrPNtEFKlpB2fvjSnCQUiAA6qAZzqwna5envK4uk6OIeP17CsdF3rSBGYVBsU0Tkg==}
-
-  stream-combiner@0.2.2:
-    resolution: {integrity: sha512-6yHMqgLYDzQDcAkL+tjJDC5nSNuNIx0vZtRZeiPh7Saef7VHX9H5Ijn9l2VIol2zaNYlYEX6KyuT/237A58qEQ==}
-
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
     engines: {node: '>=4'}
-
-  through@2.3.8:
-    resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
 
   thunky@1.1.0:
     resolution: {integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==}
@@ -861,11 +836,8 @@ packages:
     resolution: {integrity: sha512-r0eojU4bI8MnHr8c5bNo7lJDdI2qXlWWJk6a9EAFG7vbhTjElYhBVS3/miuE0uOuoLdb8Mc/rVfsmm6eo5o9GA==}
     hasBin: true
 
-  tslib@2.8.1:
-    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
-
-  tweetnacl@1.0.3:
-    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
+  tslib@2.9.1:
+    resolution: {integrity: sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==}
 
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
@@ -954,89 +926,89 @@ snapshots:
   '@biomejs/cli-win32-x64@2.6.2':
     optional: true
 
-  '@homebridge/ciao@1.3.12(supports-color@5.5.0)':
+  '@homebridge/ciao@1.4.0(supports-color@5.5.0)':
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       fast-deep-equal: 3.1.3
       source-map-support: 0.5.21
-      tslib: 2.8.1
+      tslib: 2.9.1
     transitivePeerDependencies:
       - supports-color
 
-  '@homebridge/dbus-native@0.7.9':
+  '@homebridge/hap-nodejs@2.3.0(supports-color@5.5.0)':
     dependencies:
-      event-stream: 4.0.1
-      hexy: 0.4.0
-      long: 5.3.2
-      minimist: 1.2.8
-      safe-buffer: 5.2.1
-      xml2js: 0.6.2
-
-  '@homebridge/hap-nodejs@2.2.2(supports-color@5.5.0)':
-    dependencies:
-      '@homebridge/ciao': 1.3.12(supports-color@5.5.0)
-      '@homebridge/dbus-native': 0.7.9
-      bonjour-hap: 3.10.5
+      '@homebridge/ciao': 1.4.0(supports-color@5.5.0)
+      bonjour-hap: 3.11.0
+      dbus-native: 0.16.3
       debug: 4.4.3(supports-color@5.5.0)
       fast-srp-hap: 2.0.4
       futoin-hkdf: 1.5.3
       source-map-support: 0.5.21
-      tslib: 2.8.1
-      tweetnacl: 1.0.3
+      tslib: 2.9.1
     transitivePeerDependencies:
       - supports-color
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
-  '@matter/general@0.17.9':
+  '@matter/general@0.18.0':
     dependencies:
       '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@noble/post-quantum': 0.7.1
 
-  '@matter/main@0.17.9':
+  '@matter/main@0.18.0':
     dependencies:
-      '@matter/general': 0.17.9
-      '@matter/model': 0.17.9
-      '@matter/node': 0.17.9
-      '@matter/protocol': 0.17.9
-      '@matter/types': 0.17.9
+      '@matter/general': 0.18.0
+      '@matter/model': 0.18.0
+      '@matter/node': 0.18.0
+      '@matter/protocol': 0.18.0
+      '@matter/types': 0.18.0
     optionalDependencies:
-      '@matter/nodejs': 0.17.9
+      '@matter/nodejs': 0.18.0
 
-  '@matter/model@0.17.9':
+  '@matter/model@0.18.0':
     dependencies:
-      '@matter/general': 0.17.9
+      '@matter/general': 0.18.0
 
-  '@matter/node@0.17.9':
+  '@matter/node@0.18.0':
     dependencies:
-      '@matter/general': 0.17.9
-      '@matter/model': 0.17.9
-      '@matter/protocol': 0.17.9
-      '@matter/types': 0.17.9
+      '@matter/general': 0.18.0
+      '@matter/model': 0.18.0
+      '@matter/protocol': 0.18.0
+      '@matter/types': 0.18.0
 
-  '@matter/nodejs@0.17.9':
+  '@matter/nodejs@0.18.0':
     dependencies:
-      '@matter/general': 0.17.9
-      '@matter/node': 0.17.9
-      '@matter/protocol': 0.17.9
-      '@matter/types': 0.17.9
+      '@matter/general': 0.18.0
+      '@matter/node': 0.18.0
+      '@matter/protocol': 0.18.0
+      '@matter/types': 0.18.0
     optional: true
 
-  '@matter/protocol@0.17.9':
+  '@matter/protocol@0.18.0':
     dependencies:
-      '@matter/general': 0.17.9
-      '@matter/model': 0.17.9
-      '@matter/types': 0.17.9
+      '@matter/general': 0.18.0
+      '@matter/model': 0.18.0
+      '@matter/types': 0.18.0
 
-  '@matter/types@0.17.9':
+  '@matter/types@0.18.0':
     dependencies:
-      '@matter/general': 0.17.9
-      '@matter/model': 0.17.9
+      '@matter/general': 0.18.0
+      '@matter/model': 0.18.0
+
+  '@noble/ciphers@2.4.0': {}
 
   '@noble/curves@2.4.0':
     dependencies:
       '@noble/hashes': 2.4.0
 
   '@noble/hashes@2.4.0': {}
+
+  '@noble/post-quantum@0.7.1':
+    dependencies:
+      '@noble/ciphers': 2.4.0
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
 
   '@types/node@26.6.5':
     dependencies:
@@ -1117,8 +1089,9 @@ snapshots:
 
   binary-extensions@2.3.0: {}
 
-  bonjour-hap@3.10.5:
+  bonjour-hap@3.11.0:
     dependencies:
+      dns-packet: 5.6.1
       fast-deep-equal: 3.1.3
       multicast-dns: 7.2.5
       multicast-dns-service-types: 1.1.0
@@ -1145,7 +1118,7 @@ snapshots:
       call-bind-apply-helpers: 1.0.2
       get-intrinsic: 1.3.0
 
-  chalk@6.0.0: {}
+  chalk@6.0.1: {}
 
   chokidar@3.6.0:
     dependencies:
@@ -1162,6 +1135,10 @@ snapshots:
   commander@15.0.0: {}
 
   data-uri-to-buffer@4.0.1: {}
+
+  dbus-native@0.16.3:
+    dependencies:
+      xml2js: 0.6.2
 
   debug@2.6.9(supports-color@5.5.0):
     dependencies:
@@ -1185,8 +1162,6 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
-  duplexer@0.1.2: {}
-
   ecdsa-sig-formatter@1.0.11:
     dependencies:
       safe-buffer: 5.2.1
@@ -1198,16 +1173,6 @@ snapshots:
   es-object-atoms@1.1.2:
     dependencies:
       es-errors: 1.3.0
-
-  event-stream@4.0.1:
-    dependencies:
-      duplexer: 0.1.2
-      from: 0.1.7
-      map-stream: 0.0.7
-      pause-stream: 0.0.11
-      split: 1.0.1
-      stream-combiner: 0.2.2
-      through: 2.3.8
 
   eventemitter3@5.0.4: {}
 
@@ -1237,9 +1202,7 @@ snapshots:
     dependencies:
       fetch-blob: 3.2.0
 
-  from@0.1.7: {}
-
-  fs-extra@11.4.0:
+  fs-extra@11.4.1:
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.2.1
@@ -1339,15 +1302,13 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hexy@0.4.0: {}
-
-  homebridge@2.4.0(supports-color@5.5.0):
+  homebridge@2.5.0(supports-color@5.5.0):
     dependencies:
-      '@homebridge/hap-nodejs': 2.2.2(supports-color@5.5.0)
-      '@matter/main': 0.17.9
-      chalk: 6.0.0
+      '@homebridge/hap-nodejs': 2.3.0(supports-color@5.5.0)
+      '@matter/main': 0.18.0
+      chalk: 6.0.1
       commander: 15.0.0
-      fs-extra: 11.4.0
+      fs-extra: 11.4.1
       qrcode-terminal: 0.12.0
       semver: 7.8.5
       source-map-support: 0.5.21
@@ -1404,19 +1365,13 @@ snapshots:
       jwa: 2.0.1
       safe-buffer: 5.2.1
 
-  long@5.3.2: {}
-
   lru-cache@11.5.3: {}
-
-  map-stream@0.0.7: {}
 
   math-intrinsics@1.1.0: {}
 
   minimatch@10.2.6:
     dependencies:
       brace-expansion: 5.0.12
-
-  minimist@1.2.8: {}
 
   minipass@7.1.3: {}
 
@@ -1469,10 +1424,6 @@ snapshots:
     dependencies:
       lru-cache: 11.5.3
       minipass: 7.1.3
-
-  pause-stream@0.0.11:
-    dependencies:
-      through: 2.3.8
 
   picomatch@2.3.2: {}
 
@@ -1539,20 +1490,9 @@ snapshots:
 
   source-map@0.6.1: {}
 
-  split@1.0.1:
-    dependencies:
-      through: 2.3.8
-
-  stream-combiner@0.2.2:
-    dependencies:
-      duplexer: 0.1.2
-      through: 2.3.8
-
   supports-color@5.5.0:
     dependencies:
       has-flag: 3.0.0
-
-  through@2.3.8: {}
 
   thunky@1.1.0: {}
 
@@ -1562,9 +1502,7 @@ snapshots:
 
   touch@3.1.1: {}
 
-  tslib@2.8.1: {}
-
-  tweetnacl@1.0.3: {}
+  tslib@2.9.1: {}
 
   typescript@7.0.2:
     optionalDependencies:
