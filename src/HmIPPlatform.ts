@@ -279,7 +279,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
             removeDevice: (deviceId, adapter) => this.removeAccessory(deviceId, adapter),
             updateHome: (home) => {
                 this.securitySystem?.updateHome(home);
-                this.ecoMode?.updateHome(home);
+                this.updateEcoMode(home);
             },
             updateSecurityGroups: (groups) => this.securitySystem?.updateGroups(groups),
         });
@@ -408,12 +408,18 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
     private updateEcoMode(home: HmIPHome): string | undefined {
         const uuid = this.api.hap.uuid.generate(`${home.id}_eco`);
+        if (
+            !getHmIPIndoorClimateSolution(home) ||
+            this.config.hideEcoMode === true ||
+            getDeviceConfig(this.config.devices, "HOME_ECO_MODE")?.hide === true
+        ) {
+            this.accessoryRepository.remove(uuid);
+            this.ecoMode = undefined;
+            return undefined;
+        }
         if (this.ecoMode) {
             this.ecoMode.updateHome(home);
-            return this.ecoMode.hidden ? undefined : uuid;
-        }
-        if (!getHmIPIndoorClimateSolution(home)) {
-            return undefined;
+            return uuid;
         }
 
         const hmIPAccessory = this.accessoryRepository.acquire(uuid, "Eco Mode", home);

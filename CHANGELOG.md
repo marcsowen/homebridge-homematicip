@@ -1,8 +1,14 @@
-## Unreleased
+## 2.13.0 (2026-11-06)
 
 ### Improvements
 
-- **Eco mode**: Added a HomeKit switch that turns the home's eco mode on and off using the rooms, temperature, and duration configured in the Homematic IP app. It can be hidden with `hideEcoMode`.
+- **Dependencies**: Updated Homebridge from 2.4.0 to 2.5.0, Biome from 2.6.2 to 2.6.5, Node.js type definitions from 26.6.5 to 26.6.6, and rimraf from 6.1.3 to 6.1.4, and refreshed transitive dependencies.
+- **Tooling**: Updated pnpm from 12.15.0 to 12.18.0 and the Biome configuration schema to 2.6.5.
+- **Eco mode**: Added a HomeKit switch that turns the home's eco mode on and off using the rooms, temperature, and duration configured in the Homematic IP app. It can be hidden with `hideEcoMode`. Contributed by [Benedict Schmieder (@benedictschmieder)](https://github.com/benedictschmieder) in [#636](https://github.com/marcsowen/homebridge-homematicip/pull/636).
+
+### Fixes
+
+- **Eco mode**: Reject missing or unsupported durations instead of activating permanent mode, reconcile the switch when heating support changes, and refresh restored switch state from the cloud.
 
 ## 2.12.0 (2026-10-26)
 

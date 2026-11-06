@@ -92,7 +92,12 @@ See the [plugin wiki](https://github.com/marcsowen/homebridge-homematicip/wiki) 
 
 ### Eco mode
 
-If the home uses heating control, the plugin adds an "Eco Mode" switch that turns the home's eco mode on and off, for example from HomeKit automations or buttons. The participating rooms, the eco temperature, and the duration are taken from the Homematic IP app settings: with a duration selected there, eco mode ends automatically after that time, otherwise it stays active until the switch is turned off. Holiday mode is not shown as eco mode. Set `hideEcoMode` to `true` to remove the switch.
+If the home uses heating control, the plugin adds an "Eco Mode" switch for HomeKit automations and buttons.
+The participating rooms and eco temperature stay configured in the Homematic IP app. Switching on uses the app's
+configured duration of one, two, four, or six hours, or stays active until switched off when explicitly set to permanent.
+A missing or unsupported duration causes activation to fail; it never defaults to permanent mode.
+The switch follows changes made in the app and turns off when the duration expires. Holiday mode is not shown as eco mode.
+Set `hideEcoMode` to `true`, or hide the `HOME_ECO_MODE` entry in per-device options, to remove the switch.
 
 ### Accessory synchronization
 
@@ -255,5 +260,7 @@ dependency; users do not need to install or configure it separately.
 - @ohueter for thermostat/climate sensor config option
 - @aceg1k for improvements in thermostat heating/cooling state handling and API call handling
 - @gkminix for HmIP-FSI16 support and Node-RED interoperability improvements
+- [Benedict Schmieder (@benedictschmieder)](https://github.com/benedictschmieder) for the Eco Mode switch
+  ([#636](https://github.com/marcsowen/homebridge-homematicip/pull/636))
 
 ## Help needed!

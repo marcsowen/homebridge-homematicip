@@ -7,12 +7,12 @@ import type {HmIPPlatformAccessory} from "./HmIPTypes.js";
 
 const ECO_ABSENCE_TYPES: ReadonlySet<unknown> = new Set(["PERIOD", "PERMANENT"]);
 
-const ECO_DURATION_MINUTES: Readonly<Record<string, number>> = {
-    ONE: 60,
-    TWO: 120,
-    FOUR: 240,
-    SIX: 360,
-};
+const ECO_DURATION_MINUTES: ReadonlyMap<string, number> = new Map([
+    ["ONE", 60],
+    ["TWO", 120],
+    ["FOUR", 240],
+    ["SIX", 360],
+]);
 
 interface HmIPIndoorClimateSolution extends HmIPFunctionalHome {
     solution: "INDOOR_CLIMATE";
@@ -25,6 +25,7 @@ function isHmIPIndoorClimateSolution(functionalHome: HmIPFunctionalHome): functi
     return (
         isHmIPRecord(candidate) &&
         candidate.solution === "INDOOR_CLIMATE" &&
+        candidate.active === true &&
         (candidate.absenceType === undefined || typeof candidate.absenceType === "string") &&
         (candidate.ecoDuration === undefined || typeof candidate.ecoDuration === "string")
     );
@@ -81,13 +82,15 @@ export class HmIPEcoMode {
             return;
         }
 
-        const duration = this.ecoDuration === undefined ? undefined : ECO_DURATION_MINUTES[this.ecoDuration];
-        if (duration === undefined) {
+        const duration = this.ecoDuration === undefined ? undefined : ECO_DURATION_MINUTES.get(this.ecoDuration);
+        if (this.ecoDuration === "PERMANENT") {
             this.platform.log.info("Activating eco mode permanently");
             await this.platform.connector.apiCall("home/heating/activateAbsencePermanent", {});
-        } else {
+        } else if (duration !== undefined) {
             this.platform.log.info("Activating eco mode for %d minutes", duration);
             await this.platform.connector.apiCall("home/heating/activateAbsenceWithDuration", {duration});
+        } else {
+            throw new Error("Cannot activate eco mode: select a supported eco duration in the Homematic IP app.");
         }
     }
 
@@ -96,14 +99,14 @@ export class HmIPEcoMode {
         if (!indoorClimate) {
             return;
         }
-        this.platform.log.debug(`Eco mode update: ${JSON.stringify(indoorClimate)}`);
-
+        this.accessory.context.device = home;
         this.ecoDuration = indoorClimate.ecoDuration;
         const active = ECO_ABSENCE_TYPES.has(indoorClimate.absenceType);
         if (active !== this.active) {
             this.active = active;
             this.platform.log.info("Eco mode changed to %s", active ? "active" : "inactive");
-            this.service.updateCharacteristic(this.platform.Characteristic.On, active);
         }
+        // Also reset restored HomeKit state when the initial cloud state is inactive.
+        this.service.updateCharacteristic(this.platform.Characteristic.On, active);
     }
 }
