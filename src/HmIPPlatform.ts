@@ -23,6 +23,7 @@ import {
     isHmIPControllerDevice,
     isHmIPExternalDevice,
 } from "./HmIPDeviceFactory.js";
+import {getHmIPIndoorClimateSolution, HmIPEcoMode} from "./HmIPEcoMode.js";
 import {HmIPEventRouter} from "./HmIPEventRouter.js";
 import {HmIPSecuritySystem} from "./HmIPSecuritySystem.js";
 import {type HmIPDeviceAdapter, type HmIPPlatformAccessory, isHmIPAccessoryContext} from "./HmIPTypes.js";
@@ -54,6 +55,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     public customCharacteristic: CustomCharacteristic;
 
     public securitySystem: HmIPSecuritySystem | undefined;
+    public ecoMode: HmIPEcoMode | undefined;
 
     constructor(
         public readonly log: Logger,
@@ -267,11 +269,18 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         if (securitySystemUuid) {
             activeAccessoryUuids.add(securitySystemUuid);
         }
+        const ecoModeUuid = this.updateEcoMode(state.home);
+        if (ecoModeUuid) {
+            activeAccessoryUuids.add(ecoModeUuid);
+        }
         this.accessoryRepository.reconcile(activeAccessoryUuids);
         this.eventRouter = new HmIPEventRouter(this.log, state, this.deviceMap, {
             addDevice: (device) => this.updateAccessory(device),
             removeDevice: (deviceId, adapter) => this.removeAccessory(deviceId, adapter),
-            updateHome: (home) => this.securitySystem?.updateHome(home),
+            updateHome: (home) => {
+                this.securitySystem?.updateHome(home);
+                this.ecoMode?.updateHome(home);
+            },
             updateSecurityGroups: (groups) => this.securitySystem?.updateGroups(groups),
         });
     }
@@ -393,6 +402,29 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         }
 
         securitySystem.updateGroups(this.groups);
+        this.accessoryRepository.register(hmIPAccessory);
+        return uuid;
+    }
+
+    private updateEcoMode(home: HmIPHome): string | undefined {
+        const uuid = this.api.hap.uuid.generate(`${home.id}_eco`);
+        if (this.ecoMode) {
+            this.ecoMode.updateHome(home);
+            return this.ecoMode.hidden ? undefined : uuid;
+        }
+        if (!getHmIPIndoorClimateSolution(home)) {
+            return undefined;
+        }
+
+        const hmIPAccessory = this.accessoryRepository.acquire(uuid, "Eco Mode", home);
+        const ecoMode = new HmIPEcoMode(this, hmIPAccessory.accessory);
+        this.ecoMode = ecoMode;
+
+        if (ecoMode.hidden) {
+            this.accessoryRepository.remove(uuid);
+            return undefined;
+        }
+
         this.accessoryRepository.register(hmIPAccessory);
         return uuid;
     }

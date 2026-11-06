@@ -39,11 +39,12 @@ test("HomeKit handlers reject offline reads and writes, then recover with their 
     assert.equal(calls, 2);
 });
 
-test("snapshot reconciliation removes missing devices and refreshes groups, devices and security together", () => {
+test("snapshot reconciliation removes missing devices and refreshes groups, devices, security and eco mode together", () => {
     const platform = Object.create(HmIPPlatform.prototype);
     const removed = [];
     const updated = [];
     let securityHome;
+    let ecoModeHome;
     let reconciled;
     platform.log = log;
     platform.deviceMap = new Map([
@@ -71,6 +72,10 @@ test("snapshot reconciliation removes missing devices and refreshes groups, devi
         securityHome = home;
         return "security";
     };
+    platform.updateEcoMode = (home) => {
+        ecoModeHome = home;
+        return "eco";
+    };
     const state = snapshot();
     state.devices.present = {id: "present"};
     state.groups.zone = {id: "zone"};
@@ -79,7 +84,8 @@ test("snapshot reconciliation removes missing devices and refreshes groups, devi
     assert.equal(platform.deviceMap.has("gone"), false);
     assert.deepEqual(updated, [["present", state.groups]]);
     assert.equal(securityHome, state.home);
-    assert.deepEqual(reconciled, ["present", "security"]);
+    assert.equal(ecoModeHome, state.home);
+    assert.deepEqual(reconciled, ["present", "security", "eco"]);
 });
 
 test("startup wires lifecycle events and refreshes again after reconnecting", async (t) => {

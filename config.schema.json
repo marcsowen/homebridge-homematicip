@@ -31,6 +31,12 @@
         "type": "boolean",
         "default": false
       },
+      "hideEcoMode": {
+        "title": "Hide Eco Mode Switch",
+        "description": "Do not expose the Homematic IP eco mode switch in HomeKit.",
+        "type": "boolean",
+        "default": false
+      },
       "devices": {
         "title": "Per-device Options",
         "description": "Add a device using its Homematic IP device ID, then select the options to apply to it. Device-specific options are ignored for other device types.",
