@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-
+import {HmIPPlatform} from "../dist/HmIPPlatform.js";
 import {HmIPSecuritySystem} from "../dist/HmIPSecuritySystem.js";
 
 const Characteristic = {
@@ -94,6 +94,8 @@ function createSecuritySystem(config = {}) {
     };
 
     return {
+        accessory,
+        platform,
         commands,
         getContactState: () => getters.get(Characteristic.ContactSensorState)(),
         getTargetState: () => getters.get(Characteristic.SecuritySystemTargetState)(),
@@ -164,4 +166,34 @@ test("clears security zone state when zones disappear from the refreshed snapsho
     securitySystem.updateGroups({});
     assert.equal(getTargetState(), Characteristic.SecuritySystemTargetState.DISARM);
     assert.equal(getContactState(), Characteristic.ContactSensorState.CONTACT_DETECTED);
+});
+
+test("hiding an existing security system unregisters it and unhiding creates a working adapter", () => {
+    for (const config of [{hideSecuritySystem: true}, {devices: [{id: "HOME_SECURITY_SYSTEM", hide: true}]}]) {
+        const fixture = createSecuritySystem();
+        const platform = Object.assign(Object.create(HmIPPlatform.prototype), fixture.platform);
+        const home = fixture.accessory.context.device;
+        const removed = [];
+        let registrations = 0;
+        platform.api = {hap: {uuid: {generate: (id) => id}}};
+        platform.groups = {};
+        platform.securitySystem = fixture.securitySystem;
+        platform.accessoryRepository = {
+            remove: (uuid) => removed.push(uuid),
+            acquire: () => ({accessory: fixture.accessory}),
+            register() {
+                registrations++;
+            },
+        };
+        platform.config = config;
+        assert.equal(platform.updateSecuritySystem(home), undefined);
+        assert.deepEqual(removed, ["home_security"]);
+        assert.equal(platform.securitySystem, undefined);
+        assert.equal(registrations, 0);
+        platform.config = {};
+        assert.equal(platform.updateSecuritySystem(home), "home_security");
+        assert.notEqual(platform.securitySystem, fixture.securitySystem);
+        assert.equal(registrations, 1);
+        assert.equal(fixture.getTargetState(), Characteristic.SecuritySystemTargetState.DISARM);
+    }
 });

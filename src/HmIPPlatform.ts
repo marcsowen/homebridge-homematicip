@@ -47,6 +47,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     private connection: HmIPSession | undefined;
     private eventRouter: HmIPEventRouter | undefined;
     private readonly accessoryRepository: HmIPAccessoryRepository;
+    private readonly hiddenCachedAccessoryUuids = new Set<string>();
     private readonly deviceMap = new Map<string, HmIPDeviceAdapter>();
     private readonly deviceFactory: HmIPDeviceFactory;
     private readonly shutdownController = new AbortController();
@@ -112,10 +113,25 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         }
         if (this.accessoryRepository.restore(accessory as HmIPPlatformAccessory<IdentifiableDevice>)) {
             this.log.info("Loading accessory from cache:", accessory.displayName);
+            for (const kind of ["security", "eco"] as const) {
+                if (
+                    this.isHomeAccessoryHidden(kind) &&
+                    accessory.UUID === this.api.hap.uuid.generate(`${accessory.context.device.id}_${kind}`)
+                ) {
+                    this.hiddenCachedAccessoryUuids.add(accessory.UUID);
+                }
+            }
         }
     }
 
     private async start(): Promise<void> {
+        // Homebridge finishes bridging cached accessories before didFinishLaunching.
+        // Remove hidden ones here, even if cloud initialization cannot complete.
+        for (const uuid of this.hiddenCachedAccessoryUuids) {
+            this.log.info("Removing hidden cached accessory: %s", this.accessoryRepository.get(uuid)?.displayName);
+            this.accessoryRepository.remove(uuid);
+        }
+        this.hiddenCachedAccessoryUuids.clear();
         if (!this.validDeviceConfig) {
             this.lifecycleState = "stopped";
             return;
@@ -383,13 +399,27 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         this.lifecycleState = "stopped";
     }
 
+    private isHomeAccessoryHidden(kind: "security" | "eco"): boolean {
+        const hidden = kind === "security" ? this.config.hideSecuritySystem : this.config.hideEcoMode;
+        const id = kind === "security" ? "HOME_SECURITY_SYSTEM" : "HOME_ECO_MODE";
+        return (
+            hidden === true ||
+            (!hasLegacyDeviceConfig(this.config.devices) && getDeviceConfig(this.config.devices, id)?.hide === true)
+        );
+    }
+
     private updateSecuritySystem(home: HmIPHome): string | undefined {
         const id = `${home.id}_security`;
         const uuid = this.api.hap.uuid.generate(id);
+        if (this.isHomeAccessoryHidden("security")) {
+            this.accessoryRepository.remove(uuid);
+            this.securitySystem = undefined;
+            return undefined;
+        }
         if (this.securitySystem) {
             this.securitySystem.updateHome(home);
             this.securitySystem.updateGroups(this.groups);
-            return this.securitySystem.hidden ? undefined : uuid;
+            return uuid;
         }
 
         const hmIPAccessory = this.accessoryRepository.acquire(uuid, "Home Security System", home);
@@ -408,11 +438,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
 
     private updateEcoMode(home: HmIPHome): string | undefined {
         const uuid = this.api.hap.uuid.generate(`${home.id}_eco`);
-        if (
-            !getHmIPIndoorClimateSolution(home) ||
-            this.config.hideEcoMode === true ||
-            getDeviceConfig(this.config.devices, "HOME_ECO_MODE")?.hide === true
-        ) {
+        if (!getHmIPIndoorClimateSolution(home) || this.isHomeAccessoryHidden("eco")) {
             this.accessoryRepository.remove(uuid);
             this.ecoMode = undefined;
             return undefined;

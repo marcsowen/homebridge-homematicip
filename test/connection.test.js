@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {setImmediate as nextTurn} from "node:timers/promises";
+import {HmIPAccessoryRepository} from "../dist/HmIPAccessoryRepository.js";
 import {connectedGet, connectedSet} from "../dist/HmIPAvailability.js";
 import {HmIPPlatform} from "../dist/HmIPPlatform.js";
 
@@ -18,6 +19,55 @@ const api = {
 const log = {debug() {}, info() {}, warn() {}};
 const snapshot = () => ({devices: {}, groups: {}, home: {id: "home", functionalHomes: {}}});
 const change = (...events) => ({events: Object.fromEntries(events.map((event, i) => [i, event]))});
+
+test("removes hidden cached home accessories after restoration without a cloud connection", async () => {
+    for (const [config, hidden] of [
+        [{hideSecuritySystem: true}, ["security"]],
+        [{devices: [{id: "HOME_SECURITY_SYSTEM", hide: true}]}, ["security"]],
+        [{hideEcoMode: true}, ["eco"]],
+        [{devices: [{id: "HOME_ECO_MODE", hide: true}]}, ["eco"]],
+        [{hideSecuritySystem: true, hideEcoMode: true}, ["security", "eco"]],
+        [{}, []],
+    ]) {
+        const platform = Object.create(HmIPPlatform.prototype);
+        const bridged = new Set();
+        const removed = [];
+        platform.api = {
+            hap: {uuid: {generate: (id) => id}},
+            unregisterPlatformAccessories(_plugin, _platform, accessories) {
+                for (const accessory of accessories) {
+                    assert(bridged.has(accessory.UUID), "removal must happen after Homebridge restores the bridge");
+                    bridged.delete(accessory.UUID);
+                    removed.push(accessory.UUID);
+                }
+            },
+        };
+        platform.log = {...log, error() {}};
+        platform.config = config;
+        platform.validDeviceConfig = true;
+        platform.lifecycleState = "idle";
+        platform.hiddenCachedAccessoryUuids = new Set();
+        platform.accessoryRepository = new HmIPAccessoryRepository(platform.api, platform.log, config.devices);
+        platform.connector = {isReadyForUse: () => false, isReadyForPairing: () => false};
+        for (const UUID of ["home_security", "home_eco", "ordinary-device"]) {
+            const accessory = {UUID, displayName: "Customized name", context: {device: {id: "home"}}};
+            platform.configureAccessory(accessory);
+            // Homebridge adds the cached accessory to its bridge after configureAccessory returns.
+            bridged.add(UUID);
+        }
+        assert.deepEqual(removed, []);
+        await platform.start();
+        assert.deepEqual(
+            removed,
+            hidden.map((kind) => `home_${kind}`),
+        );
+        for (const kind of hidden) {
+            assert.equal(platform.accessoryRepository.get(`home_${kind}`), undefined);
+        }
+        assert(bridged.has("ordinary-device"));
+        assert.equal(platform.accessoryRepository.size, 3 - hidden.length);
+    }
+});
 test("HomeKit handlers reject offline reads and writes, then recover with their original arguments", async () => {
     const platform = {connectionReady: false, api};
     let calls = 0;

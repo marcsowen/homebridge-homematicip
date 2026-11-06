@@ -1,3 +1,9 @@
+## 2.13.1 (2026-11-06)
+
+### Fixes
+
+- **Hidden home accessories**: Unregister cached security-system and Eco Mode accessories after Homebridge restores its cache, before connecting to the cloud, so hiding them also works when cloud initialization fails. Re-evaluate security-system visibility during synchronization.
+
 ## 2.13.0 (2026-11-06)
 
 ### Improvements
