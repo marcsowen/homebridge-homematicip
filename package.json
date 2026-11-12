@@ -1,6 +1,6 @@
 {
   "name": "homebridge-homematicip",
-  "version": "2.13.1",
+  "version": "2.13.2",
   "description": "Homematic IP plugin for homebridge",
   "license": "Apache-2.0",
   "author": "Marc Sowen <marc@sowen.net>",
@@ -45,7 +45,7 @@
     "homebridge": "^2.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.5",
+    "@biomejs/biome": "^2.6.6",
     "@types/node": "^26.6.6",
     "homebridge": "^2.5.0",
     "nodemon": "^3.1.14",

@@ -1,8 +1,12 @@
-## Unreleased
+## 2.13.2 (2026-11-12)
+
+### Improvements
+
+- **Dependencies**: Updated Biome from 2.6.5 to 2.6.6, aligned its configuration schema, and refreshed transitive dependencies.
 
 ### Fixes
 
-- **HmIP-SLO and weather sensors**: Keep reported light levels within HomeKit's range of 0.0001 to 100,000 lx, so darkness (0 lx) no longer logs "characteristic was supplied illegal value" warnings.
+- **HmIP-SLO and weather sensors**: Keep reported light levels within HomeKit's range of 0.0001 to 100,000 lx, so darkness (0 lx) no longer logs "characteristic was supplied illegal value" warnings. Contributed by [Lukas Rahn (@LukasRahn)](https://github.com/LukasRahn) in [#642](https://github.com/marcsowen/homebridge-homematicip/pull/642).
 
 ## 2.13.1 (2026-11-06)
 
