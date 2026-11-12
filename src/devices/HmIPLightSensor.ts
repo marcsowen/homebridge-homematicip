@@ -13,7 +13,7 @@ interface LightSensorChannel {
     lowestIllumination: number;
 }
 
-// HomeKit rejects light levels outside 0.0001-100000 lx; the cloud reports 0 lx in darkness.
+// HAP-NodeJS warns about light levels outside 0.0001-100000 lx; the cloud reports 0 lx in darkness.
 export function toHomeKitLightLevel(lux: number): number {
     return Math.min(100000, Math.max(0.0001, lux));
 }

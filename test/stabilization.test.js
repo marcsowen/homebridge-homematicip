@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {HmIPClimateSensor} from "../dist/devices/HmIPClimateSensor.js";
+import {HmIPLightSensor} from "../dist/devices/HmIPLightSensor.js";
 import {HmIPMotionDetector} from "../dist/devices/HmIPMotionDetector.js";
+import {HmIPWeatherSensor} from "../dist/devices/HmIPWeatherSensor.js";
 import {HmIPDeviceFactory} from "../dist/HmIPDeviceFactory.js";
 
 const CurrentHeatingCoolingState = {COOL: 2, HEAT: 1, OFF: 0};
@@ -143,13 +145,20 @@ function createPlatform(config = {}) {
 
     return {
         api: {
+            hap: {Service: MockService},
             updatePlatformAccessories() {},
             user: {storagePath: () => "/tmp"},
         },
         Characteristic,
         config,
         connector: {async command() {}},
-        customCharacteristic: {characteristic: {ValvePosition: "ValvePosition"}},
+        customCharacteristic: {
+            characteristic: {
+                ValvePosition: "ValvePosition",
+                WeatherConditionCategory: "WeatherConditionCategory",
+                WindSpeed: "WindSpeed",
+            },
+        },
         FakeGatoHistoryService: MockHistoryService,
         groups: {},
         log: {
@@ -288,6 +297,51 @@ test("motion illumination updates the optional light service", () => {
 
     assert.deepEqual(lightService.updates, [[Characteristic.CurrentAmbientLightLevel, 42]]);
     assert.deepEqual(motionService.updates, []);
+});
+
+test("HmIP-SLO darkness stays within HomeKit's light level range", () => {
+    const device = (averageIllumination) =>
+        baseDevice({
+            type: "LIGHT_SENSOR",
+            functionalChannels: {1: {functionalChannelType: "LIGHT_SENSOR_CHANNEL", averageIllumination}},
+        });
+    const accessory = createAccessory(device(0));
+    const adapter = new HmIPLightSensor(createPlatform(), accessory);
+    const lightService = accessory.getService(LightSensorService);
+
+    assert.equal(lightService.getCharacteristic(Characteristic.CurrentAmbientLightLevel).getter(), 0.0001);
+    adapter.updateDevice(device(0.01), {});
+    adapter.updateDevice(device(0), {});
+    assert.deepEqual(lightService.updates, [
+        [Characteristic.CurrentAmbientLightLevel, 0.01],
+        [Characteristic.CurrentAmbientLightLevel, 0.0001],
+    ]);
+});
+
+test("weather sensor illumination stays within HomeKit's light level range", (t) => {
+    const device = (illumination) =>
+        baseDevice({
+            type: "WEATHER_SENSOR",
+            functionalChannels: {1: {functionalChannelType: "WEATHER_SENSOR_CHANNEL", illumination}},
+        });
+    const accessory = createAccessory(device(0));
+    const adapter = new HmIPWeatherSensor(createPlatform(), accessory);
+    t.after(() => adapter.dispose());
+    const lightService = accessory.getService(LightSensorService);
+
+    for (const [illumination, published] of [
+        [3435, 3435],
+        [0, 0.0001],
+        [120000, 100000],
+    ]) {
+        adapter.updateDevice(device(illumination), {});
+        assert.equal(lightService.getCharacteristic(Characteristic.CurrentAmbientLightLevel).getter(), published);
+    }
+    assert.deepEqual(lightService.updates, [
+        [Characteristic.CurrentAmbientLightLevel, 3435],
+        [Characteristic.CurrentAmbientLightLevel, 0.0001],
+        [Characteristic.CurrentAmbientLightLevel, 100000],
+    ]);
 });
 
 test("cached sensor service names are not overwritten during construction", () => {
