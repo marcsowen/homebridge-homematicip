@@ -13,6 +13,11 @@ interface LightSensorChannel {
     lowestIllumination: number;
 }
 
+// HAP-NodeJS warns about light levels outside 0.0001-100000 lx; the cloud reports 0 lx in darkness.
+export function toHomeKitLightLevel(lux: number): number {
+    return Math.min(100000, Math.max(0.0001, lux));
+}
+
 /**
  * HomematicIP light sensor
  *
@@ -31,7 +36,7 @@ export class HmIPLightSensor extends HmIPGenericDevice {
 
         this.service
             .getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-            .onGet(connectedGet(this.platform, () => this.averageIllumination));
+            .onGet(connectedGet(this.platform, () => toHomeKitLightLevel(this.averageIllumination)));
     }
 
     public override updateDevice(hmIPDevice: HmIPDevice, groups: {[key: string]: HmIPGroup}) {
@@ -53,7 +58,7 @@ export class HmIPLightSensor extends HmIPGenericDevice {
                     );
                     this.service.updateCharacteristic(
                         this.platform.Characteristic.CurrentAmbientLightLevel,
-                        this.averageIllumination,
+                        toHomeKitLightLevel(this.averageIllumination),
                     );
                 }
             }

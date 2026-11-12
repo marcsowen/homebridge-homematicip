@@ -5,6 +5,7 @@ import {connectedGet} from "../HmIPAvailability.js";
 import type {HmIPPlatform} from "../HmIPPlatform.js";
 import type {HmIPPlatformAccessory} from "../HmIPTypes.js";
 import {HmIPGenericDevice} from "./HmIPGenericDevice.js";
+import {toHomeKitLightLevel} from "./HmIPLightSensor.js";
 
 enum WindValueType {
     CURRENT_VALUE = "CURRENT_VALUE",
@@ -167,7 +168,7 @@ export class HmIPWeatherSensor extends HmIPGenericDevice {
         // register characteristics
         this.lightSensorService
             .getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
-            .onGet(connectedGet(this.platform, () => this.illumination));
+            .onGet(connectedGet(this.platform, () => toHomeKitLightLevel(this.illumination)));
 
         this.temperatureService
             .getCharacteristic(this.platform.Characteristic.CurrentTemperature)
@@ -315,7 +316,7 @@ export class HmIPWeatherSensor extends HmIPGenericDevice {
                     );
                     this.lightSensorService.updateCharacteristic(
                         this.platform.Characteristic.CurrentAmbientLightLevel,
-                        this.illumination,
+                        toHomeKitLightLevel(this.illumination),
                     );
                 }
 

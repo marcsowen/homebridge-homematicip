@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fixes
+
+- **HmIP-SLO and weather sensors**: Keep reported light levels within HomeKit's range of 0.0001 to 100,000 lx, so darkness (0 lx) no longer logs "characteristic was supplied illegal value" warnings.
+
 ## 2.13.1 (2026-11-06)
 
 ### Fixes
