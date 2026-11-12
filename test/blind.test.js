@@ -270,7 +270,7 @@ test("keeps ordinary blind channels working for existing blind actuators", async
     assert.deepEqual(commands, [["setShutterLevel", {channelIndex: 1, deviceId: "blind1", shutterLevel: 0.5}]]);
 });
 
-test("uses the latest requested height when a scene sets height before slats", async () => {
+test("uses the latest requested height when height and slats arrive in separate requests", async () => {
     const {accessory, commands} = createBlind(
         {
             1: blindChannel(1, 0, 0.5, "", "BLIND_CHANNEL", {blindModeActive: true}),
@@ -296,7 +296,7 @@ test("uses the latest requested height when a scene sets height before slats", a
     ]);
 });
 
-test("keeps the final requested height when a scene sets slats before height", async () => {
+test("sends slats with the current height when slats arrive before height in a separate request", async () => {
     const {accessory, commands} = createBlind(
         {
             1: blindChannel(1, 0, 0.5, "", "BLIND_CHANNEL", {blindModeActive: true}),
@@ -320,6 +320,27 @@ test("keeps the final requested height when a scene sets slats before height", a
         ],
         ["setShutterLevel", {channelIndex: 1, deviceId: "blind1", shutterLevel: 1}],
     ]);
+});
+
+test("sends one command when a scene writes slats and height in the same request", async () => {
+    // HAP starts all writes of one request in the same tick without awaiting each (#279).
+    for (const order of [
+        [Characteristic.TargetHorizontalTiltAngle, Characteristic.TargetPosition],
+        [Characteristic.TargetPosition, Characteristic.TargetHorizontalTiltAngle],
+    ]) {
+        const {accessory, commands} = createBlind(
+            {
+                1: blindChannel(1, 0, 0.5, "", "BLIND_CHANNEL", {blindModeActive: true}),
+            },
+            {type: "FULL_FLUSH_BLIND"},
+        );
+        const service = accessory.services.find((candidate) => candidate.UUID === WindowCoveringService.UUID);
+        await Promise.all(order.map((type) => service.getCharacteristic(type).setter(0)));
+
+        assert.deepEqual(commands, [
+            ["setSlatsLevel", {channelIndex: 1, deviceId: "blind1", shutterLevel: 1, slatsLevel: 0.5}],
+        ]);
+    }
 });
 
 test("removes slat controls when an HmIP-FBL is configured in roller mode", () => {
