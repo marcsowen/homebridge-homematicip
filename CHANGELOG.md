@@ -1,8 +1,13 @@
-## Unreleased
+## 2.14.0 (2026-11-13)
+
+### Improvements
+
+- **Dependencies**: Updated Biome from 2.6.6 to 2.6.7, aligned its configuration schema, and refreshed transitive dependencies.
+- **CI**: Run lint, build, and tests for pull requests on Node.js 24 and 26.
 
 ### Fixes
 
-- **HmIP-FBL and other blinds**: Send a scene's height and slat angle as one command. They used to go out as two parallel commands, and when the slat angle came first it carried the old height, so blinds could move briefly and return ([#279](https://github.com/marcsowen/homebridge-homematicip/issues/279)).
+- **HmIP-FBL and other blinds**: Send a scene's height and slat angle as one command. They used to go out as two parallel commands, and when the slat angle came first it carried the old height, so blinds could move briefly and return ([#279](https://github.com/marcsowen/homebridge-homematicip/issues/279)). Contributed by [Lukas Rahn (@LukasRahn)](https://github.com/LukasRahn) in [#643](https://github.com/marcsowen/homebridge-homematicip/pull/643).
 
 ## 2.13.2 (2026-11-12)
 
