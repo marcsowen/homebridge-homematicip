@@ -30,6 +30,8 @@ interface BlindRuntimeChannel {
     shutterLevel: number;
     targetShutterLevel: number;
     slatsLevel: number;
+    targetSlatsLevel?: number | undefined; // requested but not sent yet
+    pendingCommand?: Promise<void> | undefined; // scheduled, not sent yet
     processing: boolean;
     supportsSlats: boolean;
 }
@@ -214,13 +216,25 @@ export class HmIPBlind extends HmIPGenericDevice {
             channel.index,
             targetPosition,
         );
-        const shutterLevel = HmIPBlind.shutterHomeKitToHmIP(Math.min(100, Math.max(0, targetPosition)));
-        channel.targetShutterLevel = shutterLevel;
-        await this.platform.connector.command("setShutterLevel", {
-            channelIndex: channel.index,
-            deviceId: this.accessory.context.device.id,
-            shutterLevel,
+        channel.targetShutterLevel = HmIPBlind.shutterHomeKitToHmIP(Math.min(100, Math.max(0, targetPosition)));
+        await this.sendTargetLevels(channel);
+    }
+
+    // HAP starts all writes of one HomeKit request in the same tick. Wait one microtask so a scene's
+    // height and slat angle go out as one command; two parallel commands race in the cloud (#279).
+    private sendTargetLevels(channel: BlindRuntimeChannel): Promise<void> {
+        channel.pendingCommand ??= Promise.resolve().then(async () => {
+            const {targetShutterLevel: shutterLevel, targetSlatsLevel: slatsLevel} = channel;
+            channel.pendingCommand = undefined;
+            channel.targetSlatsLevel = undefined;
+            const target = {channelIndex: channel.index, deviceId: this.accessory.context.device.id, shutterLevel};
+            if (slatsLevel === undefined) {
+                await this.platform.connector.command("setShutterLevel", target);
+            } else {
+                await this.platform.connector.command("setSlatsLevel", {...target, slatsLevel});
+            }
         });
+        return channel.pendingCommand;
     }
 
     private async handleHoldPositionSet(channel: BlindRuntimeChannel, value: CharacteristicValue): Promise<void> {
@@ -248,14 +262,8 @@ export class HmIPBlind extends HmIPGenericDevice {
             channel.index,
             targetAngle,
         );
-        await this.platform.connector.command("setSlatsLevel", {
-            channelIndex: channel.index,
-            deviceId: this.accessory.context.device.id,
-            // HomeKit scenes set height and slat angle independently. Use the latest
-            // requested height so this command cannot restore an outdated position.
-            shutterLevel: channel.targetShutterLevel,
-            slatsLevel: HmIPBlind.slatsHomeKitToHmIP(Math.min(90, Math.max(-90, targetAngle))),
-        });
+        channel.targetSlatsLevel = HmIPBlind.slatsHomeKitToHmIP(Math.min(90, Math.max(-90, targetAngle)));
+        await this.sendTargetLevels(channel);
     }
 
     public override updateDevice(hmIPDevice: HmIPDevice, groups: Readonly<Record<string, HmIPGroup>>): void {

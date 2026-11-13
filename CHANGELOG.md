@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fixes
+
+- **HmIP-FBL and other blinds**: Send a scene's height and slat angle as one command. They used to go out as two parallel commands, and when the slat angle came first it carried the old height, so blinds could move briefly and return ([#279](https://github.com/marcsowen/homebridge-homematicip/issues/279)).
+
 ## 2.13.2 (2026-11-12)
 
 ### Improvements
