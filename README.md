@@ -154,6 +154,7 @@ implement and test a device adapter. Review the file before attaching it to a pu
 - HmIP-BWTH Brand wall thermostat with humidity sensor
 - HmIP-WTH-B Wall thermostat – basic
 - ALPHA-IP-RBG Alpha IP wall thermostat display
+- HmIP-FALMOT-C12 Floor heating controller – 12x channels, motorised (valve position is shown on the wall thermostat of the same room, e.g. in the Eve app)
 - HmIP-STH Temperature and humidity sensor without display - indoor
 - HmIP-STHD Temperature and humidity sensor with display - indoor
 - HmIP-SWDO Door / window contact - optical

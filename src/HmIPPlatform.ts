@@ -25,6 +25,7 @@ import {
 } from "./HmIPDeviceFactory.js";
 import {getHmIPIndoorClimateSolution, HmIPEcoMode} from "./HmIPEcoMode.js";
 import {HmIPEventRouter} from "./HmIPEventRouter.js";
+import {getHmIPFloorHeatingValvePositions, isHmIPFloorHeatingDevice} from "./HmIPFloorHeating.js";
 import {HmIPSecuritySystem} from "./HmIPSecuritySystem.js";
 import {type HmIPDeviceAdapter, type HmIPPlatformAccessory, isHmIPAccessoryContext} from "./HmIPTypes.js";
 import {PLATFORM_NAME, PLUGIN_NAME, PLUGIN_VERSION} from "./settings.js";
@@ -49,6 +50,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
     private readonly accessoryRepository: HmIPAccessoryRepository;
     private readonly hiddenCachedAccessoryUuids = new Set<string>();
     private readonly deviceMap = new Map<string, HmIPDeviceAdapter>();
+    private floorHeatingValvePositions: ReadonlyMap<string, number> = new Map();
     private readonly deviceFactory: HmIPDeviceFactory;
     private readonly shutdownController = new AbortController();
     private readonly validDeviceConfig: boolean;
@@ -257,6 +259,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
             snapshot: (state) => this.applySnapshot(state),
             change: (change, state) => {
                 this.groups = state.groups;
+                this.floorHeatingValvePositions = getHmIPFloorHeatingValvePositions(state.devices);
                 this.eventRouter?.handle(change, state);
             },
             status: (status) => {
@@ -268,8 +271,17 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         return true;
     }
 
+    /**
+     * Valve position (0..1) of the floor heating circuits that belong to the given heating group,
+     * or null if no floor heating controller serves that group.
+     */
+    public getFloorHeatingValvePosition(heatingGroupId: string): number | null {
+        return this.floorHeatingValvePositions.get(heatingGroupId) ?? null;
+    }
+
     private applySnapshot(state: HmIPState): void {
         this.groups = state.groups;
+        this.floorHeatingValvePositions = getHmIPFloorHeatingValvePositions(state.devices);
         for (const [id, adapter] of this.deviceMap) {
             if (!state.devices[id]) {
                 this.removeAccessory(id, adapter);
@@ -324,7 +336,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         const deviceKind = getHmIPDeviceKind(device);
         if (deviceKind === undefined) {
             this.accessoryRepository.remove(uuid);
-            if (!isHmIPControllerDevice(device)) {
+            if (!isHmIPControllerDevice(device) && !isHmIPFloorHeatingDevice(device)) {
                 this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
             }
             return [];
@@ -350,7 +362,7 @@ export class HmIPPlatform implements DynamicPlatformPlugin {
         const homebridgeDevice = this.deviceFactory.create(device, hmIPAccessory.accessory);
         if (!homebridgeDevice) {
             this.accessoryRepository.remove(uuid);
-            if (!isHmIPControllerDevice(device)) {
+            if (!isHmIPControllerDevice(device) && !isHmIPFloorHeatingDevice(device)) {
                 this.log.warn(`Device not implemented: ${device.modelType} - ${device.label} via type ${device.type}`);
             }
             return [];

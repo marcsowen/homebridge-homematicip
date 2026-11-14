@@ -1,6 +1,7 @@
 import type {Logger} from "homebridge";
 import type {HmIPDevice, HmIPGroup, HmIPHome, HmIPState, HmIPStateChange} from "homematicip-cloud-client-ts";
 import {reduceHmIPState} from "homematicip-cloud-client-ts";
+import {isHmIPFloorHeatingDevice} from "./HmIPFloorHeating.js";
 import type {HmIPDeviceAdapter} from "./HmIPTypes.js";
 
 export interface HmIPEventRouterCallbacks {
@@ -19,8 +20,10 @@ export class HmIPEventRouter {
     ) {}
 
     public handle(stateChange: HmIPStateChange, state: HmIPState = reduceHmIPState(this.state, stateChange)): void {
+        const previousDevices = this.state.devices;
         this.state = state;
         let groupsChanged = false;
+        let floorHeatingChanged = false;
         let securityZoneChanged = false;
 
         for (const event of Object.values(stateChange.events)) {
@@ -44,6 +47,9 @@ export class HmIPEventRouter {
                     if (event.device) {
                         this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
                         const adapter = this.devices.get(event.device.id);
+                        // removal events carry no device type: look it up in the state before this change
+                        const removedDevice = previousDevices[event.device.id];
+                        floorHeatingChanged ||= removedDevice !== undefined && isHmIPFloorHeatingDevice(removedDevice);
                         if (adapter) {
                             this.callbacks.removeDevice(event.device.id, adapter);
                         } else {
@@ -55,6 +61,7 @@ export class HmIPEventRouter {
                     if (event.device) {
                         this.log.debug(`${event.pushEventType}: ${event.device.id} ${event.device.modelType}`);
                         const adapter = this.devices.get(event.device.id);
+                        floorHeatingChanged ||= isHmIPFloorHeatingDevice(event.device);
                         if (adapter) {
                             adapter.updateDevice(event.device, this.state.groups);
                         } else {
@@ -68,6 +75,9 @@ export class HmIPEventRouter {
                         const adapter = this.devices.get(event.device.id);
                         if (adapter) {
                             adapter.updateDevice(event.device, this.state.groups);
+                        } else if (isHmIPFloorHeatingDevice(event.device)) {
+                            // no accessory of its own: its valve positions are shown by the room thermostats
+                            floorHeatingChanged = true;
                         } else {
                             this.log.debug(`Change event from unregistered device: ${event.device.id}`);
                         }
@@ -107,7 +117,7 @@ export class HmIPEventRouter {
         if (securityZoneChanged) {
             this.callbacks.updateSecurityGroups(this.state.groups);
         }
-        if (groupsChanged) {
+        if (groupsChanged || floorHeatingChanged) {
             for (const [deviceId, adapter] of this.devices) {
                 const device = this.state.devices[deviceId];
                 if (device) {
