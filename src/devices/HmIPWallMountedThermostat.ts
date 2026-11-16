@@ -106,7 +106,15 @@ export class HmIPWallMountedThermostat extends HmIPHeatingThermostat {
 
     protected override updateByHeatingGroup(heatingGroup: HmIPHeatingGroup, channel: HmIPFunctionalChannel) {
         super.updateByHeatingGroup(heatingGroup, channel);
-        this.updateValvePosition(heatingGroup.valvePosition, "group"); // if heatingGroup provides valvePosition: use it
+        if (heatingGroup.valvePosition !== null) {
+            this.updateValvePosition(heatingGroup.valvePosition, "group"); // if heatingGroup provides valvePosition: use it
+        } else {
+            // floor heating controllers report valve positions per channel, not through the heating group
+            this.updateValvePosition(
+                this.platform.getFloorHeatingValvePosition(heatingGroup.id),
+                "floor heating controller",
+            );
+        }
     }
 
     protected override createHistoryEvent(): HistoryEvent {
