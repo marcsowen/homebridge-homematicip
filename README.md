@@ -254,14 +254,15 @@ dependency; users do not need to install or configure it separately.
 
 ## Many thanks to our contributors
 
-- @coreGreenberet for originally reverse-engineering and implementing the Homematic IP API client in Python, now
-  maintained and further developed by @hahn-th (https://github.com/hahn-th/homematicip-rest-api)
-- @dmalch for adding fakegato-history support (https://github.com/simont77/fakegato-history)
-- @smhex for HmIP-DLS, HmIP-BSL, HmIP-DRDI3, ELV-SH-CTH and ELV-SH-SPS25 support
-- @ohueter for thermostat/climate sensor config option
-- @aceg1k for improvements in thermostat heating/cooling state handling and API call handling
-- @gkminix for HmIP-FSI16 support and Node-RED interoperability improvements
+- [@coreGreenberet](https://github.com/coreGreenberet) for originally reverse-engineering and implementing the Homematic IP API client in Python
+- [@hahn-th](https://github.com/hahn-th) for maintaining and further developing the [Homematic IP Python API client](https://github.com/hahn-th/homematicip-rest-api)
+- [@dmalch](https://github.com/dmalch) for adding fakegato-history support (https://github.com/simont77/fakegato-history)
+- [@smhex](https://github.com/smhex) for HmIP-DLS, HmIP-BSL, HmIP-DRDI3, ELV-SH-CTH and ELV-SH-SPS25 support
+- [@ohueter](https://github.com/ohueter) for thermostat/climate sensor config option
+- [@aceg1k](https://github.com/aceg1k) for improvements in thermostat heating/cooling state handling and API call handling
+- [@gkminix](https://github.com/gkminix) for HmIP-FSI16 support and Node-RED interoperability improvements
 - [Benedict Schmieder (@benedictschmieder)](https://github.com/benedictschmieder) for the Eco Mode switch
-  ([#636](https://github.com/marcsowen/homebridge-homematicip/pull/636))
+- [Lukas Rahn (@LukasRahn)](https://github.com/LukasRahn) for light-level range fixes and reliable blind scene commands
+- [@dirkseiler](https://github.com/dirkseiler) for floor heating valve positions on wall thermostats
 
 ## Help needed!

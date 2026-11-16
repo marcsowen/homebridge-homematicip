@@ -1,3 +1,14 @@
+## 2.15.0 (2026-11-16)
+
+### Improvements
+
+- **HmIP-FALMOT-C12**: Show floor heating valve positions on the room's wall thermostat in Eve ([#645](https://github.com/marcsowen/homebridge-homematicip/pull/645)).
+- **Dependencies**: Updated pnpm to 12.21.0 and refreshed transitive dependencies. Removed the workspace configuration and its release-age exceptions; Biome remains on 2.6.7.
+
+### Fixes
+
+- **Wall thermostats**: Clear stale valve readings when their source disappears and restore temperature-based heating-state detection.
+
 ## 2.14.0 (2026-11-13)
 
 ### Improvements

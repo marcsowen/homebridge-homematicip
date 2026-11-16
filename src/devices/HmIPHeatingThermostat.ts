@@ -433,8 +433,8 @@ export class HmIPHeatingThermostat extends HmIPGenericDevice {
         }
     }
 
-    protected updateValvePosition(updateValvePosition: number | null, source: string) {
-        if (updateValvePosition !== null && updateValvePosition !== this.valvePosition) {
+    protected updateValvePosition(updateValvePosition: number | null, source: string, clearMissing = false) {
+        if ((updateValvePosition !== null || clearMissing) && updateValvePosition !== this.valvePosition) {
             this.valvePosition = updateValvePosition;
             this.platform.log.info(
                 "Valve position of %s changed to %s (%s)",

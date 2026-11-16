@@ -278,6 +278,65 @@ test("wall thermostat follows later floor heating valve changes", () => {
     adapter.dispose();
 });
 
+for (const [initialPosition, actualTemperature, expectedState] of [
+    [0.48, 21, CurrentHeatingCoolingState.OFF],
+    [0, 19, CurrentHeatingCoolingState.HEAT],
+]) {
+    test(`losing a floor heating reading restores temperature-based state ${expectedState}`, () => {
+        const positions = new Map([["room1", initialPosition]]);
+        const groups = {room1: heatingGroup("room1")};
+        const {adapter, device, service} = createThermostat(groups, positions);
+        try {
+            positions.clear();
+            device.functionalChannels[1].actualTemperature = actualTemperature;
+            service.updates.length = 0;
+            adapter.updateDevice(device, groups);
+
+            assert.equal(service.getCharacteristic("ValvePosition").getter(), 0);
+            assert.equal(service.getCharacteristic(Characteristic.CurrentHeatingCoolingState).getter(), expectedState);
+            assert.ok(service.updates.some(([key, value]) => key === "ValvePosition" && value === 0));
+            assert.ok(
+                service.updates.some(([key, value]) => key === CurrentHeatingCoolingState && value === expectedState),
+            );
+            assert.equal(adapter.createHistoryEvent().valvePosition, 0);
+
+            positions.set("room1", 0.25);
+            adapter.updateDevice(device, groups);
+            assert.equal(service.getCharacteristic("ValvePosition").getter(), 25);
+        } finally {
+            adapter.dispose();
+        }
+    });
+}
+
+test("losing floor heating preserves a current internal switch reading", () => {
+    const positions = new Map([["room1", 0.48]]);
+    const groups = {room1: heatingGroup("room1")};
+    const {adapter, device, service} = createThermostat(groups, positions);
+    try {
+        device.functionalChannels[2] = {
+            functionalChannelType: "INTERNAL_SWITCH_CHANNEL",
+            index: 2,
+            valvePosition: 0.3,
+        };
+        positions.clear();
+        adapter.updateDevice(device, groups);
+        assert.equal(service.getCharacteristic("ValvePosition").getter(), 30);
+    } finally {
+        adapter.dispose();
+    }
+});
+
+test("removing a thermostat's heating group clears its old floor heating reading", () => {
+    const {adapter, device, service} = createThermostat({room1: heatingGroup("room1")}, new Map([["room1", 0.48]]));
+    try {
+        adapter.updateDevice(device, {});
+        assert.equal(service.getCharacteristic("ValvePosition").getter(), 0);
+    } finally {
+        adapter.dispose();
+    }
+});
+
 test("a valve position reported by the heating group wins over the floor heating controller", () => {
     const {adapter, service} = createThermostat({room1: heatingGroup("room1", 0.1)}, new Map([["room1", 0.48]]));
 

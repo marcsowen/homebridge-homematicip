@@ -67,6 +67,7 @@ function isInternalSwitchChannel(
  */
 export class HmIPWallMountedThermostat extends HmIPHeatingThermostat {
     private humidity = 0;
+    private hasCurrentValvePosition = false;
 
     constructor(platform: HmIPPlatform, accessory: HmIPPlatformAccessory) {
         super(platform, accessory);
@@ -77,6 +78,7 @@ export class HmIPWallMountedThermostat extends HmIPHeatingThermostat {
     }
 
     override updateDevice(hmIPDevice: HmIPDevice, groups: {[p: string]: HmIPGroup}) {
+        this.hasCurrentValvePosition = false;
         for (const channel of Object.values(hmIPDevice.functionalChannels)) {
             if (isInternalSwitchChannel(channel)) {
                 // this.platform.log.debug('internalSwitchChannel', JSON.stringify(channel));
@@ -90,6 +92,15 @@ export class HmIPWallMountedThermostat extends HmIPHeatingThermostat {
         }
         // call super method that manages heating groups etc.
         super.updateDevice(hmIPDevice, groups);
+        // Clear a stale reading only after checking the internal switch, group, and floor heating sources.
+        if (!this.hasCurrentValvePosition) {
+            super.updateValvePosition(null, "no valve position available", true);
+        }
+    }
+
+    protected override updateValvePosition(valvePosition: number | null, source: string) {
+        this.hasCurrentValvePosition ||= valvePosition !== null;
+        super.updateValvePosition(valvePosition, source);
     }
 
     protected updateHumidity(updatedHumidity: number | null) {
